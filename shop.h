@@ -20,8 +20,9 @@ private:
     QPixmap btn;
     QPixmap sel;
     int selected;
+    QFont font;
 public:
-    explicit Shop(Player *player,QObject *parent = nullptr);
+    explicit Shop(Player *player,QFont font,QObject *parent = nullptr);
     int item1Count;
     int item2Count;
     int multiplier;

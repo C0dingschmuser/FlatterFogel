@@ -30,7 +30,9 @@ SOURCES += \
     obstacle.cpp \
     blus.cpp \
     shop.cpp \
-    pxan.cpp
+    pxan.cpp \
+    window.cpp \
+    star.cpp
 
 HEADERS += \
         frmmain.h \
@@ -38,7 +40,9 @@ HEADERS += \
     obstacle.h \
     blus.h \
     shop.h \
-    pxan.h
+    pxan.h \
+    window.h \
+    star.h
 
 FORMS += \
         frmmain.ui

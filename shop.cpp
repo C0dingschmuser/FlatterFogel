@@ -1,9 +1,10 @@
 #include "shop.h"
 
-Shop::Shop(Player *player,QObject *parent) : QObject(parent)
+Shop::Shop(Player *player, QFont font, QObject *parent) : QObject(parent)
 {
     active = false;
     this->player = player;
+    this->font = font;
     this->item1 = QPixmap(":/images/items/item1.png");
     this->item2 = QPixmap(":/images/items/item2.png");
     background = QPixmap(":/images/shopM.png");
@@ -29,31 +30,30 @@ void Shop::load(int ic1, int ic2)
 
 void Shop::draw(QPainter &painter)
 {
-    QFont f("Arial");
-    f.setBold(true);
-    f.setPixelSize(110);
+    QFont f = font;
+    f.setPixelSize(72);
     painter.setFont(f);
     painter.drawPixmap(165,460,750,1000,background);
     painter.drawPixmap(200,490,200,200,item1);
     painter.drawPixmap(200,790,200,200,item2);
     painter.setPen(QColor(0,143,255));
     painter.drawText(470,640,QString::number(multiplier)+"x");
-    painter.drawText(700,640,QString::number(tapMultiplier)+"x");
+    painter.drawText(710,640,QString::number(tapMultiplier)+"x");
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(609,1304,300,150,btn);
     painter.drawPixmap(169,1304,300,150,btn);
-    f.setPixelSize(70);
+    f.setPixelSize(40);
     painter.setFont(f);
-    painter.setPen(QColor(108,67,43));
+    painter.setPen(QColor(0,143,255));
     painter.drawText(640,1405,"Kaufen");
     painter.drawText(195,1405,"Zurück");
-    f.setPixelSize(30);
+    f.setPixelSize(22);
     painter.setFont(f);
     painter.setPen(Qt::white);
-    painter.drawText(210,720,"B 5000 ("+QString::number(item1Count)+"x)");
+    painter.drawText(210,720,"B 5000("+QString::number(item1Count)+"x)");
     painter.drawText(480,720,"B "+QString::number(mMax));
     painter.drawText(710,720,"B "+QString::number(tMax));
-    painter.drawText(210,1020,"B 5000 ("+QString::number(item2Count)+"x)");
+    painter.drawText(210,1020,"B 5000("+QString::number(item2Count)+"x)");
     switch(selected) {
         case 1:
             painter.drawPixmap(200,490,30,30,sel);

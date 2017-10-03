@@ -1,6 +1,7 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 #include <QRect>
+#include <QPixmap>
 
 class Obstacle
 {
@@ -9,7 +10,8 @@ private:
     QRectF bottom;
 public:
     Obstacle();
-    Obstacle(QRect top,QRect bottom, int type=0);
+    Obstacle(QRect top, QRect bottom, QPixmap px, int type=0);
+    QPixmap px;
     bool approved;
     int type;
     QRectF getTop();

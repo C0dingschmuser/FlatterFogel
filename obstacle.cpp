@@ -5,11 +5,12 @@ Obstacle::Obstacle()
 
 }
 
-Obstacle::Obstacle(QRect top, QRect bottom, int type)
+Obstacle::Obstacle(QRect top, QRect bottom, QPixmap px, int type)
 {
     this->type = type;
     this->top = QRectF(top);
     this->bottom = QRectF(bottom);
+    this->px = px;
     approved = false;
 }
 

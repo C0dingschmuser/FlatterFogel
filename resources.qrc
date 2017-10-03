@@ -10,5 +10,13 @@
 		<file>images/items/item2.png</file>
 		<file>images/shopM.png</file>
 		<file>images/sel.png</file>
+		<file>images/pipe1.png</file>
+		<file>images/ground.png</file>
+		<file>images/bg.png</file>
+		<file>images/player/gondola0.png</file>
+		<file>images/player/gondola1.png</file>
+		<file>images/player/gondola2.png</file>
+		<file>font/PressStart2P.ttf</file>
+		<file>font/LICENSE.txt</file>
     </qresource>
 </RCC>

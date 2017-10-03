@@ -17,7 +17,7 @@ private:
 public:
     Blus();
     Blus(int angle,QRectF rect,QPixmap p);
-    Blus(int angle, QRectF rect, QString text, int size=56);
+    Blus(int angle, QRectF rect, QString text, int size=48);
     Blus(int angle, QRectF rect);
     int size;
     bool isRect;

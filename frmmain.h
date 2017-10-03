@@ -15,11 +15,15 @@
 #include <QFont>
 #include <QFile>
 #include <QTime>
+#include <QFontDatabase>
+#include <QFont>
 #include "blus.h"
 #include "player.h"
 #include "obstacle.h"
 #include "shop.h"
+#include "window.h"
 #include "pxan.h"
+#include "star.h"
 
 namespace Ui {
 class FrmMain;
@@ -38,6 +42,11 @@ private slots:
     void on_shopBuy(int amount);
     void on_trevive();
     void on_tboost();
+    void on_tAn();
+    void on_tTilt();
+    void on_tChange();
+    void on_tflag();
+    void on_tstar();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -50,6 +59,12 @@ private:
     QTimer *t_event;
     QTimer *t_revive;
     QTimer *t_boost;
+    QTimer *t_an;
+    QTimer *t_tilt;
+    QTimer *t_tchange;
+    QTimer *t_flag;
+    QTimer *t_star;
+    QFont font;
     double scaleX;
     double scaleY;
     Player *player;
@@ -60,6 +75,8 @@ private:
     QVector <Obstacle*> obstacles;
     QVector <Blus*> blusse;
     QVector <PxAn*> pxans;
+    QVector <Window*> windows;
+    QVector <Star*> stars;
     int random(int min, int max);
     QPixmap end;
     QPixmap blus;
@@ -68,6 +85,8 @@ private:
     QPixmap enemyPixmap;
     QPixmap maas;
     QPixmap btnPx;
+    QPixmap ground;
+    QPixmap bg;
     QString enemy;
     QRectF enemyRect;
     int enemytype;
@@ -78,12 +97,17 @@ private:
     int schmuser;
     int maxX;
     int maxY;
+    double g1x;
+    double g2x;
     double boost;
     bool revive;
+    bool flag;
     QFile file;
     void loadData();
     void write();
     void reset(int type=0);
+    void moveGround(double speed);
+    void createWindows();
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
