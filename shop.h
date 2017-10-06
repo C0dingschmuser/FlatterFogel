@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QPainter>
 #include "player.h"
+#include "translation.h"
 
 class Shop : public QObject
 {
@@ -17,20 +18,23 @@ private:
     QPixmap background;
     QPixmap item1;
     QPixmap item2;
+    QPixmap item3;
     QPixmap btn;
     QPixmap sel;
     int selected;
     QFont font;
+    Translation* transl;
 public:
-    explicit Shop(Player *player,QFont font,QObject *parent = nullptr);
+    explicit Shop(Player *player,QFont font,Translation *transl,QObject *parent = nullptr);
     int item1Count;
     int item2Count;
+    int item3Count;
     int multiplier;
     int tapMultiplier;
     int speedLvl;
     int mMax;
     int tMax;
-    void load(int ic1,int ic2);
+    void load(int ic1,int ic2, int ic3);
     void draw(QPainter &painter);
     void setActive(bool active);
     bool getActive();

@@ -17,6 +17,7 @@
 #include <QTime>
 #include <QFontDatabase>
 #include <QFont>
+#include "translation.h"
 #include "blus.h"
 #include "player.h"
 #include "obstacle.h"
@@ -41,6 +42,7 @@ private slots:
     void on_shopMsg(QString msg);
     void on_shopBuy(int amount);
     void on_trevive();
+    void on_treviveL();
     void on_tboost();
     void on_tAn();
     void on_tTilt();
@@ -64,6 +66,7 @@ private:
     QTimer *t_tchange;
     QTimer *t_flag;
     QTimer *t_star;
+    QTimer *t_reviveL;
     QFont font;
     double scaleX;
     double scaleY;
@@ -87,8 +90,14 @@ private:
     QPixmap btnPx;
     QPixmap ground;
     QPixmap bg;
+    QPixmap medal_bronze;
+    QPixmap medal_silver;
+    QPixmap medal_gold;
+    QPixmap flag_de;
+    QPixmap flag_en;
     QString enemy;
     QRectF enemyRect;
+    Translation *transl;
     int enemytype;
     int enemydir;
     int enemylife;
@@ -97,10 +106,12 @@ private:
     int schmuser;
     int maxX;
     int maxY;
+    int medal;
+    double flashOpacity;
     double g1x;
     double g2x;
     double boost;
-    bool revive;
+    int revive;
     bool flag;
     QFile file;
     void loadData();

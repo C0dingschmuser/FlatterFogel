@@ -32,7 +32,9 @@ SOURCES += \
     shop.cpp \
     pxan.cpp \
     window.cpp \
-    star.cpp
+    star.cpp \
+    text.cpp \
+    translation.cpp
 
 HEADERS += \
         frmmain.h \
@@ -42,7 +44,9 @@ HEADERS += \
     shop.h \
     pxan.h \
     window.h \
-    star.h
+    star.h \
+    text.h \
+    translation.h
 
 FORMS += \
         frmmain.ui

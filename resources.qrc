@@ -8,6 +8,7 @@
 		<file>images/maas.png</file>
 		<file>images/items/item1.png</file>
 		<file>images/items/item2.png</file>
+		<file>images/items/item3.png</file>
 		<file>images/shopM.png</file>
 		<file>images/sel.png</file>
 		<file>images/pipe1.png</file>
@@ -18,5 +19,10 @@
 		<file>images/player/gondola2.png</file>
 		<file>font/PressStart2P.ttf</file>
 		<file>font/LICENSE.txt</file>
+		<file>images/medals/bronze.png</file>
+		<file>images/medals/silber.png</file>
+		<file>images/medals/gold.png</file>
+		<file>images/flag/de.png</file>
+		<file>images/flag/en.png</file>
     </qresource>
 </RCC>

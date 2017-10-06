@@ -9,5 +9,9 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(f);*/
     FrmMain w;
     w.show();
+    w.showFullScreen();
+    #ifdef QT_DEBUG
+        w.showNormal();
+    #endif
     return a.exec();
 }
