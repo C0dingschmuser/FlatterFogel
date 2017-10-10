@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -34,7 +34,8 @@ SOURCES += \
     window.cpp \
     star.cpp \
     text.cpp \
-    translation.cpp
+    translation.cpp \
+    scoreboard.cpp
 
 HEADERS += \
         frmmain.h \
@@ -46,7 +47,8 @@ HEADERS += \
     window.h \
     star.h \
     text.h \
-    translation.h
+    translation.h \
+    scoreboard.h
 
 FORMS += \
         frmmain.ui
@@ -55,6 +57,13 @@ CONFIG += mobility
 MOBILITY = 
 
 DISTFILES += \
+    android/AndroidManifest.xml \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradlew \
+    android/res/values/libs.xml \
+    android/build.gradle \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew.bat \
     android/AndroidManifest.xml \
     android/gradle/wrapper/gradle-wrapper.jar \
     android/gradlew \

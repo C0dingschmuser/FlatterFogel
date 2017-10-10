@@ -15,7 +15,6 @@ class Shop : public QObject
 private:
     Player *player;
     bool active;
-    QPixmap background;
     QPixmap item1;
     QPixmap item2;
     QPixmap item3;
@@ -26,6 +25,7 @@ private:
     Translation* transl;
 public:
     explicit Shop(Player *player,QFont font,Translation *transl,QObject *parent = nullptr);
+    QPixmap background;
     int item1Count;
     int item2Count;
     int item3Count;

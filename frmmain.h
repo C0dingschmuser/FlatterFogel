@@ -14,7 +14,10 @@
 #include <QPixmap>
 #include <QFont>
 #include <QFile>
+#include <QInputDialog>
 #include <QTime>
+#include <QGuiApplication>
+#include <QInputMethod>
 #include <QFontDatabase>
 #include <QFont>
 #include "translation.h"
@@ -25,6 +28,7 @@
 #include "window.h"
 #include "pxan.h"
 #include "star.h"
+#include "scoreboard.h"
 
 namespace Ui {
 class FrmMain;
@@ -49,6 +53,8 @@ private slots:
     void on_tChange();
     void on_tflag();
     void on_tstar();
+    void on_sbWrongName();
+    void on_sbConnFail();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -95,9 +101,12 @@ private:
     QPixmap medal_gold;
     QPixmap flag_de;
     QPixmap flag_en;
+    QPixmap stats;
     QString enemy;
     QRectF enemyRect;
     Translation *transl;
+    Scoreboard *scoreboard;
+    QString name;
     int enemytype;
     int enemydir;
     int enemylife;

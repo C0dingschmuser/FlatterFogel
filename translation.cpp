@@ -259,3 +259,93 @@ Text Translation::getText_Schmuser3()
     }
     return t;
 }
+
+Text Translation::gettext_Scoreboard_Falsch()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Nickname darf nicht leer sein, muss kürzer als 13 Zeichen sein und folgende Zeichen nicht enthalten: #~äöü";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+        default:
+            t.text = "Nickname cant be empty, has to be shorter than 13 letters and must only contain normal letters and numbers";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Scoreboard_WrongName()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Name ist bereits vergeben!";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+        default:
+            t.text = "Nickname is already taken!";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Scoreboard_ConnectionFail()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Verbindung zum Server Fehlgeschlagen!";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+        default:
+            t.text = "Connection to Server failed!";
+            t.pos = QPoint(180,450);
+            t.size = 56;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getBtn_Scoreboard_Back()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Zurück";
+            t.pos = QPoint(135,1415);
+            t.size = 40;
+        break;
+        default:
+            t.text = "Back";
+            t.pos = QPoint(160,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Scoreboard_SetName()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Name nur einmal wählbar! Nickname:";
+            t.pos = QPoint(135,1415);
+            t.size = 40;
+        break;
+        default:
+            t.text = "Nickname cannot be changed! Nickname:";
+            t.pos = QPoint(160,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}

@@ -49,8 +49,12 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     medal_gold = QPixmap(":/images/medals/gold.png");
     flag_de = QPixmap(":/images/flag/de.png");
     flag_en = QPixmap(":/images/flag/en.png");
+    stats = QPixmap(":/images/stats.png");
     player = new Player(QRectF(1080/2-40,1920/2-40,80,80));
     shop = new Shop(player,font,transl);
+    scoreboard = new Scoreboard(shop->background,btnPx,font,transl);
+    connect(scoreboard,SIGNAL(connFail()),this,SLOT(on_sbConnFail()));
+    connect(scoreboard,SIGNAL(wrongName()),this,SLOT(on_sbWrongName()));
     connect(shop,SIGNAL(back()),this,SLOT(on_shopBack()));
     connect(shop,SIGNAL(msg(QString)),this,SLOT(on_shopMsg(QString)));
     connect(shop,SIGNAL(buy(int)),this,SLOT(on_shopBuy(int)));
@@ -394,6 +398,18 @@ void FrmMain::on_tstar()
     }
 }
 
+void FrmMain::on_sbWrongName()
+{
+    Text t = transl->getText_Scoreboard_WrongName();
+    QMessageBox::critical(this,"Error",t.text);
+}
+
+void FrmMain::on_sbConnFail()
+{
+    Text t = transl->getText_Scoreboard_ConnectionFail();
+    QMessageBox::critical(this,"Error",t.text);
+}
+
 int FrmMain::random(int min, int max)
 {
     int rand;
@@ -423,10 +439,14 @@ void FrmMain::loadData()
                 shop->multiplier = 10;
                 shop->tapMultiplier = 1;
             }
-            shop->load(list.at(2).toInt(),list.at(5).toInt(),list.at(7).toInt());
-            if(list.at(6).size()>1) {
-                transl->locale = QLocale(list.at(6));
+            if(list.size()>8) {
+                shop->load(list.at(2).toInt(),list.at(5).toInt(),list.at(7).toInt());
+                if(list.at(6).size()>1) {
+                    transl->locale = QLocale(list.at(6));
+                }
+                scoreboard->name = list.at(8);
             }
+
         }
     } else {
         file.open(QIODevice::ReadWrite);
@@ -441,7 +461,8 @@ void FrmMain::write()
     out << QString::number(highscore) << "#" << QString::number(player->getBenis()) << "#"
         << QString::number(shop->item1Count) << "#" << QString::number(shop->multiplier) << "#"
         << QString::number(shop->tapMultiplier) << "#" << QString::number(shop->item2Count) << "#"
-        << transl->locale.bcp47Name() << "#" << QString::number(shop->item3Count) << "#";
+        << transl->locale.bcp47Name() << "#" << QString::number(shop->item3Count) << "#"
+        << scoreboard->name << "#";
     file.close();
 }
 
@@ -783,7 +804,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setOpacity(1);
         painter.drawText(500,1855,QString::number(shop->item3Count)+"x");
 
-    } else if(!active&&!shop->getActive()) {
+    } else if(!active&&!shop->getActive()&&!scoreboard->active) {
         Text go = transl->getBtn_Go();
         Text shop = transl->getBtn_Shop();
         f.setPixelSize(go.size);
@@ -791,6 +812,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setPen(QColor(0,143,255));
         painter.drawPixmap(QRect(390,900,300,150),btnPx);
         painter.drawPixmap(QRect(390,1100,300,150),btnPx);
+        painter.drawPixmap(QRect(390,1300,300,150),btnPx);
+        painter.drawPixmap(QRect(439,1308,200,120),stats);
         painter.drawPixmap(QRect(10,1810,160,96),flag_de);
         painter.drawPixmap(QRect(175,1810,160,96),flag_en);
         painter.setBrush(QColor(22,22,24));
@@ -807,6 +830,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawText(shop.pos,shop.text);
     } else if(!active&&shop->getActive()) {
         shop->draw(painter);
+    } else if(!active&&scoreboard->active) {
+        scoreboard->draw(painter,highscore);
     }
     f.setPixelSize(48);
     painter.setFont(f);
@@ -830,6 +855,8 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
         case 0:
             if(shop->getActive()) {
                 shop->mousePress(QPoint(x,y));
+            } else if(scoreboard->active) {
+                scoreboard->mpress(QPoint(x,y));
             } else {
                 if(QRect(x,y,1,1).intersects(QRect(390,900,300,150))) {
                     //QMetaObject::invokeMethod(t_obst,"start");
@@ -843,6 +870,27 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 } else if(QRect(x,y,1,1).intersects(QRect(175,1810,160,96))) {
                     transl->locale = QLocale("en");
                     write();
+                } else if(QRect(x,y,1,1).intersects(QRect(390,1300,300,150))) {
+                    bool ok=true;
+                    if(scoreboard->name=="") {
+                        QGuiApplication::inputMethod()->show();
+                        QString n = QInputDialog::getText(this,tr("Nickname"),transl->getText_Scoreboard_SetName().text,QLineEdit::Normal,"",&ok);
+                        if(n.isEmpty()||n.contains("äüö#~ÄÖÜ"||n.length()>12||n.contains(" "))) {
+                            ok = false;
+                            Text t = transl->gettext_Scoreboard_Falsch();
+                            QMessageBox::critical(this,"Error",t.text);
+                        } else {
+                            scoreboard->name = n;
+                            scoreboard->first="1";
+                        }
+                    } else {
+                        scoreboard->first="0";
+                    }
+                    if(highscore) {
+                        scoreboard->setScore(highscore);
+                        scoreboard->getScores();
+                    }
+                    if(ok&&scoreboard->wasConnected) scoreboard->active = true;
                 }
             }
         break;
@@ -919,6 +967,8 @@ void FrmMain::keyPressEvent(QKeyEvent *e)
     if(e->key()==Qt::Key_Back) {
         if(shop->getActive()) {
             shop->setActive(false);
+        } else if(scoreboard->active){
+            scoreboard->active = false;
         } else {
             write();
             QApplication::quit();

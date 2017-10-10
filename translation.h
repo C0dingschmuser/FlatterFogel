@@ -24,6 +24,11 @@ public:
     Text getText_Schmuser1();
     Text getText_Schmuser2();
     Text getText_Schmuser3();
+    Text gettext_Scoreboard_Falsch();
+    Text getText_Scoreboard_WrongName();
+    Text getText_Scoreboard_ConnectionFail();
+    Text getBtn_Scoreboard_Back();
+    Text getText_Scoreboard_SetName();
 };
 
 #endif // LOCALE_H
