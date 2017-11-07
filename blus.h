@@ -14,12 +14,15 @@ private:
     bool text;
     QString string;
     double opacity;
+    double oSpeed;
 public:
     Blus();
-    Blus(int angle,QRectF rect,QPixmap p);
+    Blus(int angle,QRectF rect,QPixmap p, int w=40, int h=40);
     Blus(int angle, QRectF rect, QString text, int size=48);
-    Blus(int angle, QRectF rect);
+    Blus(int angle, QRectF rect, double vSpeed=8, double oSpeed=1);
     int size;
+    int width;
+    int height;
     bool isRect;
     QColor color;
     void move();

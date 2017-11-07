@@ -23,6 +23,7 @@ private:
     QVector<QString>players;
     QFont font;
     Translation *transl;
+    QString maas(QString n);
 public:
     explicit Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent = nullptr);
     void draw(QPainter &painter, int highscore);
@@ -38,6 +39,7 @@ public:
 signals:
     void wrongName();
     void connFail();
+    void write();
 public slots:
 };
 

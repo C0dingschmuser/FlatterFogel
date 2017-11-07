@@ -9,6 +9,7 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QObject *parent) : Q
     this->item1 = QPixmap(":/images/items/item1.png");
     this->item2 = QPixmap(":/images/items/item2.png");
     this->item3 = QPixmap(":/images/items/item3.png");
+    this->item4 = QPixmap(":/images/items/item4.png");
     background = QPixmap(":/images/shopM.png");
     btn = QPixmap(":/images/button.png");
     sel = QPixmap(":/images/sel.png");
@@ -16,20 +17,22 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QObject *parent) : Q
     item1Count = 2;
     item2Count = 2;
     item3Count = 0;
+    item4Count = 0;
     multiplier = 10;
     tapMultiplier = 1;
     speedLvl = 1;
     mMax = multiplier*500+(((multiplier-10)*2500)*2);
-    tMax = tapMultiplier*5000+((tapMultiplier*5000)*2);
+    tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
 }
 
-void Shop::load(int ic1, int ic2, int ic3)
+void Shop::load(int ic1, int ic2, int ic3, int ic4)
 {
     item1Count = ic1;
     item2Count = ic2;
     item3Count = ic3;
+    item4Count = ic4;
     mMax = multiplier*500+(((multiplier-10)*2500)*2);
-    tMax = tapMultiplier*5000+((tapMultiplier*5000)*2);
+    tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
 }
 
 void Shop::draw(QPainter &painter)
@@ -41,6 +44,7 @@ void Shop::draw(QPainter &painter)
     painter.drawPixmap(200,790,200,200,item1);
     painter.drawPixmap(200,1090,200,200,item2);
     painter.drawPixmap(470,790,200,200,item3);
+    painter.drawPixmap(470,1090,200,200,item4);
     painter.setPen(QColor(0,143,255));
     painter.drawText(200,640,QString::number(multiplier)+"x");
     painter.drawText(460,640,QString::number(tapMultiplier)+"x"); //710 3
@@ -61,8 +65,9 @@ void Shop::draw(QPainter &painter)
     painter.drawText(210,1020,"B 4000("+QString::number(item1Count)+"x)");
     painter.drawText(220,720,"B "+QString::number(mMax));
     painter.drawText(470,720,"B "+QString::number(tMax));
-    painter.drawText(210,1320,"B 5000("+QString::number(item2Count)+"x)");
+    painter.drawText(210,1320,"B 4000("+QString::number(item2Count)+"x)");
     painter.drawText(470,1020,"B 7500("+QString::number(item3Count)+"x)");
+    painter.drawText(470,1320,"B 7500("+QString::number(item4Count)+"x)");
     Text selText;
     switch(selected) {
         case 1:
@@ -88,7 +93,6 @@ void Shop::draw(QPainter &painter)
         break;
         case 5:
             painter.drawPixmap(470,790,30,30,sel);
-            painter.setPen(Qt::red);
             selText = transl->getText_Shop_Item3();
             f.setPixelSize(selText.size);
             painter.setFont(f);
@@ -97,6 +101,13 @@ void Shop::draw(QPainter &painter)
         case 7:
             painter.drawPixmap(200,1090,30,30,sel);
             selText = transl->getText_Shop_Item2();
+            f.setPixelSize(selText.size);
+            painter.setFont(f);
+            painter.drawText(selText.pos,selText.text);
+        break;
+        case 8:
+            painter.drawPixmap(470,1090,30,30,sel);
+            selText = transl->getText_Shop_Item4();
             f.setPixelSize(selText.size);
             painter.setFont(f);
             painter.drawText(selText.pos,selText.text);
@@ -135,6 +146,8 @@ void Shop::mousePress(QPoint pos)
         selected = 6;
     } else if(r.intersects(QRect(200,1090,200,200))) {
         selected = 7;
+    } else if(r.intersects(QRect(470,1090,200,200))) {
+        selected = 8;
     }
     if(r.intersects(QRect(609,1304,300,150))) {
         if(!selected) {
@@ -154,13 +167,13 @@ void Shop::mousePress(QPoint pos)
                 }
             break;
             case 2: //tmp
-                tMax = tapMultiplier*5000+((tapMultiplier*5000)*2);
+                tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
                 if(player->getBenis()<tMax) {
                     emit msg(transl->getText_Shop_NotEnough().text);
                 } else {
                     player->setBenis(player->getBenis()-tMax);
                     tapMultiplier+=1;
-                    tMax = tapMultiplier*5000+((tapMultiplier*5000)*2);
+                    tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
                     emit buy(tMax);
                 }
             break;
@@ -183,12 +196,21 @@ void Shop::mousePress(QPoint pos)
                 }
             break;
             case 7: //speed
-                if(player->getBenis()<5000) {
+                if(player->getBenis()<4000) {
                     emit msg(transl->getText_Shop_NotEnough().text);
                 } else {
-                    player->setBenis(player->getBenis()-5000);
+                    player->setBenis(player->getBenis()-4000);
                     item2Count++;
-                    emit buy(5000);
+                    emit buy(4000);
+                }
+            break;
+            case 8: //speed+
+                if(player->getBenis()<7500) {
+                    emit msg(transl->getText_Shop_NotEnough().text);
+                } else {
+                    player->setBenis(player->getBenis()-7500);
+                    item4Count++;
+                    emit buy(7500);
                 }
             break;
         }
@@ -207,6 +229,9 @@ QPixmap Shop::getPixmap(int item)
         break;
         case 3:
             p = item3;
+        break;
+        case 4:
+            p = item4;
         break;
 
     }

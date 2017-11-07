@@ -46,7 +46,7 @@ private slots:
     void on_shopMsg(QString msg);
     void on_shopBuy(int amount);
     void on_trevive();
-    void on_treviveL();
+    void on_tboxDeathAn();
     void on_tboost();
     void on_tAn();
     void on_tTilt();
@@ -55,6 +55,7 @@ private slots:
     void on_tstar();
     void on_sbWrongName();
     void on_sbConnFail();
+    void on_write();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -72,7 +73,7 @@ private:
     QTimer *t_tchange;
     QTimer *t_flag;
     QTimer *t_star;
-    QTimer *t_reviveL;
+    QTimer *t_boxDeathAn;
     QFont font;
     double scaleX;
     double scaleY;
@@ -102,8 +103,16 @@ private:
     QPixmap flag_de;
     QPixmap flag_en;
     QPixmap stats;
+    QPixmap trainPx;
+    QPixmap train2Px;
+    QPixmap boxPx;
+    QPixmap box2Px;
+    QPixmap box3Px;
+    QVector <QPixmap> boxPxAn;
+    QVector <QPixmap> explosion;
     QString enemy;
     QRectF enemyRect;
+    bool fastboost;
     Translation *transl;
     Scoreboard *scoreboard;
     QString name;
@@ -116,6 +125,10 @@ private:
     int maxX;
     int maxY;
     int medal;
+    int boxCount;
+    int boxDeath;
+    int obsNum;
+    int boxState;
     double flashOpacity;
     double g1x;
     double g2x;

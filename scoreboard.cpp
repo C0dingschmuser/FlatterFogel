@@ -5,6 +5,11 @@ void Scoreboard::on_tcpRecv()
 
 }
 
+QString Scoreboard::maas(QString n)
+{
+    return n;
+}
+
 Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent) : QObject(parent)
 {
     this->bg = bg;
@@ -19,7 +24,7 @@ Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, 
 
 void Scoreboard::draw(QPainter &painter,int highscore)
 {
-    painter.drawPixmap(70,460,940,1000,bg);
+    painter.drawPixmap(20,460,1040,1000,bg);
     QFont f = font;
     f.setPixelSize(56);
     painter.setFont(f);
@@ -36,16 +41,22 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         } else {
             painter.setPen(Qt::white);
         }
-        painter.drawText(100,550+(i*60),name);
-        painter.drawText(790,550+(i*60),score);
+        painter.drawText(50,550+(i*60),name);
+        painter.drawText(850,550+(i*60),score);
     }
     if(own==-1) {
         painter.setPen(Qt::red);
-        painter.drawText(100,550+10*60,name);
-        painter.drawText(790,550+10*60,QString::number(highscore));
+        painter.drawText(50,550+10*60,name);
+        painter.drawText(850,550+10*60,QString::number(highscore));
     }
-    painter.drawPixmap(104,1324,300,130,btnPx);
+    painter.drawPixmap(24,1324,300,130,btnPx);
+    painter.drawPixmap(500,1324,560,130,btnPx);
+    painter.setPen(QColor(0,143,255));
     Text t = transl->getBtn_Scoreboard_Back();
+    f.setPixelSize(t.size);
+    painter.setFont(f);
+    painter.drawText(t.pos,t.text);
+    t = transl->getBtn_Scoreboard_Change();
     f.setPixelSize(t.size);
     painter.setFont(f);
     painter.drawText(t.pos,t.text);
@@ -63,9 +74,15 @@ void Scoreboard::setScore(int score)
         QString input = socket->readAll();
         if(input.size()) {
             if(input.at(0)=="0") {
+                active = false;
+                wasConnected = false;
+                socket->close();
+                this->name=="";
                 emit wrongName();
+                return;
             }
         }
+        emit write();
         wasConnected = true;
     } else {
         wasConnected = false;
@@ -90,7 +107,8 @@ void Scoreboard::getScores()
             input.replace("~","");
             QStringList split = input.split("#");
             for(int i=0;i<split.size()-1;i+=2) {
-                players.append(split[i]+"#"+split[i+1]);
+                QString n = maas(split[i]);
+                players.append(n+"#"+split[i+1]);
             }
         }
     } else {
@@ -101,7 +119,24 @@ void Scoreboard::getScores()
 
 void Scoreboard::mpress(QPoint pos)
 {
-    if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(104,1324,300,130))) {
+    if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(24,1324,300,130))) {
         this->active = false;
+    } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(500,1324,560,130))) {
+        socket->connectToHost("37.120.177.121",38900);
+        socket->waitForConnected(1000);
+        if(socket->state()==QTcpSocket::ConnectedState) {
+            QString data = ".2#"+name+"#~";
+            socket->write(data.toUtf8());
+            socket->waitForBytesWritten(2000);
+        } else {
+            emit connFail();
+            return;
+        }
+        socket->close();
+        wasConnected = false;
+        this->name = "";
+        this->first = "0";
+        this->active = false;
+        emit write();
     }
 }

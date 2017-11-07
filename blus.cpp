@@ -5,15 +5,18 @@ Blus::Blus()
 
 }
 
-Blus::Blus(int angle, QRectF rect, QPixmap p)
+Blus::Blus(int angle, QRectF rect, QPixmap p, int w, int h)
 {
     opacity = 255;
     this->p = p;
     this->rect = rect;
+    this->width = w;
+    this->height = h;
     vx = qCos(qDegreesToRadians((double)angle))*2;
     vy = qSin(qDegreesToRadians((double)angle))*2;
     text = false;
     isRect = false;
+    oSpeed = 1;
 }
 
 Blus::Blus(int angle, QRectF rect, QString text, int size)
@@ -26,23 +29,25 @@ Blus::Blus(int angle, QRectF rect, QString text, int size)
     this->string = text;
     this->text = true;
     isRect = false;
+    oSpeed = 1;
 }
 
-Blus::Blus(int angle, QRectF rect)
+Blus::Blus(int angle, QRectF rect, double vSpeed,double oSpeed)
 {
     this->rect = rect;
     opacity = 255;
-    vx = qCos(qDegreesToRadians((double)angle))*8;
-    vy = qSin(qDegreesToRadians((double)angle))*8;
+    vx = qCos(qDegreesToRadians((double)angle))*vSpeed;
+    vy = qSin(qDegreesToRadians((double)angle))*vSpeed;
     isRect = true;
+    this->oSpeed = oSpeed;
 }
 
 void Blus::move()
 {
-    //if(text) {
-        opacity -= 1;
-    //}
-    rect.moveTo(rect.x()+vx,rect.y()+vy);
+    if(opacity>0) {
+        opacity -= oSpeed;
+        rect.moveTo(rect.x()+vx,rect.y()+vy);
+    }
 }
 
 void Blus::setOpacity(double opacity)

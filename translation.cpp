@@ -86,12 +86,12 @@ Text Translation::getText_Shop_Item1()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Wenn aktiviert hast du für 30s 1 extra Leben";
-            t.pos = QPoint(12,1692);
+            t.pos = QPoint(12,1688);
             t.size = 24;
         break;
         default:
             t.text = "One extra Life while activated for 30s";
-            t.pos = QPoint(30,1692);
+            t.pos = QPoint(30,1688);
             t.size = 27;
         break;
     }
@@ -104,12 +104,12 @@ Text Translation::getText_Shop_MP1()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Erhöht den Benismultiplikator (Hindernisse & Gegner)";
-            t.pos = QPoint(0,1692);
+            t.pos = QPoint(0,1688);
             t.size = 21;
         break;
         default:
             t.text = "Increases Benis multiplier (Obstacles & Enemys)";
-            t.pos = QPoint(5,1692);
+            t.pos = QPoint(5,1688);
             t.size = 23;
         break;
     }
@@ -122,12 +122,12 @@ Text Translation::getText_Shop_MP2()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Erhöht den Benismultiplikator (Benis pro Touch)";
-            t.pos = QPoint(5,1692);
+            t.pos = QPoint(5,1688);
             t.size = 23;
         break;
         default:
             t.text = "Increases Benis multiplier (Benis per Touch)";
-            t.pos = QPoint(10,1692);
+            t.pos = QPoint(10,1688);
             t.size = 24;
         break;
     }
@@ -140,7 +140,7 @@ Text Translation::getText_Shop_Item2()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Kann für einen Schnellstart benutzt werden";
-            t.pos = QPoint(25,1692);
+            t.pos = QPoint(25,1688);
             t.size = 25;
         break;
         default:
@@ -158,12 +158,30 @@ Text Translation::getText_Shop_Item3()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Wenn aktiviert hast du ein extra Leben";
-            t.pos = QPoint(25,1692);
+            t.pos = QPoint(25,1688);
             t.size = 27;
         break;
         default:
             t.text = "One extra Life until death";
             t.pos = QPoint(80,1696);
+            t.size = 35;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Item4()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Kann für einen Schnellstart+ benutzt werden";
+            t.pos = QPoint(7,1688);
+            t.size = 25;
+        break;
+        default:
+            t.text = "Can be used for a Quick start+";
+            t.pos = QPoint(20,1696);
             t.size = 35;
         break;
     }
@@ -265,7 +283,7 @@ Text Translation::gettext_Scoreboard_Falsch()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Nickname darf nicht leer sein, muss kürzer als 13 Zeichen sein und folgende Zeichen nicht enthalten: #~äöü";
+            t.text = "Nickname darf nicht leer sein, muss kürzer als 13 Zeichen sein und darf folgende Zeichen nicht enthalten: #~äöü";
             t.pos = QPoint(180,450);
             t.size = 56;
         break;
@@ -320,12 +338,12 @@ Text Translation::getBtn_Scoreboard_Back()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Zurück";
-            t.pos = QPoint(135,1415);
+            t.pos = QPoint(55,1415);
             t.size = 40;
         break;
         default:
             t.text = "Back";
-            t.pos = QPoint(160,1415);
+            t.pos = QPoint(70,1415);
             t.size = 50;
         break;
     }
@@ -337,13 +355,31 @@ Text Translation::getText_Scoreboard_SetName()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Name nur einmal wählbar! Nickname:";
+            t.text = "Nickname:";
             t.pos = QPoint(135,1415);
             t.size = 40;
         break;
         default:
-            t.text = "Nickname cannot be changed! Nickname:";
+            t.text = "Nickname:";
             t.pos = QPoint(160,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getBtn_Scoreboard_Change()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Name zurücksetzen";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Reset Name";
+            t.pos = QPoint(530,1415);
             t.size = 50;
         break;
     }

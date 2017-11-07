@@ -19,6 +19,7 @@ public:
     Text getText_Shop_MP2();
     Text getText_Shop_Item2();
     Text getText_Shop_Item3();
+    Text getText_Shop_Item4();
     Text getText_Shop_NotEnough();
     Text getText_Shop_NotSelected();
     Text getText_Schmuser1();
@@ -29,6 +30,7 @@ public:
     Text getText_Scoreboard_ConnectionFail();
     Text getBtn_Scoreboard_Back();
     Text getText_Scoreboard_SetName();
+    Text getBtn_Scoreboard_Change();
 };
 
 #endif // LOCALE_H
