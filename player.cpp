@@ -5,6 +5,7 @@ Player::Player(QRectF rect)
     this->rect = rect;
     velD = 0;
     benis = 10000;
+    coins = 0;
     g0 = QPixmap(":/images/player/gondola0.png");
     g1 = QPixmap(":/images/player/gondola1.png");
     g2 = QPixmap(":/images/player/gondola2.png");

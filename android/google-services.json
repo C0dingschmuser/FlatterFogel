@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "632651705165",
+    "firebase_url": "https://flatterfogel.firebaseio.com",
+    "project_id": "flatterfogel",
+    "storage_bucket": "flatterfogel.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:632651705165:android:98572ff1a4ebf67f",
+        "android_client_info": {
+          "package_name": "com.bruhgames.Flatterfogel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "632651705165-mjn3spcndv4olbn83kdb8lb82uqc9rpe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA14zzA3qmhzuzwnleiEHB7S8iPmiycHdg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

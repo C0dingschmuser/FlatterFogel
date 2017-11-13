@@ -12,6 +12,7 @@ QString Scoreboard::maas(QString n)
 
 Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent) : QObject(parent)
 {
+    scoreX = -1080;
     this->bg = bg;
     this->btnPx = btnPx;
     this->transl = transl;
@@ -24,7 +25,7 @@ Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, 
 
 void Scoreboard::draw(QPainter &painter,int highscore)
 {
-    painter.drawPixmap(20,460,1040,1000,bg);
+    painter.drawPixmap(scoreX+20,460,1040,1000,bg);
     QFont f = font;
     f.setPixelSize(56);
     painter.setFont(f);
@@ -41,25 +42,37 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         } else {
             painter.setPen(Qt::white);
         }
-        painter.drawText(50,550+(i*60),name);
-        painter.drawText(850,550+(i*60),score);
+        painter.drawText(scoreX+50,550+(i*60),name);
+        painter.drawText(scoreX+850,550+(i*60),score);
+        int scoreI = score.toInt();
+        int medal;
+        if(scoreI>=175) {
+            medal = 3;
+        } else if(scoreI>=100) {
+            medal = 2;
+        } else if(scoreI>=60) {
+            medal = 1;
+        } else if(scoreI>=30) {
+            medal = 0;
+        }
+        painter.drawPixmap(scoreX+790,490+(i*60),55,55,medals[medal]);
     }
     if(own==-1) {
         painter.setPen(Qt::red);
-        painter.drawText(50,550+10*60,name);
-        painter.drawText(850,550+10*60,QString::number(highscore));
+        painter.drawText(scoreX+50,550+10*60,name);
+        painter.drawText(scoreX+850,550+10*60,QString::number(highscore));
     }
-    painter.drawPixmap(24,1324,300,130,btnPx);
-    painter.drawPixmap(500,1324,560,130,btnPx);
+    painter.drawPixmap(scoreX+24,1324,300,130,btnPx);
+    painter.drawPixmap(scoreX+500,1324,560,130,btnPx);
     painter.setPen(QColor(0,143,255));
     Text t = transl->getBtn_Scoreboard_Back();
     f.setPixelSize(t.size);
     painter.setFont(f);
-    painter.drawText(t.pos,t.text);
+    painter.drawText(QPoint(scoreX+t.pos.x(),t.pos.y()),t.text);
     t = transl->getBtn_Scoreboard_Change();
     f.setPixelSize(t.size);
     painter.setFont(f);
-    painter.drawText(t.pos,t.text);
+    painter.drawText(QPoint(scoreX+t.pos.x(),t.pos.y()),t.text);
 }
 
 void Scoreboard::setScore(int score)
@@ -119,9 +132,11 @@ void Scoreboard::getScores()
 
 void Scoreboard::mpress(QPoint pos)
 {
+    if(scoreX!=0) return;
     if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(24,1324,300,130))) {
-        this->active = false;
-    } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(500,1324,560,130))) {
+        emit back();
+    }
+    if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(500,1324,560,130))) {
         socket->connectToHost("37.120.177.121",38900);
         socket->waitForConnected(1000);
         if(socket->state()==QTcpSocket::ConnectedState) {
@@ -136,7 +151,7 @@ void Scoreboard::mpress(QPoint pos)
         wasConnected = false;
         this->name = "";
         this->first = "0";
-        this->active = false;
         emit write();
+        this->active = false;
     }
 }

@@ -32,14 +32,17 @@ public:
     void mpress(QPoint pos);
     bool active;
     bool wasConnected;
+    int scoreX;
     QString first;
     QString name;
     QTcpSocket *socket;
+    QVector <QPixmap> medals;
 
 signals:
     void wrongName();
     void connFail();
     void write();
+    void back();
 public slots:
 };
 

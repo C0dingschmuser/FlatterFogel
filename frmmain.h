@@ -44,7 +44,7 @@ private slots:
     void on_tEvent();
     void on_shopBack();
     void on_shopMsg(QString msg);
-    void on_shopBuy(int amount);
+    void on_shopBuy(int amount, bool buy=true, bool coin=false);
     void on_trevive();
     void on_tboxDeathAn();
     void on_tboost();
@@ -56,12 +56,20 @@ private slots:
     void on_sbWrongName();
     void on_sbConnFail();
     void on_write();
+    void on_tresume();
+    void on_scoreBack();
+    void on_scoreWrite();
+    void on_tAnimation();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
 
 private:
     Ui::FrmMain *ui;
+    int mainX;
+    int endX;
+    bool anDir;
+    int moveAn;
     QTimer *t_draw;
     QTimer *t_main;
     QTimer *t_obst;
@@ -74,6 +82,8 @@ private:
     QTimer *t_flag;
     QTimer *t_star;
     QTimer *t_boxDeathAn;
+    QTimer *t_resume;
+    QTimer *t_animation;
     QFont font;
     double scaleX;
     double scaleY;
@@ -87,6 +97,8 @@ private:
     QVector <PxAn*> pxans;
     QVector <Window*> windows;
     QVector <Star*> stars;
+    QVector <QPixmap> skins;
+    int currentskin;
     int random(int min, int max);
     QPixmap end;
     QPixmap blus;
@@ -100,6 +112,7 @@ private:
     QPixmap medal_bronze;
     QPixmap medal_silver;
     QPixmap medal_gold;
+    QPixmap medal_platin;
     QPixmap flag_de;
     QPixmap flag_en;
     QPixmap stats;
@@ -108,9 +121,13 @@ private:
     QPixmap boxPx;
     QPixmap box2Px;
     QPixmap box3Px;
+    QPixmap pause0;
+    QPixmap pause1;
+    QPixmap coinPx;
     QVector <QPixmap> boxPxAn;
     QVector <QPixmap> explosion;
     QString enemy;
+    QString version;
     QRectF enemyRect;
     bool fastboost;
     Translation *transl;
@@ -129,12 +146,16 @@ private:
     int boxDeath;
     int obsNum;
     int boxState;
+    int resumeTime;
+    int event;
     double flashOpacity;
     double g1x;
     double g2x;
     double boost;
     int revive;
     bool flag;
+    bool pause;
+    bool changelog;
     QFile file;
     void loadData();
     void write();

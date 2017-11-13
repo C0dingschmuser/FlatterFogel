@@ -8,7 +8,6 @@ int main(int argc, char *argv[])
     f.setSwapInterval(0);
     QSurfaceFormat::setDefaultFormat(f);*/
     FrmMain w;
-    w.show();
     w.showFullScreen();
     #ifdef QT_DEBUG
         w.showNormal();

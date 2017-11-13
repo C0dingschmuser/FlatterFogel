@@ -47,12 +47,12 @@ Text Translation::getBtn_Shop_Back()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Zurück";
-            t.pos = QPoint(195,1415);
+            t.pos = QPoint(195,1545);
             t.size = 40;
         break;
         default:
             t.text = "Back";
-            t.pos = QPoint(220,1415);
+            t.pos = QPoint(220,1545);
             t.size = 50;
         break;
     }
@@ -71,6 +71,24 @@ Text Translation::getBtn_Shop_Buy()
         default:
             t.text = "Buy";
             t.pos = QPoint(680,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getBtn_Shop_Sell()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Verkaufen";
+            t.pos = QPoint(630,1540);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Sell";
+            t.pos = QPoint(665,1545);
             t.size = 50;
         break;
     }
@@ -103,7 +121,7 @@ Text Translation::getText_Shop_MP1()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Erhöht den Benismultiplikator (Hindernisse & Gegner)";
+            t.text = "Erhöht den Benismultiplikator bei Hindernissen & Gegnern";
             t.pos = QPoint(0,1688);
             t.size = 21;
         break;
@@ -139,12 +157,14 @@ Text Translation::getText_Shop_Item2()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Kann für einen Schnellstart benutzt werden";
+            t.text = "Kann nur vor Spielbeginn aktiviert werden.\n"
+                     "Boostet den Spieler bis zu einer Score von 20.";
             t.pos = QPoint(25,1688);
             t.size = 25;
         break;
         default:
-            t.text = "Can be used for a Quick start";
+        t.text = "Can only used before the game starts.\n"
+                 "Boosts the Player to a Score of 20.";
             t.pos = QPoint(30,1696);
             t.size = 35;
         break;
@@ -157,12 +177,13 @@ Text Translation::getText_Shop_Item3()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Wenn aktiviert hast du ein extra Leben";
+            t.text = "Wenn aktiviert hast du ein extra Leben\n"
+                     "bis du stirbst";
             t.pos = QPoint(25,1688);
             t.size = 27;
         break;
         default:
-            t.text = "One extra Life until death";
+            t.text = "One extra Life until you die";
             t.pos = QPoint(80,1696);
             t.size = 35;
         break;
@@ -175,12 +196,14 @@ Text Translation::getText_Shop_Item4()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Kann für einen Schnellstart+ benutzt werden";
+            t.text = "Kann nur vor Spielbeginn aktiviert werden.\n"
+                     "Boostet den Spieler bis zu einer Score von 40.";
             t.pos = QPoint(7,1688);
             t.size = 25;
         break;
         default:
-            t.text = "Can be used for a Quick start+";
+            t.text = "Can only used before the game starts.\n"
+                     "Boosts the Player to a Score of 40.";
             t.pos = QPoint(20,1696);
             t.size = 35;
         break;
@@ -188,17 +211,17 @@ Text Translation::getText_Shop_Item4()
     return t;
 }
 
-Text Translation::getText_Shop_NotEnough()
+Text Translation::getText_Shop_NotEnough(QString obj)
 {
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Du hast nicht genug Benis!";
+            t.text = "Du hast nicht genug "+obj+"!";
             t.pos = QPoint(25,1692);
             t.size = 25;
         break;
         default:
-            t.text = "You don't have enough Benis!";
+            t.text = "You don't have enough "+obj+"!";
             t.pos = QPoint(30,1696);
             t.size = 35;
         break;
@@ -211,7 +234,7 @@ Text Translation::getText_Shop_NotSelected()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Wähle zuerst etwas zum kaufen aus!";
+            t.text = "Wähle zuerst etwas aus!";
             t.pos = QPoint(25,1692);
             t.size = 25;
         break;
@@ -381,6 +404,118 @@ Text Translation::getBtn_Scoreboard_Change()
             t.text = "Reset Name";
             t.pos = QPoint(530,1415);
             t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_PauseError()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Keine Zeitpowerups dürfen aktiv sein!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Timepowerups must not be activated!";
+            t.pos = QPoint(530,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Changelog()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Neue Features:\n"
+                     "- Coins & Skins:\n"
+                     "  - Skins können nur mit Coins gekauft\n"
+                     "    werden\n"
+                     "  - Coins findest du in Kisten und\n"
+                     "    jedes mal wenn du die 100 knackst\n"
+                     "- Animationen\n"
+                     "- Medaille im Hauptmenü & im Scoreboard\n"
+                     "- 'Info'-Button im Shop\n"
+                     "- InApp Changelog\n"
+                     "- Powerups können verkauft werden\n"
+                     "- 'Pause'-Button\n"
+                     "- Preis vom 30s-Revivepowerup angepasst\n"
+                     "- Multitasking-Support\n"
+                     "Nicht vergessen: Ganze Kisten auf der \nU-Bahn können eingesammelt werden!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "New Features:\n"
+                     "- Coins & Skins:\n"
+                     "  - Skins can only be purchased\n"
+                     "    with Coins\n"
+                     "  - You find the Coins required\n"
+                     "    for a Purchase in Crates and\n"
+                     "    you get a Coin everytime your\n"
+                     "    Score is greater than 100\n"
+                     "- Animations\n"
+                     "- Medal on Home Menu & Scoreboard\n"
+                     "- 'Info'-Button in Shop\n"
+                     "- InApp changelog\n"
+                     "- Powerups can now be sold\n"
+                     "- 'Pause'-Button\n"
+                     "- Changed Price of 30s-Revivepowerup\n"
+                     "- Multitasking-Support\n"
+                     "Don't forget that the crates on the \nSubway can be collected!";
+            t.pos = QPoint(530,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_NoSell()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Du kannst Skins nicht verkaufen!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "You can't sell Skins!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Skin()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe einen Skin an um ihn auszuwählen\n"
+                     "nachdem du ihn gekauft hast. Die für\n"
+                     "den Kauf benötigten Coins findest du\n"
+                     "in Kisten. Zusätzlich bekommst du\n"
+                     "jedes mal wenn du die 100 knackst\n"
+                     "einen Coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Tap on a Skin to equip it after you\n"
+                     "have purchased the Skin. You can\n"
+                     "find the Coins required for a\n"
+                     "Purchase in Crates. In addition\n"
+                     "everytime you get a score greater\n"
+                     "than 100 you get a coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
         break;
     }
     return t;

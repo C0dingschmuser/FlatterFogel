@@ -10,12 +10,13 @@ private:
     QRectF rect;
     double velD;
     int benis;
+public:
+    Player(QRectF rect);
     QPixmap g0;
     QPixmap g1;
     QPixmap g2;
-public:
-    Player(QRectF rect);
     int an;
+    int coins;
     bool dir;
     double tilt;
     bool tdir;

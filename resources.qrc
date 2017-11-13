@@ -8,6 +8,10 @@
 		<file>images/maas.png</file>
 		<file>images/train.png</file>
 		<file>images/train2.png</file>
+		<file>images/pause0.png</file>
+		<file>images/pause1.png</file>
+		<file>images/btnInfo.png</file>
+		<file>images/coin.png</file>
 		<file>images/box/box.png</file>
 		<file>images/box/box2.png</file>
 		<file>images/box/box3.png</file>
@@ -61,7 +65,6 @@
 		<file>images/items/item3.png</file>
 		<file>images/items/item4.png</file>
 		<file>images/shopM.png</file>
-		<file>images/sel.png</file>
 		<file>images/pipe1.png</file>
 		<file>images/ground.png</file>
 		<file>images/bg.png</file>
@@ -69,11 +72,22 @@
 		<file>images/player/gondola0.png</file>
 		<file>images/player/gondola1.png</file>
 		<file>images/player/gondola2.png</file>
+		<file>images/player/skins/0.png</file>
+		<file>images/player/skins/1.png</file>
+		<file>images/player/skins/2.png</file>
+		<file>images/player/skins/3.png</file>
+		<file>images/player/skins/4.png</file>
+		<file>images/player/skins/5.png</file>
+		<file>images/player/skins/6.png</file>
+		<file>images/player/skins/7.png</file>
+		<file>images/player/skins/8.png</file>
+		<file>images/player/skins/9.png</file>
 		<file>font/PressStart2P.ttf</file>
 		<file>font/LICENSE.txt</file>
 		<file>images/medals/bronze.png</file>
 		<file>images/medals/silber.png</file>
 		<file>images/medals/gold.png</file>
+		<file>images/medals/platin.png</file>
 		<file>images/flag/de.png</file>
 		<file>images/flag/en.png</file>
     </qresource>
