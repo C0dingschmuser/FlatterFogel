@@ -6,9 +6,7 @@ Player::Player(QRectF rect)
     velD = 0;
     benis = 10000;
     coins = 0;
-    g0 = QPixmap(":/images/player/gondola0.png");
-    g1 = QPixmap(":/images/player/gondola1.png");
-    g2 = QPixmap(":/images/player/gondola2.png");
+    reload(1);
     an = 0;
     dir = 0; //unten
     tilt = 45;
@@ -44,6 +42,13 @@ void Player::setVelD(double velD)
 void Player::setBenis(int benis)
 {
     this->benis = benis;
+}
+
+void Player::reload(int id)
+{
+    g0 = QPixmap(":/images/player/an"+QString::number(id)+"_1.png");
+    g1 = QPixmap(":/images/player/an"+QString::number(id)+"_2.png");
+    g2 = QPixmap(":/images/player/an"+QString::number(id)+"_3.png");
 }
 
 int Player::getBenis()

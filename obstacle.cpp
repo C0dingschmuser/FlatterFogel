@@ -7,6 +7,7 @@ Obstacle::Obstacle()
 
 Obstacle::Obstacle(QRect top, QRect bottom, QPixmap px, int type, bool box, int boxType)
 {
+    dir = 0;
     this->type = type;
     this->top = QRectF(top);
     this->bottom = QRectF(bottom);
@@ -34,6 +35,29 @@ QRectF Obstacle::getBottom()
 
 void Obstacle::moveBy(double x, double y)
 {
+    double speed = 0.5;
+    switch(dir) {
+        case 1: //runter
+            if(bottom.y()<1560) {
+                top.moveTo(top.x(),top.y());
+                top.adjust(0,0,0,speed);
+                bottom.moveTo(bottom.x(),bottom.y()+speed);
+                bottom.adjust(0,0,0,-speed);
+            } else {
+                dir = 2;
+            }
+            break;
+        case 2: //hoch
+            if(top.y()+top.height()>300) {
+                top.moveTo(top.x(),top.y());
+                top.adjust(0,0,0,-speed);
+                bottom.moveTo(bottom.x(),bottom.y()-speed);
+                bottom.adjust(0,0,0,+speed);
+            } else {
+                dir = 1;
+            }
+            break;
+    }
     top.moveTo(top.x()+x,top.y()+y);
     bottom.moveTo(bottom.x()+x,bottom.y()+y);
     train.moveTo(train.x()+x,train.y()+y);

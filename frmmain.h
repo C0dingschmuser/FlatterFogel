@@ -20,6 +20,9 @@
 #include <QInputMethod>
 #include <QFontDatabase>
 #include <QFont>
+#include <bitset>
+#include <QPushButton>
+#include <QMessageBox>
 #include "translation.h"
 #include "blus.h"
 #include "player.h"
@@ -29,6 +32,7 @@
 #include "pxan.h"
 #include "star.h"
 #include "scoreboard.h"
+#include "background.h"
 
 namespace Ui {
 class FrmMain;
@@ -69,6 +73,7 @@ private:
     int mainX;
     int endX;
     bool anDir;
+    int movingObstacles;
     int moveAn;
     QTimer *t_draw;
     QTimer *t_main;
@@ -98,6 +103,7 @@ private:
     QVector <Window*> windows;
     QVector <Star*> stars;
     QVector <QPixmap> skins;
+    QVector <Background*> backgrounds;
     int currentskin;
     int random(int min, int max);
     QPixmap end;
@@ -113,6 +119,7 @@ private:
     QPixmap medal_silver;
     QPixmap medal_gold;
     QPixmap medal_platin;
+    QPixmap medal_diamond;
     QPixmap flag_de;
     QPixmap flag_en;
     QPixmap stats;
@@ -124,10 +131,14 @@ private:
     QPixmap pause0;
     QPixmap pause1;
     QPixmap coinPx;
+    QPixmap cloudPx;
+    QPixmap referralPx1;
+    QPixmap referralPx2;
     QVector <QPixmap> boxPxAn;
     QVector <QPixmap> explosion;
     QString enemy;
     QString version;
+    QString refkey;
     QRectF enemyRect;
     bool fastboost;
     Translation *transl;
@@ -148,6 +159,11 @@ private:
     int boxState;
     int resumeTime;
     int event;
+    int referrals;
+    bool invited;
+    bool refActive;
+    double cloud1X;
+    double cloud2X;
     double flashOpacity;
     double g1x;
     double g2x;
@@ -162,6 +178,10 @@ private:
     void reset(int type=0);
     void moveGround(double speed);
     void createWindows();
+    QString genKey();
+    QString lucaAlg(QString text);
+    bool checkKey(QString key);
+    bool checkConfirm(QString key);
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);

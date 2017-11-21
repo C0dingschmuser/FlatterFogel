@@ -46,7 +46,9 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         painter.drawText(scoreX+850,550+(i*60),score);
         int scoreI = score.toInt();
         int medal;
-        if(scoreI>=175) {
+        if(scoreI>=300) {
+            medal = 4;
+        } else if(scoreI>=175) {
             medal = 3;
         } else if(scoreI>=100) {
             medal = 2;
@@ -62,6 +64,10 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         painter.drawText(scoreX+50,550+10*60,name);
         painter.drawText(scoreX+850,550+10*60,QString::number(highscore));
     }
+    painter.setPen(Qt::magenta);
+    f.setPixelSize(36);
+    painter.setFont(f);
+    painter.drawText(scoreX+50,550+12*60,"Server ist instabil. WIP.");
     painter.drawPixmap(scoreX+24,1324,300,130,btnPx);
     painter.drawPixmap(scoreX+500,1324,560,130,btnPx);
     painter.setPen(QColor(0,143,255));
@@ -98,8 +104,31 @@ void Scoreboard::setScore(int score)
         emit write();
         wasConnected = true;
     } else {
-        wasConnected = false;
-        emit connFail();
+        socket->close();
+        socket->connectToHost("flatterfogel.ddns.net",38900);
+        socket->waitForConnected(1000);
+        if(socket->state()!=QTcpSocket::ConnectedState) {
+            wasConnected = false;
+            emit connFail();
+        } else {
+            QString data = ".0#"+name+"#"+QString::number(score)+"#"+first+"#~";
+            socket->write(data.toUtf8());
+            socket->waitForBytesWritten(2000);
+            socket->waitForReadyRead(2000);
+            QString input = socket->readAll();
+            if(input.size()) {
+                if(input.at(0)=="0") {
+                    active = false;
+                    wasConnected = false;
+                    socket->close();
+                    this->name=="";
+                    emit wrongName();
+                    return;
+                }
+            }
+            emit write();
+            wasConnected = true;
+        }
     }
     socket->close();
 }
@@ -125,7 +154,25 @@ void Scoreboard::getScores()
             }
         }
     } else {
-
+        socket->close();
+        socket->connectToHost("flatterfogel.ddns.net",38900);
+        socket->waitForConnected(1000);
+        if(socket->state()==QTcpSocket::ConnectedState) {
+            QString data = ".1#"+name+"#~";
+            socket->write(data.toUtf8());
+            socket->waitForBytesWritten(1000);
+            socket->waitForReadyRead(1000);
+            QString input = socket->readAll();
+            if(input.size()) {
+                players.resize(0);
+                input.replace("~","");
+                QStringList split = input.split("#");
+                for(int i=0;i<split.size()-1;i+=2) {
+                    QString n = maas(split[i]);
+                    players.append(n+"#"+split[i+1]);
+                }
+            }
+        }
     }
     socket->close();
 }
@@ -144,8 +191,17 @@ void Scoreboard::mpress(QPoint pos)
             socket->write(data.toUtf8());
             socket->waitForBytesWritten(2000);
         } else {
-            emit connFail();
-            return;
+            socket->close();
+            socket->connectToHost("flatterfogel.ddns.net",38900);
+            socket->waitForConnected(1000);
+            if(socket->state()!=QTcpSocket::ConnectedState) {
+                emit connFail();
+                return;
+            } else {
+                QString data = ".2#"+name+"#~";
+                socket->write(data.toUtf8());
+                socket->waitForBytesWritten(2000);
+            }
         }
         socket->close();
         wasConnected = false;

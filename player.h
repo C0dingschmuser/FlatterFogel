@@ -25,6 +25,7 @@ public:
     void setPos(int x, int y);
     void setVelD(double velD);
     void setBenis(int benis);
+    void reload(int id);
     int getBenis();
     double getVelD();
     QRectF getRect();

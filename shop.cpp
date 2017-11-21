@@ -6,9 +6,25 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(x,y,w,h,skins[num]);
     if(selected!=num+1) {
-        painter.drawPixmap(x,y,w,h,g2);
+        bool ok=false;
+        if(skinPrice[num]>1) {
+            player->reload(num);
+            ok=true;
+        }
+        painter.drawPixmap(x,y,w,h,player->g2);
+        if(ok) {
+            player->reload(1);
+        }
     } else {
+        bool ok=false;
+        if(skinPrice[num]>1) {
+            player->reload(num);
+            ok=true;
+        }
         painter.drawPixmap(x,y,w,h,player->getPx());
+        if(ok) {
+            player->reload(1);
+        }
     }
     painter.setPen(Qt::white);
     painter.setOpacity(1);
@@ -18,10 +34,27 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
     }
 }
 
-Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QObject *parent) : QObject(parent)
+void Shop::drawBg(int x, int y, int w, int h, int num, QPainter &painter)
+{
+    if(selected!=num+1) painter.setOpacity(0.4);
+    painter.setPen(Qt::NoPen);
+    painter.drawPixmap(x,y,w,h,backgrounds[num]->background);
+    if(backgrounds[num]->cloud) {
+        painter.drawPixmap(x,y+175,w,64,cloudPx);
+    }
+    painter.setPen(Qt::white);
+    painter.setOpacity(1);
+    if(!ownedbackgrounds.contains(num)) {
+        painter.drawText(x+45,y+425,QString::number(bgPrice[num]));
+        painter.drawPixmap(x,y+380,42,42,coinPx);
+    }
+}
+
+Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPixmap cloudPx, QObject *parent) : QObject(parent)
 {
     shopX = -1080;
     ownedSkins.insert(0,0);
+    ownedbackgrounds.insert(0,0);
     this->transl = transl;
     active = false;
     this->player = player;
@@ -32,8 +65,15 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QObj
     this->item3 = QPixmap(":/images/items/item3.png");
     this->item4 = QPixmap(":/images/items/item4.png");
     background = QPixmap(":/images/shopM.png");
-    btn = QPixmap(":/images/button.png");
-    btnInfoPx = QPixmap(":/images/btnInfo.png");
+    btn = QPixmap(":/images/buttons/button.png");
+    btnShop = QPixmap(":/images/buttons/buttonShop.png");
+    btnInfoPx = QPixmap(":/images/buttons/btnInfo.png");
+    btnSkinsPx = QPixmap(":/images/buttons/btnSkins.png");
+    btnPowPx = QPixmap(":/images/buttons/btnPow.png");
+    btnBGPx = QPixmap(":/images/buttons/btnBG.png");
+    btnChangePx = QPixmap(":/images/buttons/btnChange.png");
+    itemBcPx = QPixmap(":/images/items/item_bc.png");
+    this->cloudPx = cloudPx;
     selected = 0;
     item1Count = 2;
     item2Count = 2;
@@ -53,7 +93,14 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QObj
     skinPrice.append(1);
     skinPrice.append(1);
     skinPrice.append(1);
+    skinPrice.append(1);
+    skinPrice.append(1);
+    skinPrice.append(2);
+    bgPrice.append(0);
+    bgPrice.append(1);
+    bgPrice.append(1);
     chosenSkin = 1;
+    chosenBackground = 1;
     multiplier = 10;
     page = 0;
     tapMultiplier = 1;
@@ -111,14 +158,27 @@ void Shop::draw(QPainter &painter)
     }
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255,153,0));
-    painter.drawRect(shopX+190,1454,720,120);
-    painter.drawRect(shopX+609,1350,300,230);
-    painter.drawRect(shopX+169,1350,300,140);
+    painter.drawRect(shopX+609,1350,300,102);
+    painter.drawRect(shopX+169,1500,300,80);
+    painter.drawRect(shopX+880,1315,30,20);
     painter.drawPixmap(shopX+609,1324,300,130,btn); //buy
-    painter.drawPixmap(shopX+609,1454,300,130,btn); //sell
+    if(page!=0&&page!=-1) painter.setOpacity(0.4);
+    painter.drawPixmap(shopX+609,1452,300,130,btnShop); //sell
+    painter.setOpacity(1);
     painter.drawPixmap(shopX+169,1454,300,130,btn); //back
-    painter.drawPixmap(shopX+469,1454,140,130,btnInfoPx); //info
-    painter.drawPixmap(shopX+169,1324,300,130,btn); //skins
+    if(page!=-1) painter.setOpacity(0.4);
+    painter.drawPixmap(shopX+769,674,140,130,btnChangePx); //change
+    painter.setOpacity(1);
+    if(page!=0) painter.setOpacity(0.4);
+    painter.drawPixmap(shopX+769,804,140,130,btnPowPx); //powerups
+    painter.setOpacity(1);
+    if(page!=1) painter.setOpacity(0.4);
+    painter.drawPixmap(shopX+769,934,140,130,btnSkinsPx); //skins
+    painter.setOpacity(1);
+    if(page!=2) painter.setOpacity(0.4);
+    painter.drawPixmap(shopX+769,1064,140,130,btnBGPx); //bg
+    painter.setOpacity(1);
+    painter.drawPixmap(shopX+769,1194,140,130,btnInfoPx); //info
     Text back = transl->getBtn_Shop_Back();
     Text buy = transl->getBtn_Shop_Buy();
     Text sell = transl->getBtn_Shop_Sell();
@@ -133,7 +193,18 @@ void Shop::draw(QPainter &painter)
     f.setPixelSize(back.size);
     painter.setFont(f);
     painter.drawText(QPoint(shopX+back.pos.x(),back.pos.y()),back.text);
-    if(!page) {
+    switch(page) {
+    case -1:
+        painter.drawPixmap(shopX+200,500,400,400,itemBcPx);
+        f.setPixelSize(72);
+        painter.setFont(f);
+        painter.setPen(Qt::white);
+        painter.drawText(shopX+200,910,"200k B");
+        /*f.setPixelSize(32);
+        painter.setFont(f);
+        painter.drawText(100,1200,"Coin "+transl->getText_Shop_BC().text+" Benis: 100k");*/
+        break;
+    case 0:
         f.setPixelSize(72);
         painter.setFont(f);
         painter.setPen(Qt::NoPen);
@@ -153,11 +224,8 @@ void Shop::draw(QPainter &painter)
         painter.drawText(shopX+210,1320,"B "+QString::number(item2Price)+"("+QString::number(item2Count)+"x)");
         painter.drawText(shopX+470,1020,"B "+QString::number(item3Price)+"("+QString::number(item3Count)+"x)");
         painter.drawText(shopX+470,1320,"B "+QString::number(item4Price)+"("+QString::number(item4Count)+"x)");
-        painter.setPen(QColor(0,143,255));
-        f.setPixelSize(42);
-        painter.setFont(f);
-        painter.drawText(shopX+220,1415,"Skins");
-    } else {
+        break;
+    case 1:
         painter.setPen(Qt::NoPen);
         drawSkin(shopX+200,500,100,100,0,painter);
         drawSkin(shopX+350,500,100,100,1,painter);
@@ -169,10 +237,15 @@ void Shop::draw(QPainter &painter)
         drawSkin(shopX+650,650,100,100,7,painter);
         drawSkin(shopX+200,800,100,100,8,painter);
         drawSkin(shopX+350,800,100,100,9,painter);
-        painter.setPen(QColor(0,143,255));
-        f.setPixelSize(35);
-        painter.setFont(f);
-        painter.drawText(shopX+182,1407,"Powerups");
+        drawSkin(shopX+500,800,100,100,10,painter);
+        drawSkin(shopX+650,800,100,100,11,painter);
+        drawSkin(shopX+200,950,100,100,12,painter);
+        break;
+    case 2:
+        drawBg(shopX+200,500,248,381,0,painter);
+        drawBg(shopX+481,500,248,381,1,painter);
+        drawBg(shopX+200,931,248,381,2,painter);
+        break;
     }
 }
 
@@ -180,8 +253,15 @@ void Shop::setActive(bool active)
 {
     if(!active) selected = 0;
     this->active = active;
-    if(active&&page) {
-        selected = chosenSkin;
+    if(active) {
+        switch(page) {
+        case 1:
+            selected = chosenSkin;
+            break;
+        case 2:
+            selected = chosenBackground;
+            break;
+        }
     }
 }
 
@@ -195,13 +275,6 @@ void Shop::mousePress(QPoint pos)
     QRect r(pos.x(),pos.y(),1,1);
     if(shopX!=0) return;
     if(r.intersects(QRect(169,1454,300,130))) {
-        if(page) {
-            if(ownedSkins.contains(selected-1)) {
-                chosenSkin = selected;
-            } else {
-                chosenSkin = 1;
-            }
-        }
         emit back();
     }
     if(!page) {
@@ -223,30 +296,56 @@ void Shop::mousePress(QPoint pos)
             selected = 8;
         }
     } else {
-        if(r.intersects(QRect(200,500,100,100))) {
-            selected = 1;
-        } else if(r.intersects(QRect(350,500,100,100))) {
-            selected = 2;
-        } else if(r.intersects(QRect(500,500,100,100))) {
-            selected = 3;
-        } else if(r.intersects(QRect(650,500,100,100))) {
-            selected = 4;
-        } else if(r.intersects(QRect(200,650,100,100))) {
-            selected = 5;
-        } else if(r.intersects(QRect(350,650,100,100))) {
-            selected = 6;
-        } else if(r.intersects(QRect(500,650,100,100))) {
-            selected = 7;
-        } else if(r.intersects(QRect(650,650,100,100))) {
-            selected = 8;
-        } else if(r.intersects(QRect(200,800,100,100))) {
-            selected = 9;
-        } else if(r.intersects(QRect(350,800,100,100))) {
-            selected = 10;
+        switch(page) {
+            case 1: //
+                if(r.intersects(QRect(200,500,100,100))) {
+                    selected = 1;
+                } else if(r.intersects(QRect(350,500,100,100))) {
+                    selected = 2;
+                } else if(r.intersects(QRect(500,500,100,100))) {
+                    selected = 3;
+                } else if(r.intersects(QRect(650,500,100,100))) {
+                    selected = 4;
+                } else if(r.intersects(QRect(200,650,100,100))) {
+                    selected = 5;
+                } else if(r.intersects(QRect(350,650,100,100))) {
+                    selected = 6;
+                } else if(r.intersects(QRect(500,650,100,100))) {
+                    selected = 7;
+                } else if(r.intersects(QRect(650,650,100,100))) {
+                    selected = 8;
+                } else if(r.intersects(QRect(200,800,100,100))) {
+                    selected = 9;
+                } else if(r.intersects(QRect(350,800,100,100))) {
+                    selected = 10;
+                } else if(r.intersects(QRect(500,800,100,100))) {
+                    selected = 11;
+                } else if(r.intersects(QRect(650,800,100,100))) {
+                    selected = 12;
+                } else if(r.intersects(QRect(200,950,100,100))) {
+                    selected = 13;
+                }
+                if(skinPrice[selected-1]>1) player->reload(selected-1);
+                if(ownedSkins.contains(selected-1)) {
+                    chosenSkin = selected;
+                }
+            break;
+            case 2:
+                if(r.intersects(QRect(200,500,248,381))) {
+                    selected = 1;
+                } else if(r.intersects(QRect(481,500,248,381))) {
+                    selected = 2;
+                } else if(r.intersects(QRect(200,931,248,381))) {
+                    selected = 3;
+                }
+                if(ownedbackgrounds.contains(selected-1)) {
+                    chosenBackground = selected;
+                }
+            break;
         }
     }
     if(r.intersects(QRect(609,1304,300,150))) { //buy
-        if(!selected) {
+        if(!selected&&page!=-1) {
             emit msg(transl->getText_Shop_NotSelected().text);
             return;
         }
@@ -313,24 +412,66 @@ void Shop::mousePress(QPoint pos)
             }
         } else {
             int coins = player->coins;
-            int price = skinPrice[selected-1];
-            if(coins<price) {
-                emit msg(transl->getText_Shop_NotEnough("Coins").text);
-            } else {
-                coins-=price;
-                ownedSkins.append(selected-1);
-                player->coins = coins;
-                emit buy(1,true,true);
+            switch(page) {
+            case -1:
+                {
+                    int b = player->getBenis();
+                    if(b<200000) {
+                        emit msg(transl->getText_Shop_NotEnough().text);
+                    } else {
+                        b-=200000;
+                        player->coins++;
+                        player->setBenis(b);
+                        emit buy(200000);
+                    }
+                    break;
+                }
+            case 1:
+                {
+                    int price = skinPrice[selected-1];
+                    if(coins<price) {
+                        emit msg(transl->getText_Shop_NotEnough("Coins").text);
+                    } else if(!ownedSkins.contains(selected-1)) {
+                        coins-=price;
+                        ownedSkins.append(selected-1);
+                        player->coins = coins;
+                        emit buy(1,true,true);
+                    }
+                    break;
+                }
+            case 2:
+                {
+                    int price = bgPrice[selected-1];
+                    if(coins<price) {
+                        emit msg(transl->getText_Shop_NotEnough("Coins").text);
+                    } else if(!ownedbackgrounds.contains(selected-1)){
+                        coins-=price;
+                        ownedbackgrounds.append(selected-1);
+                        player->coins = coins;
+                        emit buy(1,true,true);
+                    }
+                    break;
+                }
             }
         }
     } else if(r.intersects(QRect(609,1454,300,130))) { //sell
-        if(page) {
-            emit msg(transl->getText_Shop_NoSell().text);
+        if(page&&page!=-1) {
             return;
         }
-        if(!selected) {
+        if(!selected&&page!=-1) {
             emit msg(transl->getText_Shop_NotSelected().text);
             return;
+        }
+        if(!selected&&page==-1) {
+            int c = player->coins;
+            if(!c) {
+                emit msg(transl->getText_Shop_NotEnough("Coins").text);
+            } else {
+                c--;
+                player->setBenis(player->getBenis()+100000);
+                player->coins = c;
+                emit buy(1,true,true);
+            }
         }
         switch(selected) {
             case 4: //revive
@@ -370,7 +511,7 @@ void Shop::mousePress(QPoint pos)
                 }
             break;
         }
-    } else if(r.intersects(QRect(469,1454,140,130))) {
+    } else if(r.intersects(QRect(769,1200,140,130))) { //info
         Text t;
         if(!page) {
             switch(selected) {
@@ -394,17 +535,37 @@ void Shop::mousePress(QPoint pos)
                 break;
             }
         } else {
-            emit msg(transl->getText_Shop_Skin().text);
+            switch(page) {
+            case 1:
+                emit msg(transl->getText_Shop_Skin().text);
+                break;
+            case 2:
+                emit msg(transl->getText_Shop_Background().text);
+                break;
+            }
         }
-    } else if(r.intersects(QRect(169,1324,300,130))) {
-        if(page) {
+    } else if(r.intersects(QRect(769,950,140,130))) { //btnSkins
+        if(page!=1) {
+            selected = chosenSkin;
+        }
+        page = 1;
+        /*if(page) {
             chosenSkin = selected;
             selected = 0;
             page = 0;
         } else {
             selected = chosenSkin;
             page = 1;
+        }*/
+    } else if(r.intersects(QRect(769,825,140,130))) { //btnPow
+        page = 0;
+    } else if(r.intersects(QRect(769,1064,140,130))) { //btnbg
+        if(page!=2) {
+            selected = chosenBackground;
         }
+        page = 2;
+    } else if(r.intersects(QRect(769,674,140,130))) { //btnPow
+        page = -1;
     }
 }
 
@@ -413,6 +574,15 @@ QString Shop::skinsToString()
     QString s;
     for(int i=1;i<ownedSkins.size();i++) {
         s.append(QString::number(ownedSkins[i])+"~");
+    }
+    return s;
+}
+
+QString Shop::bgsToString()
+{
+    QString s;
+    for(int i=1;i<ownedbackgrounds.size();i++) {
+        s.append(QString::number(ownedbackgrounds[i])+"~");
     }
     return s;
 }

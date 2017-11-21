@@ -36,6 +36,14 @@ public:
     Text getText_Changelog();
     Text getText_Shop_NoSell();
     Text getText_Shop_Skin();
+    Text getText_Shop_Background();
+    Text getText_Shop_BC();
+    Text getText_Referral_Get(QString key, QString leftKeys);
+    Text getText_Referral_WrongKey();
+    Text getText_Referral_Confirmed();
+    Text getText_Referral_Confirmed2();
+    Text getText_Referral_btnConfirm();
+    Text getText_Referral_btnInvite();
 };
 
 #endif // LOCALE_H

@@ -35,7 +35,8 @@ SOURCES += \
     star.cpp \
     text.cpp \
     translation.cpp \
-    scoreboard.cpp
+    scoreboard.cpp \
+    background.cpp
 
 HEADERS += \
         frmmain.h \
@@ -48,7 +49,8 @@ HEADERS += \
     star.h \
     text.h \
     translation.h \
-    scoreboard.h
+    scoreboard.h \
+    background.h
 
 FORMS += \
         frmmain.ui

@@ -2,6 +2,7 @@
 #define OBSTACLE_H
 #include <QRectF>
 #include <QPixmap>
+#include <QDebug>
 
 class Obstacle
 {
@@ -14,6 +15,7 @@ public:
     QPixmap px;
     bool approved;
     bool hasBox;
+    int dir;
     int type;
     int boxType;
     double opacity;

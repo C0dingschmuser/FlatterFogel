@@ -8,10 +8,13 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui->setupUi(this);
     mainX = 0;
     endX = 1080;
+    cloud1X = 0;
+    cloud2X = 1079;
     event = 0;
     anDir = false;
     moveAn = false;
-    version = "1.2r1";
+    refActive = false;
+    version = "1.2.2r1";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -28,7 +31,6 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_animation = new QTimer();
     flashOpacity = 0;
     pause = false;
-    currentskin = 0;
     transl = new Translation();
     int id = QFontDatabase::addApplicationFont(":/font/PressStart2P.ttf");
     QString fam = QFontDatabase::applicationFontFamilies(id).at(0);
@@ -48,23 +50,26 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     connect(t_resume,SIGNAL(timeout()),this,SLOT(on_tresume()));
     connect(t_animation,SIGNAL(timeout()),this,SLOT(on_tAnimation()));
     //this->showMaximized();
+    referrals = 3;
+    invited = false;
     end = QPixmap(":/images/end.png");
-    btnPx = QPixmap(":/images/button.png");
+    btnPx = QPixmap(":/images/buttons/button.png");
     blus = QPixmap(":/images/blus.png");
     minus = QPixmap(":/images/minus.png");
-    schmuserkadser = QPixmap(":/images/schmuserkadser.png");
-    maas = QPixmap(":/images/maas.png");
     ground = QPixmap(":/images/ground.png");
-    bg = QPixmap(":/images/bg.png");
+    bg = QPixmap(":/images/backgrounds/bg2.png");
     medal_bronze = QPixmap(":/images/medals/bronze.png");
     medal_silver = QPixmap(":/images/medals/silber.png");
     medal_gold = QPixmap(":/images/medals/gold.png");
     medal_platin = QPixmap(":/images/medals/platin.png");
+    medal_diamond = QPixmap(":/images/medals/diamant.png");
+    cloudPx = QPixmap(":/images/cloud.png");
     QVector <QPixmap> medalsPx;
     medalsPx.append(medal_bronze);
     medalsPx.append(medal_silver);
     medalsPx.append(medal_gold);
     medalsPx.append(medal_platin);
+    medalsPx.append(medal_diamond);
     flag_de = QPixmap(":/images/flag/de.png");
     flag_en = QPixmap(":/images/flag/en.png");
     stats = QPixmap(":/images/stats.png");
@@ -73,23 +78,29 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     boxPx = QPixmap(":/images/box/box.png");
     box2Px = QPixmap(":/images/box/box2.png");
     box3Px = QPixmap(":/images/box/box3.png");
-    pause0 = QPixmap(":/images/pause0.png");
-    pause1 = QPixmap(":/images/pause1.png");
+    pause0 = QPixmap(":/images/buttons/pause0.png");
+    pause1 = QPixmap(":/images/buttons/pause1.png");
     coinPx = QPixmap(":/images/coin.png");
-    for(int i=0;i<10;i++) {
+    referralPx1 = QPixmap(":/images/referral.png");
+    referralPx2 = QPixmap(":/images/referral2.png");
+    for(int i=0;i<13;i++) {
         skins.append(QPixmap(":/images/player/skins/"+QString::number(i)+".png"));
     }
+    backgrounds.append(new Background(1,QColor(22,22,24),true,false,true));
+    backgrounds.append(new Background(2,QColor(0,143,255),false,true,true));
+    backgrounds.append(new Background(3,QColor(95,95,95),true,false,false));
     for(int i=0;i<3;i++) {
         boxPxAn.append(QPixmap(":/images/box/box_"+QString::number(i+1)+".png"));
     }
     for(int i=0;i<42;i++) {
         explosion.append(QPixmap(":/images/explosion/"+QString::number(i+1)+".png"));
     }
-    player = new Player(QRectF(1080/2-40,1920/2-40,80,80));
-    shop = new Shop(player,font,transl,coinPx);
+    player = new Player(QRectF(1080/2-250,1920/2-40,80,80));
+    shop = new Shop(player,font,transl,coinPx,cloudPx);
     shop->skins = skins;
     shop->g2 = player->g2;
     scoreboard = new Scoreboard(shop->background,btnPx,font,transl);
+    shop->backgrounds = backgrounds;
     scoreboard->medals = medalsPx;
     connect(scoreboard,SIGNAL(connFail()),this,SLOT(on_sbConnFail()));
     connect(scoreboard,SIGNAL(wrongName()),this,SLOT(on_sbWrongName()));
@@ -105,6 +116,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     obsNum = 0;
     boxState = 0;
     resumeTime = 0;
+    movingObstacles = 0;
     //window
     createWindows();
     //~Window
@@ -127,10 +139,10 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_main->start(5);
     t_draw->start(10);
     t_obst->start(100);
-    t_event->start(2000);
+    t_event->start(500);
     t_flag->start(750);
     t_star->start(125);
-    t_an->start(250);
+    t_an->start(150);
     t_animation->start(1);
     t_tchange->setSingleShot(true);
     t_animation->moveToThread(workerThread);
@@ -145,6 +157,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_boxDeathAn->moveToThread(workerThread);
     t_resume->moveToThread(workerThread);
     workerThread->start();
+    qApp->setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }");
 }
 
 FrmMain::~FrmMain()
@@ -174,6 +187,15 @@ void FrmMain::on_tmain()
             delete blusse[i];
             blusse.removeAt(i);
             //break;
+        }
+    }
+    if(backgrounds[shop->chosenBackground-1]->cloud) {
+        cloud1X-=0.15;
+        cloud2X-=0.15;
+        if(cloud1X<=-1079) {
+            cloud1X = 1079;
+        } else if(cloud2X<=-1079) {
+            cloud2X = 1079;
         }
     }
     if(active<1) return;
@@ -217,7 +239,9 @@ void FrmMain::on_tmain()
             reset(1);
             blusse.append(new Blus(270,QRect(260,850,1,1),"Revive!",88));
         }
-        if(score>=175) {
+        if(score>=300) {
+            medal = 5;
+        } else if(score>=175) {
             medal = 4;
         } else if(score>=100) {
             medal = 3;
@@ -267,15 +291,18 @@ void FrmMain::on_tmain()
         } else if(obstacles[i]->getTop().x()<=player->getRect().x()&&active==1&&!obstacles[i]->type&&!obstacles[i]->approved) {
             obstacles[i]->approved = true;
             score++;
+            if(movingObstacles) movingObstacles--;
             int ok=-1;
-            for(int a=0;a<windows.size();a++) {
-                if(windows[a]->visible) {
-                    ok = a;
-                    break;
+            if(backgrounds[shop->chosenBackground-1]->windows) {
+                for(int a=0;a<windows.size();a++) {
+                    if(windows[a]->visible) {
+                        ok = a;
+                        break;
+                    }
                 }
-            }
-            if(ok!=-1) {
-                windows[ok]->visible = false;
+                if(ok!=-1) {
+                    windows[ok]->visible = false;
+                }
             }
             if(!boost) {
                 if(score%100==0) {
@@ -305,51 +332,39 @@ void FrmMain::on_tObst()
         if(obstacles.size()) {
             x = obstacles[obstacles.size()-1]->getBottom().x()+600;
         }
-        QPixmap p(":/images/pipe1.png");
+        QPixmap p;
+        if(!movingObstacles) {
+            p = QPixmap(":/images/pipe1.png");
+        } else {
+            p = QPixmap(":/images/pipe2.png");
+        }
         QRect top(x,0,100,random(300,1300));
         QRect bottom(x,top.height()+350,100,1920-top.height()+350);
         bool bA=false;
         bool type=false;
         if(active==1&&!boost) {
             bA = true;
-            if(!random(0,6)) {
+            if(!random(0,8)) {
                 type = true;
             }
         }
-        obstacles.append(new Obstacle(top,bottom,p,0,bA,type));
+        Obstacle *o = new Obstacle(top,bottom,p,0,bA,type);
+        if(movingObstacles) o->dir = random(1,3);
+        obstacles.append(o);
     }
 }
 
 void FrmMain::on_tEvent()
 {
     if(active!=1) return;
-    if(((score%10==0)&&(score!=0)&&(!boost))||schmuser) {
-        if(!schmuser) {
-            enemytype = random(1,3);
-            switch(enemytype) {
-                case 1: //mieserkadser
-                    enemyPixmap = schmuserkadser;
-                    enemy = "Mieserkadser";
-                    enemyRect = QRectF(-300,100,300,200);
-                    maxX = 304;
-                    maxY = 202;
-                break;
-                case 2: //maas
-                    enemyPixmap = maas;
-                    enemy = "Maas";
-                    enemyRect = QRectF(-300,100,180,230);
-                    maxX = 181;
-                    maxY = 231;
-                break;
-            }
-        }
-        if(schmuser<3) schmuser++;
+    if(((score%20==0)&&(score!=0)&&(!boost))||schmuser) {
         for(int i=0;i<obstacles.size();i++) {
-            if(obstacles[i]->getTop().x()>1280) {
-                delete obstacles[i];
-                obstacles.removeAt(i);
+            if(obstacles[i]->getTop().x()>1930) {
+                obstacles[i]->px = QPixmap(":/images/pipe2.png");
+                obstacles[i]->dir = random(1,3);
             }
         }
+        movingObstacles = 5;
     }
 }
 
@@ -461,6 +476,7 @@ void FrmMain::on_tflag()
         QMessageBox::information(this,"Changelog v"+version,transl->getText_Changelog().text);
     }
     if(pause) return;
+    genKey();
     if(flag) {
         flag = false;
     } else {
@@ -558,7 +574,7 @@ void FrmMain::on_scoreWrite()
 
 void FrmMain::on_tAnimation()
 {
-    int speed = 2;
+    int speed = 4;
     if(moveAn) {
         switch (moveAn) {
             case 1: //end
@@ -596,6 +612,11 @@ void FrmMain::on_tAnimation()
                 } else {
                     moveAn = 0;
                     shop->setActive(false);
+                    if(shop->skinPrice[shop->chosenSkin-1]>1) {
+                        player->reload(shop->chosenSkin-1);
+                    } else {
+                        player->reload(1);
+                    }
                 }
             break;
             case 5: //main-score
@@ -649,7 +670,7 @@ void FrmMain::loadData()
                 shop->multiplier = 10;
                 shop->tapMultiplier = 1;
             }
-            if(list.size()>8) {
+            if(list.size()>9) {
                 shop->load(list.at(2).toInt(),list.at(5).toInt(),list.at(7).toInt(),list.at(9).toInt());
                 if(list.at(6).size()>1) {
                     transl->locale = QLocale(list.at(6));
@@ -673,7 +694,24 @@ void FrmMain::loadData()
                     }
                 }
                 if(list.size()>14) {
-                    event = list.at(14).toInt();
+                    //event = list.at(14).toInt();
+                }
+                if(list.size()>15) {
+                    QStringList bgList = QString(list.at(15)).split("~");
+                    for(int i=0;i<bgList.size()-1;i++) {
+                        shop->ownedbackgrounds.append(bgList.at(i).toInt());
+                    }
+                }
+                if(list.size()>16) {
+                    shop->chosenSkin = list.at(16).toInt();
+                }
+                if(list.size()>17) {
+                    shop->chosenBackground = list.at(17).toInt();
+                }
+                if(list.size()>19) {
+                    QStringList ref = QString(list.at(18)).split("~");
+                    referrals = ref.at(0).toInt();
+                    invited = ref.at(1).toInt();
                 }
             }
 
@@ -694,7 +732,9 @@ void FrmMain::write()
         << transl->locale.bcp47Name() << "#" << QString::number(shop->item3Count) << "#"
         << scoreboard->name << "#" << QString::number(shop->item4Count) << "#"
         << QString::number(boxCount) << "#" << version << "#" << QString::number(player->coins) << "#"
-        << shop->skinsToString() << "#" << QString::number(event) << "#";
+        << shop->skinsToString() << "#" << QString::number(event) << "#" << shop->bgsToString() << "#"
+        << QString::number(shop->chosenSkin) << "#" << QString::number(shop->chosenBackground) << "#"
+        << QString::number(referrals) << "~" << QString::number(invited) << "#";
     file.close();
 }
 
@@ -718,11 +758,12 @@ void FrmMain::reset(int type)
     boxDeath = 0;
     boxState = 0;
     schmuser = 0;
+    movingObstacles = 0;
     enemydir = 1;
     boost = 0;
     player->tdir = 0;
     player->tilt = 45;
-    player->setPos(1080/2-40,1920/2-40);
+    player->setPos(1080/2-250,1920/2-40);
     enemyRect.moveTo(-300,100);
 }
 
@@ -873,6 +914,68 @@ void FrmMain::createWindows()
     }
 }
 
+QString FrmMain::genKey()
+{
+    bool ok=true;
+    int num,num2;
+    while(ok) {
+        num = random(111111,999999);
+        num2 = random(11,99);
+        if(num%num2==3) {
+            ok = false;
+        }
+    }
+    QString aa=QString::number(num)+"-"+QString::number(num2);
+    return aa;
+}
+
+QString FrmMain::lucaAlg(QString text)
+{
+    QString myString = text;
+    std::string binary_outputInformations;
+    for (std::size_t i = 0; i < myString.size(); ++i) {
+        std::bitset<8> b(myString.toStdString().c_str()[i]);
+        binary_outputInformations+= b.to_string();
+    }
+    QString a = QString::fromStdString(binary_outputInformations);
+    QString num;
+    for(int i=0;i<a.size();i++) {
+        if(a.at(i)=='0') {
+            num.append(QString::number(random(0,5)));
+        } else if(a.at(i)=='1') {
+            num.append(QString::number(random(5,10)));
+        }
+    }
+    return num;
+}
+
+bool FrmMain::checkKey(QString key)
+{
+    QStringList l = key.split("-");
+    bool ok=false;
+    if(l[0].toInt()%l[1].toInt()==3) {
+        ok = true;
+    }
+    return ok;
+}
+
+bool FrmMain::checkConfirm(QString key)
+{
+    QString bin;
+    for(int i=0;i<key.size();i++) {
+        if(QString(key.at(i)).toInt()<5) {
+            bin.append("0");
+        } else {
+            bin.append("1");
+        }
+    }
+    bool ok=false;
+    if(bin==QString("01100100")) {
+        ok = true;
+    }
+    return ok;
+}
+
 void FrmMain::paintEvent(QPaintEvent *e)
 {
     Q_UNUSED(e)
@@ -886,9 +989,10 @@ void FrmMain::paintEvent(QPaintEvent *e)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.scale(scaleX,scaleY);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(22,22,24));
-    painter.drawRect(0,-2,1080,1922);
-    painter.drawPixmap(0,0,1080,1660,bg);
+    painter.setBrush(backgrounds[shop->chosenBackground-1]->bColor);
+    //painter.setBrush(QColor(0,143,255));
+    //painter.drawRect(0,-2,1080,1922);
+    painter.drawPixmap(0,0,1080,1660,backgrounds[shop->chosenBackground-1]->background);
     if(flag) {
         painter.drawRect(80,1237,20,13);
         painter.drawRect(120,1237,10,13);
@@ -905,18 +1009,26 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawRect(50,1300,10,10);
         painter.drawRect(50,1290,10,10);
     }
-    painter.setBrush(QColor(49,49,49));
-    for(int i=0;i<windows.size();i++) {
-        if(!windows[i]->visible) {
-            painter.drawRect(windows[i]->rect);
+    if(backgrounds[shop->chosenBackground-1]->windows) {
+        painter.setBrush(QColor(49,49,49));
+        for(int i=0;i<windows.size();i++) {
+            if(!windows[i]->visible) {
+                painter.drawRect(windows[i]->rect);
+            }
         }
     }
     painter.setBrush(QColor(22,22,24));
-    for(int i=0;i<stars.size();i++) {
-        painter.setOpacity(stars[i]->opacity);
-        painter.drawRect(stars[i]->rect);
+    if(backgrounds[shop->chosenBackground-1]->stars) {
+        for(int i=0;i<stars.size();i++) {
+            painter.setOpacity(stars[i]->opacity);
+            painter.drawRect(stars[i]->rect);
+        }
     }
     painter.setOpacity(1);
+    if(backgrounds[shop->chosenBackground-1]->cloud) {
+        painter.drawPixmap(QRectF(cloud1X,800,1080,280),cloudPx,QRectF(0,0,108,28));
+        painter.drawPixmap(QRectF(cloud2X,800,1080,280),cloudPx,QRectF(0,0,108,28));
+    }
     painter.setBrush(QColor(255,153,0));
     painter.save();
     painter.translate(mainX+1080,0);
@@ -929,7 +1041,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
     painter.setBrush(QColor(0,143,255));
     //painter.drawRect(player->getRect());
     if(active>0||active==-1||moveAn==3||moveAn==1) {
-        player->setPos((mainX+1080)+500,player->getRect().y());
+        player->setPos((mainX+1080)+250,player->getRect().y());
         painter.save();
         painter.translate(player->getRect().center().x(),player->getRect().center().y());
         painter.rotate(player->tilt-45);
@@ -985,9 +1097,6 @@ void FrmMain::paintEvent(QPaintEvent *e)
         pen.setWidth(2);
         painter.setPen(pen);
     }
-    if(schmuser) {
-        painter.drawPixmap(enemyRect,enemyPixmap,QRectF(0,0,maxX,maxY));
-    }
     for(int i=0;i<blusse.size();i++) {
         if(!blusse[i]->isText()&&!blusse[i]->isRect) {
             painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
@@ -1028,6 +1137,9 @@ void FrmMain::paintEvent(QPaintEvent *e)
             case 4:
                 painter.drawPixmap(endX+160,890,300,300,medal_platin);
             break;
+            case 5:
+                painter.drawPixmap(endX+160,890,300,300,medal_diamond);
+            break;
         }
         painter.drawText(endX+720,970,QString::number(score));
         painter.drawText(endX+720,1175,QString::number(highscore));
@@ -1036,30 +1148,13 @@ void FrmMain::paintEvent(QPaintEvent *e)
     if(active>0||active==-1||moveAn==3) {
         f.setPixelSize(56);
         painter.setFont(f);
-        painter.setPen(QColor(0,143,255));
+        painter.setPen(QColor(255,0,130));
         if(score<10) {
             painter.drawText((mainX+1080)+510,750,QString::number(score));
         } else if(score<100) {
             painter.drawText((mainX+1080)+490,750,QString::number(score));
         } else if(score<1000) {
             painter.drawText((mainX+1080)+470,750,QString::number(score));
-        }
-        if(schmuser) {
-            Text t;
-            switch(schmuser) {
-                case 1:
-                    t = transl->getText_Schmuser1();
-                    painter.drawText(t.pos,t.text);
-                break;
-                case 2:
-                    t = transl->getText_Schmuser2();
-                    painter.drawText(t.pos,t.text+enemy);
-                break;
-                case 3:
-                t = transl->getText_Schmuser3();
-                painter.drawText(t.pos,t.text);
-                break;
-            }
         }
         if(!shop->item1Count||active==-1||boost) {
             painter.setOpacity(0.5);
@@ -1101,10 +1196,12 @@ void FrmMain::paintEvent(QPaintEvent *e)
     }
     if((!active&&!shop->getActive()&&!scoreboard->active)||moveAn) {
         Text go = transl->getBtn_Go();
-        Text shop = transl->getBtn_Shop();
+        Text shopT = transl->getBtn_Shop();
         f.setPixelSize(go.size);
         painter.setPen(Qt::NoPen);
-        if(highscore>=175) {
+        if(highscore>=300) {
+            painter.drawPixmap(mainX+180,1538,150,150,medal_diamond);
+        } else if(highscore>=175) {
             painter.drawPixmap(mainX+180,1538,150,150,medal_platin);
         } else if(highscore>=100) {
             painter.drawPixmap(mainX+180,1538,150,150,medal_gold);
@@ -1121,6 +1218,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawPixmap(QRect(mainX+439,1308,200,120),stats);
         painter.drawPixmap(QRect(mainX+10,1810,160,96),flag_de);
         painter.drawPixmap(QRect(mainX+175,1810,160,96),flag_en);
+        painter.drawPixmap(QRect(mainX+910,1810,160,100),referralPx1);
         painter.setBrush(QColor(22,22,24));
         painter.setOpacity(0.75);
         if(transl->locale.language()==QLocale::German) {
@@ -1130,9 +1228,9 @@ void FrmMain::paintEvent(QPaintEvent *e)
         }
         painter.setOpacity(1);
         painter.drawText(QPoint(mainX+go.pos.x(),go.pos.y()),go.text);
-        f.setPixelSize(shop.size);
+        f.setPixelSize(shopT.size);
         painter.setFont(f);
-        painter.drawText(QPoint(mainX+shop.pos.x(),shop.pos.y()),shop.text);
+        painter.drawText(QPoint(mainX+shopT.pos.x(),shopT.pos.y()),shopT.text);
         if(!boxState) {
             if(!boxCount) painter.setOpacity(0.5);
             painter.drawPixmap(QRectF(mainX+775,1550,150,135),boxPx,QRectF(0,0,11,10));
@@ -1142,6 +1240,25 @@ void FrmMain::paintEvent(QPaintEvent *e)
         }
         painter.setPen(QColor(238,77,46));
         painter.drawText(mainX+780,1755,QString::number(boxCount)+"x");
+        if(refActive) {
+            painter.setOpacity(1);
+            painter.drawPixmap(165,460,750,1130,shop->background);
+            f.setPixelSize(26);
+            painter.setFont(f);
+            painter.drawText(QRect(180,500,750,1130),transl->getText_Referral_Get(refkey,QString::number(referrals)).text);
+            painter.setPen(Qt::NoPen);
+            if(!referrals) painter.setOpacity(0.4);
+            painter.drawPixmap(165,1460,300,130,btnPx);
+            painter.setOpacity(1);
+            if(invited) painter.setOpacity(0.4);
+            painter.drawPixmap(455,1460,300,130,btnPx);
+            painter.setOpacity(1);
+            painter.drawPixmap(750,1460,160,130,btnPx);
+            painter.setPen(QColor(0,143,255));
+            painter.drawText(QRect(170,1460,300,130),Qt::AlignCenter,transl->getText_Referral_btnConfirm().text);
+            painter.drawText(QRect(455,1460,300,130),Qt::AlignCenter,transl->getText_Referral_btnInvite().text);
+            painter.drawText(QRect(750,1460,160,130),Qt::AlignCenter,"Ok");
+        }
     }
     if((!active&&shop->getActive())||(moveAn==2||moveAn==4)) {
         shop->draw(painter);
@@ -1188,8 +1305,46 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     if(moveAn||shop->getActive()||scoreboard->active) return;
     switch(active) {
         case 0:
+            if(refActive) {
+                if(QRect(x,y,1,1).intersects(QRect(165,1460,300,130))&&referrals) { //btnconfirm
+                    bool ok=false;
+                    QGuiApplication::inputMethod()->show();
+                    QString n = QInputDialog::getText(this,tr("Key"),"Key: ",QLineEdit::Normal,"",&ok);
+                    if(ok) {
+                        if(checkConfirm(n)) {
+                            player->setBenis(player->getBenis()+250000);
+                            on_shopBuy(250000,false);
+                            referrals--;
+                            write();
+                            QMessageBox::information(this,"Info",transl->getText_Referral_Confirmed2().text);
+                        } else {
+                            QMessageBox::information(this,"Info",transl->getText_Referral_WrongKey().text);
+                        }
+                    }
+                    refActive = false;
+                } else if(QRect(x,y,1,1).intersects(QRect(455,1460,300,130))&&!invited) { //btnwurde
+                    bool ok=false;
+                    QGuiApplication::inputMethod()->show();
+                    QString n = QInputDialog::getText(this,tr("Key"),"Key: ",QLineEdit::Normal,"",&ok);
+                    if(ok) {
+                        if(checkKey(n)&&n!=refkey) {
+                            player->setBenis(player->getBenis()+100000);
+                            on_shopBuy(100000,false);
+                            invited = 1;
+                            write();
+                            QMessageBox::information(this,tr("Info"),transl->getText_Referral_Confirmed().text+lucaAlg("d"));
+                        } else {
+                            QMessageBox::information(this,tr("Info"),transl->getText_Referral_WrongKey().text);
+                        }
+                    }
+                    refActive = false;
+                } else if(QRect(x,y,1,1).intersects(QRect(750,1460,160,130))) { //btnok
+                    refActive = false;
+                }
+                return;
+            }
             if(QRect(x,y,1,1).intersects(QRect(50,1236,75,71))) {
-                if(event<3) {
+                /*if(event<3) {
                     event++;
                     if(event==3) {
                         shop->ownedSkins.append(1);
@@ -1197,9 +1352,8 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         QMessageBox::information(this,"I bims der Schmuserkadser","Schmuserkadser hat dir einen Skin und einen Coin geschenkt!");
                         write();
                     }
-                }
+                }*/
             } else if(QRect(x,y,1,1).intersects(QRect(390,900,300,150))) {
-                //QMetaObject::invokeMethod(t_obst,"start");
                 moveAn = 3;
             } else if(QRect(x,y,1,1).intersects(QRect(390,1100,300,150))) { //shop
                 moveAn = 2;
@@ -1214,7 +1368,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 if(scoreboard->name=="") {
                     QGuiApplication::inputMethod()->show();
                     QString n = QInputDialog::getText(this,tr("Nickname"),transl->getText_Scoreboard_SetName().text,QLineEdit::Normal,"",&ok);
-                    if(n.isEmpty()||n.contains("äüö#~ÄÖÜ"||n.length()>12||n.contains(" "))) {
+                    if(n.isEmpty()||n.contains("äüö#~ÄÖÜ")||n.size()>12||n.contains(" ")) {
                         if(ok) {
                             ok = false;
                             Text t = transl->gettext_Scoreboard_Falsch();
@@ -1282,6 +1436,10 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         boxState++;
                     }
                 }
+            } else if(QRect(x,y,1,1).intersects(QRect(910,1810,160,100))) {
+                refActive = true;
+                if(refkey!="") return;
+                for(int i=0;i<10;i++) refkey = genKey();
             }
         break;
         case -1:
@@ -1372,13 +1530,6 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         }
                         blusse.append(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(score*5)));
                         player->setBenis(player->getBenis()+score*(shop->multiplier/2));
-                        if(schmuser<4) {
-                            enemylife--;
-                            if(!enemylife) {
-                                schmuser = 4;
-                                enemydir = 1;
-                            }
-                        }
                     } else {
                         player->setBenis(player->getBenis()+shop->tapMultiplier);
                         for(int i=0;i<shop->tapMultiplier;i++) {
@@ -1398,6 +1549,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
 
 void FrmMain::keyPressEvent(QKeyEvent *e)
 {
+    if(moveAn) return;
     if(e->key()==Qt::Key_Back) {
         if(shop->getActive()) {
             moveAn = 4;

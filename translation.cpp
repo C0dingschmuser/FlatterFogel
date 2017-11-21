@@ -433,41 +433,21 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "- Coins & Skins:\n"
-                     "  - Skins können nur mit Coins gekauft\n"
-                     "    werden\n"
-                     "  - Coins findest du in Kisten und\n"
-                     "    jedes mal wenn du die 100 knackst\n"
-                     "- Animationen\n"
-                     "- Medaille im Hauptmenü & im Scoreboard\n"
-                     "- 'Info'-Button im Shop\n"
-                     "- InApp Changelog\n"
-                     "- Powerups können verkauft werden\n"
-                     "- 'Pause'-Button\n"
-                     "- Preis vom 30s-Revivepowerup angepasst\n"
-                     "- Multitasking-Support\n"
-                     "Nicht vergessen: Ganze Kisten auf der \nU-Bahn können eingesammelt werden!";
+                     "- Lade Freunde ein und werde mit Boni belohnt!\n"
+                     "  -> Hauptmenü unten rechts\n"
+                     "- Neuer Hintergrund & Skin\n"
+                     "- Neue Medaille\n"
+                     "- Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "- Coins & Skins:\n"
-                     "  - Skins can only be purchased\n"
-                     "    with Coins\n"
-                     "  - You find the Coins required\n"
-                     "    for a Purchase in Crates and\n"
-                     "    you get a Coin everytime your\n"
-                     "    Score is greater than 100\n"
-                     "- Animations\n"
-                     "- Medal on Home Menu & Scoreboard\n"
-                     "- 'Info'-Button in Shop\n"
-                     "- InApp changelog\n"
-                     "- Powerups can now be sold\n"
-                     "- 'Pause'-Button\n"
-                     "- Changed Price of 30s-Revivepowerup\n"
-                     "- Multitasking-Support\n"
-                     "Don't forget that the crates on the \nSubway can be collected!";
+                     "- Invite Freinds and receive Rewards!\n"
+                     "  -> Main Menu bottom right\n"
+                     "- New Background & Skin\n"
+                     "- New Medal\n"
+                     "- Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
         break;
@@ -514,6 +494,193 @@ Text Translation::getText_Shop_Skin()
                      "Purchase in Crates. In addition\n"
                      "everytime you get a score greater\n"
                      "than 100 you get a coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Background()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe einen Hintergrund an um ihn auszuwählen\n"
+                     "nachdem du ihn gekauft hast. Die für\n"
+                     "den Kauf benötigten Coins findest du\n"
+                     "in Kisten. Zusätzlich bekommst du\n"
+                     "jedes mal wenn du die 100 knackst\n"
+                     "einen Coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Tap on a Background to equip it\n"
+                     "after you have purchased it. You can\n"
+                     "find the Coins required for a\n"
+                     "Purchase in Crates. In addition\n"
+                     "everytime you get a score greater\n"
+                     "than 100 you get a coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_BC()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "zu";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "to";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_Get(QString key, QString leftKeys)
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Weiterempfehlungen\n\n"
+                     "Du kannst noch "+leftKeys+" Leute einladen. Für jeden "
+                     "Spieler den du einlädst erhältst du einen "
+                     "Bonus von 250k Benis und der eingeladene "
+                     "bekommt 100k Benis.\n\n"
+                     "Key: "+key+"\n\n"
+                     "Anleitung:\n\n"
+                     "1. Den oben angezeigten Key\n"
+                     "   bei der eingeladenen\n"
+                     "   Person eingeben ('Ich\n"
+                     "   wurde eingeladen')\n\n"
+                     "2. Die eingeladene Person\n"
+                     "   erhält nun den Bonus.\n"
+                     "   Gib den dort angezeigten\n"
+                     "   Bestätigungscode hier\n"
+                     "   bei 'Einladung\n"
+                     "   bestätigen' ein.\n\n"
+                     "3. Alle sind glücklich.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Referrals\n\n"
+                     "You have "+leftKeys+" Invites left. For every Player "
+                     "you Invite you receive 250k Benis and the Invited gets "
+                     "100k Benis.\n\n"
+                     "Key: "+key+"\n\n"
+                     "Tutorial:\n\n"
+                     "1. Enter the Key displayed\n"
+                     "   above on the Device from\n"
+                     "   the Person you want to\n"
+                     "   invite ('I was invited').\n\n"
+                     "2. The Invited Person\n"
+                     "   receives his Bonus. Enter\n"
+                     "   the displayed\n"
+                     "   confirmation key back on\n"
+                     "   your Device under\n"
+                     "   'Confirm Invite'\n\n"
+                     "3. Everybody is happy.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_WrongKey()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Falscher key!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Wrong key!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_Confirmed()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Key bestätigt!\nBestätigungscode: ";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Key confirmed!\nConfirmation code: ";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_Confirmed2()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Einladung bestätigt!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Invite confirmed!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_btnConfirm()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Einladung\nbestätigen";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Confirm\nInvite";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Referral_btnInvite()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Ich wurde\neingeladen";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "I was\ninvited";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
