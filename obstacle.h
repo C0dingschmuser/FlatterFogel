@@ -24,7 +24,7 @@ public:
     QRectF train;
     QRectF train2;
     QRectF box;
-    void moveBy(double x,double y);
+    void moveBy(double x,double y, double speed=0.5);
 };
 
 #endif // OBSTACLE_H

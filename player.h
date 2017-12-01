@@ -1,6 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 #include <QRect>
+#include <QPolygonF>
 #include <QPixmap>
 #include <QDebug>
 
@@ -22,13 +23,14 @@ public:
     bool tdir;
     double tstep;
     QPixmap getPx();
-    void setPos(int x, int y);
+    void setPos(double x, double y);
     void setVelD(double velD);
     void setBenis(int benis);
     void reload(int id);
     int getBenis();
     double getVelD();
     QRectF getRect();
+    QPolygonF getPoly();
 };
 
 #endif // PLAYER_H

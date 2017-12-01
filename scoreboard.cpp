@@ -81,8 +81,9 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     painter.drawText(QPoint(scoreX+t.pos.x(),t.pos.y()),t.text);
 }
 
-void Scoreboard::setScore(int score)
+void Scoreboard::setScore(int score, int hs)
 {
+    this->hs = hs;
     socket->connectToHost("37.120.177.121",38900);
     socket->waitForConnected(1000);
     if(socket->state()==QTcpSocket::ConnectedState) {
@@ -183,6 +184,7 @@ void Scoreboard::mpress(QPoint pos)
     if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(24,1324,300,130))) {
         emit back();
     }
+    if(!players.size()) return;
     if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(500,1324,560,130))) {
         socket->connectToHost("37.120.177.121",38900);
         socket->waitForConnected(1000);

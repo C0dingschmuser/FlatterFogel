@@ -65,7 +65,7 @@ public:
     void draw(QPainter &painter);
     void setActive(bool active);
     bool getActive();
-    void mousePress(QPoint pos);
+    void mousePress(QPoint pos, bool &cave);
     QString skinsToString();
     QString bgsToString();
     QPixmap getPixmap(int item);

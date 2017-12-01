@@ -27,12 +27,13 @@ private:
 public:
     explicit Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent = nullptr);
     void draw(QPainter &painter, int highscore);
-    void setScore(int score);
+    void setScore(int score, int hs);
     void getScores();
     void mpress(QPoint pos);
     bool active;
     bool wasConnected;
     int scoreX;
+    int hs;
     QString first;
     QString name;
     QTcpSocket *socket;

@@ -33,9 +33,8 @@ QRectF Obstacle::getBottom()
     return bottom;
 }
 
-void Obstacle::moveBy(double x, double y)
+void Obstacle::moveBy(double x, double y, double speed)
 {
-    double speed = 0.5;
     switch(dir) {
         case 1: //runter
             if(bottom.y()<1560) {

@@ -4,6 +4,7 @@
 #include <QtMath>
 #include <QPixmap>
 #include <QColor>
+#include <QDebug>
 class Blus
 {
 private:
@@ -14,19 +15,25 @@ private:
     bool text;
     QString string;
     double opacity;
-    double oSpeed;
 public:
     Blus();
-    Blus(int angle,QRectF rect,QPixmap p, int w=40, int h=40);
+    Blus(int angle,QRectF rect,QPixmap p, int w=40, int h=40, double oSpeed=1, double vSpeed=2, bool snow=false);
     Blus(int angle, QRectF rect, QString text, int size=48);
-    Blus(int angle, QRectF rect, double vSpeed=8, double oSpeed=1);
+    Blus(int angle, QRectF rect, double vSpeed=8, double oSpeed=1, bool hardcore=false);
+    double oSpeed;
+    bool snow;
+    bool hardcore;
+    bool spark;
+    bool used;
+    int item;
     int size;
     int width;
     int height;
     bool isRect;
     QColor color;
-    void move();
+    void move(double s);
     void setOpacity(double opacity);
+    void setAngle(int angle, double vSpeed=2);
     QRectF getRect();
     QPixmap getPixmap();
     bool isText();

@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QPainter>
 #include <QTimer>
+#include <QDateTime>
 #include <QColor>
 #include <QVector>
 #include <QMessageBox>
@@ -64,6 +65,8 @@ private slots:
     void on_scoreBack();
     void on_scoreWrite();
     void on_tAnimation();
+    void on_tblus();
+    void on_tnewHS();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -73,8 +76,14 @@ private:
     int mainX;
     int endX;
     bool anDir;
+    int newHS;
     int movingObstacles;
     int moveAn;
+    double radR;
+    double playTime;
+    double localPlayTime;
+    bool hardcore;
+    bool cave;
     QTimer *t_draw;
     QTimer *t_main;
     QTimer *t_obst;
@@ -89,6 +98,8 @@ private:
     QTimer *t_boxDeathAn;
     QTimer *t_resume;
     QTimer *t_animation;
+    QTimer *t_blus;
+    QTimer *t_newHS;
     QFont font;
     double scaleX;
     double scaleY;
@@ -97,6 +108,7 @@ private:
     int active;
     QPoint mousePos;
     QThread *workerThread;
+    QThread *blusThread;
     QVector <Obstacle*> obstacles;
     QVector <Blus*> blusse;
     QVector <PxAn*> pxans;
@@ -140,6 +152,9 @@ private:
     QString version;
     QString refkey;
     QRectF enemyRect;
+    QPolygonF polyTop;
+    QPolygonF polyBottom;
+    QPolygonF polyColl;
     bool fastboost;
     Translation *transl;
     Scoreboard *scoreboard;
@@ -160,6 +175,7 @@ private:
     int resumeTime;
     int event;
     int referrals;
+    int caveSpawnCount;
     bool invited;
     bool refActive;
     double cloud1X;

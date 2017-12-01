@@ -36,9 +36,18 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
 
 void Shop::drawBg(int x, int y, int w, int h, int num, QPainter &painter)
 {
-    if(selected!=num+1) painter.setOpacity(0.4);
     painter.setPen(Qt::NoPen);
-    painter.drawPixmap(x,y,w,h,backgrounds[num]->background);
+    if(selected!=num+1) {
+        painter.setOpacity(0.4);
+    } else {
+        painter.setBrush(Qt::blue);
+        painter.drawRect(x-2,y-2,w+4,h+4);
+    }
+    if(!backgrounds[num]->p) {
+        painter.drawPixmap(x,y,w,h,backgrounds[num]->background);
+    } else {
+        painter.drawPixmap(x,y,w,h,backgrounds[num]->backgroundP);
+    }
     if(backgrounds[num]->cloud) {
         painter.drawPixmap(x,y+175,w,64,cloudPx);
     }
@@ -99,6 +108,7 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     bgPrice.append(0);
     bgPrice.append(1);
     bgPrice.append(1);
+    bgPrice.append(2);
     chosenSkin = 1;
     chosenBackground = 1;
     multiplier = 10;
@@ -245,6 +255,7 @@ void Shop::draw(QPainter &painter)
         drawBg(shopX+200,500,248,381,0,painter);
         drawBg(shopX+481,500,248,381,1,painter);
         drawBg(shopX+200,931,248,381,2,painter);
+        drawBg(shopX+481,931,248,381,3,painter);
         break;
     }
 }
@@ -270,7 +281,7 @@ bool Shop::getActive()
     return active;
 }
 
-void Shop::mousePress(QPoint pos)
+void Shop::mousePress(QPoint pos, bool &cave)
 {
     QRect r(pos.x(),pos.y(),1,1);
     if(shopX!=0) return;
@@ -337,9 +348,16 @@ void Shop::mousePress(QPoint pos)
                     selected = 2;
                 } else if(r.intersects(QRect(200,931,248,381))) {
                     selected = 3;
+                } else if(r.intersects(QRect(481,931,248,381))) {
+                    selected = 4;
                 }
                 if(ownedbackgrounds.contains(selected-1)) {
                     chosenBackground = selected;
+                    if(chosenBackground==4) {
+                        cave = true;
+                    } else {
+                        cave = false;
+                    }
                 }
             break;
         }
@@ -434,6 +452,7 @@ void Shop::mousePress(QPoint pos)
                     } else if(!ownedSkins.contains(selected-1)) {
                         coins-=price;
                         ownedSkins.append(selected-1);
+                        chosenSkin = selected;
                         player->coins = coins;
                         emit buy(1,true,true);
                     }
@@ -447,6 +466,7 @@ void Shop::mousePress(QPoint pos)
                     } else if(!ownedbackgrounds.contains(selected-1)){
                         coins-=price;
                         ownedbackgrounds.append(selected-1);
+                        chosenBackground = selected;
                         player->coins = coins;
                         emit buy(1,true,true);
                     }

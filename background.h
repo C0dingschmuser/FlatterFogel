@@ -7,8 +7,10 @@
 class Background
 {
 public:
-    Background(int id, QColor color, bool stars, bool cloud, bool windows);
+    Background(int id, QColor color, bool stars, bool cloud, bool windows, bool p=false);
     QPixmap background;
+    QPixmap backgroundP;
+    bool p;
     bool stars;
     bool cloud;
     bool windows;

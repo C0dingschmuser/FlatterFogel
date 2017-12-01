@@ -433,21 +433,20 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "- Lade Freunde ein und werde mit Boni belohnt!\n"
-                     "  -> Hauptmenü unten rechts\n"
-                     "- Neuer Hintergrund & Skin\n"
-                     "- Neue Medaille\n"
-                     "- Bugfixes";
+                     "-> Höhlenmpdus:\n"
+                     "zum spielen letzten Hintergrund kaufen\n"
+                     "-> Scoreboard verbesserungen\n"
+                     "-> Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "- Invite Freinds and receive Rewards!\n"
-                     "  -> Main Menu bottom right\n"
-                     "- New Background & Skin\n"
-                     "- New Medal\n"
-                     "- Bugfixes";
+                     "-> Cave-Mode\n"
+                     "   -> To activate purchase\n"
+                     "      last Background\n"
+                     "-> Scoreboard improvements\n"
+                     "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
         break;
@@ -681,6 +680,75 @@ Text Translation::getText_Referral_btnInvite()
         break;
         default:
             t.text = "I was\ninvited";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Donate()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Hilf bei der Entwicklung von Flatterfogel\n\n"
+                     "Weil ich nicht EA bin, gibt es keine unfairen\n"
+                     "In-App Käufe und/oder Werbung. Flatterfogel\n"
+                     "ist nicht aus Geldgier entstanden, sondern\n"
+                     "aus Liebe zum Pr0. Wenn dir Flatterfogel\n"
+                     "so gut gefällt, dass du die Entwicklung\n"
+                     "unterstützen möchtest, kannst du das indem\n"
+                     "du mir einen beliebigen Betrag spendest.\n"
+                     "Im Gegenzug für deine Großzügigkeit kommst\n"
+                     "du auf eine Spenderliste und darfst dir\n"
+                     "einen Skin ausdenken, der dann für jedermann\n"
+                     "in den Shop kommt.\n\n"
+                     ""
+                     "Meine Paypal-Email:\n"
+                     "firediver98@gmail.com";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Paypal-Email:\n"
+                     "firediver98@gmail.com";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_NHS()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "NEUE HIGHSCORE!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "NEW HIGHSCORE!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Neu()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "NEU";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "NEW";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;

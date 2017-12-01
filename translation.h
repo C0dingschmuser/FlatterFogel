@@ -44,6 +44,9 @@ public:
     Text getText_Referral_Confirmed2();
     Text getText_Referral_btnConfirm();
     Text getText_Referral_btnInvite();
+    Text getText_Donate();
+    Text getText_NHS();
+    Text getText_Neu();
 };
 
 #endif // LOCALE_H

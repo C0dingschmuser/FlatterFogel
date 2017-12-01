@@ -29,7 +29,7 @@ QPixmap Player::getPx()
     }
 }
 
-void Player::setPos(int x, int y)
+void Player::setPos(double x, double y)
 {
     rect.moveTo(x,y);
 }
@@ -64,4 +64,10 @@ double Player::getVelD()
 QRectF Player::getRect()
 {
     return rect;
+}
+
+QPolygonF Player::getPoly()
+{
+    QPolygonF poly(rect);
+    return poly;
 }

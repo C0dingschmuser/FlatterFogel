@@ -7,14 +7,20 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
 {
     ui->setupUi(this);
     mainX = 0;
+    newHS = 0;
+    caveSpawnCount = 0;
     endX = 1080;
     cloud1X = 0;
     cloud2X = 1079;
     event = 0;
+    playTime = 0;
+    localPlayTime = 0;
+    hardcore = false;
+    radR = 2700;
     anDir = false;
     moveAn = false;
     refActive = false;
-    version = "1.2.2r1";
+    version = "1.2.5b1";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -29,6 +35,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_star = new QTimer();
     t_resume = new QTimer();
     t_animation = new QTimer();
+    t_blus = new QTimer();
+    t_newHS = new QTimer();
     flashOpacity = 0;
     pause = false;
     transl = new Translation();
@@ -49,6 +57,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     connect(t_boxDeathAn,SIGNAL(timeout()),this,SLOT(on_tboxDeathAn()));
     connect(t_resume,SIGNAL(timeout()),this,SLOT(on_tresume()));
     connect(t_animation,SIGNAL(timeout()),this,SLOT(on_tAnimation()));
+    connect(t_blus,SIGNAL(timeout()),this,SLOT(on_tblus()));
+    connect(t_newHS,SIGNAL(timeout()),this,SLOT(on_tnewHS()));
     //this->showMaximized();
     referrals = 3;
     invited = false;
@@ -89,6 +99,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     backgrounds.append(new Background(1,QColor(22,22,24),true,false,true));
     backgrounds.append(new Background(2,QColor(0,143,255),false,true,true));
     backgrounds.append(new Background(3,QColor(95,95,95),true,false,false));
+    backgrounds.append(new Background(4,QColor(95,95,95),false,false,false,true));
     for(int i=0;i<3;i++) {
         boxPxAn.append(QPixmap(":/images/box/box_"+QString::number(i+1)+".png"));
     }
@@ -129,16 +140,20 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     highscore = 0;
     boost = 0;
     fastboost = false;
+    cave = false;
     medal = 0;
     g1x = 0;
     g2x = 1080;
     boxCount = 0;
     revive = false;
+    qsrand(QDateTime::currentDateTime().toTime_t());
     loadData();
     workerThread = new QThread();
+    blusThread = new QThread();
     t_main->start(5);
     t_draw->start(10);
-    t_obst->start(100);
+    t_obst->start(150);
+    t_blus->start(5);
     t_event->start(500);
     t_flag->start(750);
     t_star->start(125);
@@ -156,7 +171,10 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_star->moveToThread(workerThread);
     t_boxDeathAn->moveToThread(workerThread);
     t_resume->moveToThread(workerThread);
+    t_blus->moveToThread(blusThread);
+    t_newHS->moveToThread(workerThread);
     workerThread->start();
+    blusThread->start();
     qApp->setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }");
 }
 
@@ -172,22 +190,43 @@ void FrmMain::on_tdraw()
     update();
 }
 
+void FrmMain::on_tblus()
+{
+    if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) return;
+    for(int i=0;i<blusse.size();i++) {
+        if(boost) {
+            blusse[i]->move(-boost);
+        } else {
+            int s = 0;
+            if(active==1) s = -1;
+            blusse[i]->move(s);
+            //if(blusse[i]->item) qDebug()<<blusse[i]->getRect();
+        }
+    }
+    for(int i=0;i<blusse.size();i++) {
+        if(!blusse[i]->getRect().intersects(QRectF(0,0,1080,1920))||blusse[i]->getOpacity()<=0) {
+            if(!blusse[i]->snow&&!blusse[i]->item||(blusse[i]->snow&&blusse[i]->getOpacity()<=0)||((blusse[i]->snow||blusse[i]->item)&&blusse[i]->getRect().x()<=0)||
+                    (blusse[i]->item&&blusse[i]->getOpacity()<=0)) {
+                delete blusse[i];
+                blusse.removeAt(i);
+            }
+            //break;
+        }
+    }
+}
+
+void FrmMain::on_tnewHS()
+{
+    newHS = 2;
+    QMetaObject::invokeMethod(t_newHS,"stop");
+}
+
 void FrmMain::on_tmain()
 {
     if(pause) return;
     //moveAn = 3;
     if(flashOpacity) {
         flashOpacity -= 0.0125;
-    }
-    for(int i=0;i<blusse.size();i++) {
-        blusse[i]->move();
-    }
-    for(int i=0;i<blusse.size();i++) {
-        if(!blusse[i]->getRect().intersects(QRectF(0,0,1080,1920))||!blusse[i]->getOpacity()) {
-            delete blusse[i];
-            blusse.removeAt(i);
-            //break;
-        }
     }
     if(backgrounds[shop->chosenBackground-1]->cloud) {
         cloud1X-=0.15;
@@ -200,32 +239,118 @@ void FrmMain::on_tmain()
     }
     if(active<1) return;
     if(active==1&&!boxDeath) {
+        localPlayTime+=0.005;
         for(int i=0;i<obstacles.size();i++) {
             if(boost) {
                 obstacles[i]->moveBy(-boost,0);
                 moveGround(-boost);
             } else {
-                obstacles[i]->moveBy(-1,0);
+                double speed=0.5;
+                if(hardcore) {
+                    speed = 0.70;
+                }
+                obstacles[i]->moveBy(-1,0,speed);
                 moveGround(-1);
             }
-            if((player->getRect().intersects(obstacles[i]->getBottom())||
-                    player->getRect().intersects(obstacles[i]->getTop()))&&!boost) {
+            bool co = false;
+            if(!boost&&active==1) {
+                if(cave) {
+                    QPolygonF c1 = player->getPoly().intersected(polyTop);
+                    QPolygonF c2 = player->getPoly().intersected(polyBottom);
+                    if(c1.size()) {
+                        co = true;
+                        polyColl = c1;
+                    } else if(c2.size()) {
+                        co = true;
+                        polyColl = c2;
+                    }
+                    QPolygonF poly;
+                    for(int i=0;i<obstacles.size();i++) {
+                        QPointF oben(obstacles[i]->getBottom().x(),obstacles[i]->getBottom().y());
+                        poly.append(oben);
+                    }
+                    for(int i=obstacles.size()-1;i>=0;i--) {
+                        QPointF unten(obstacles[i]->getBottom().x(),obstacles[i]->getBottom().y()+obstacles[i]->getBottom().height());
+                        poly.append(unten);
+                    }
+                    QPolygonF polyTop;
+                    for(int i=0;i<obstacles.size();i++) {
+                        QPointF oben(obstacles[i]->getTop().x(),obstacles[i]->getTop().y());
+                        polyTop.append(oben);
+                    }
+                    for(int i=obstacles.size()-1;i>=0;i--) {
+                        QPointF unten(obstacles[i]->getTop().x(),obstacles[i]->getTop().y()+obstacles[i]->getTop().height());
+                        polyTop.append(unten);
+                    }
+                    polyBottom = poly;
+                    this->polyTop = polyTop;
+                } else if(player->getRect().intersects(obstacles[i]->getBottom())||
+                          player->getRect().intersects(obstacles[i]->getTop())) {
+                    co = true;
+
+                }
+            }
+            if(co) {
                 active = 3;
                 flashOpacity = 0.5;
             }
+            if(score>highscore&&!newHS&&highscore&&!boost) {
+                newHS = 1;
+                QMetaObject::invokeMethod(t_newHS,"start",Q_ARG(int,500));
+            }
+        }
+        for(int i=0;i<blusse.size();i++) {
+            if(blusse[i]->item) {
+                if(player->getRect().intersects(blusse[i]->getRect())) {
+                    if(blusse[i]->item==1) {
+                        score++;
+                        blusse[i]->move(-5000);
+                        if((score%100==0&&score!=0)||(score%30==0&&hardcore)) {
+                            on_shopBuy(1,false,true);
+                            player->coins++;
+                            write();
+                        } else {
+                            player->setBenis(player->getBenis()+(score*shop->multiplier));
+                            int b = score*shop->multiplier;
+                            if(hardcore) b*=1.5;
+                            blusse.append(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(b)));
+                            for(int a=0;a<360;a+=12) {
+                                blusse.append(new Blus(a,QRectF(player->getRect().center().x()-20,player->getRect().center().y()-20,40,40),blus));
+                            }
+                        }
+                    } else if(!blusse[i]->used){
+                        blusse[i]->used = true;
+                        blusse[i]->oSpeed = 4;
+                        blusse[i]->setAngle(-90);
+                        boxCount++;
+                    }
+                }
+            }
         }
     }
+    bool dead = false;
     if(player->getRect().y()<1600&&active>0) {
         double velD = player->getVelD();
         if(velD<10) velD += 0.1;
         player->setVelD(velD);
         QRectF r = player->getRect();
-        if(r.y()+velD>1600) {
-            velD = 1600-r.y();
+        if(!cave) {
+            if(r.y()+velD>1600) {
+                velD = 1600-r.y();
+            }
+            player->setPos(r.x(),r.y()+velD);
+        } else {
+            QRectF r2 = QRectF(r.x(),r.y()+velD,r.width(),r.height());
+            QPolygonF inters = QPolygonF(r2).intersected(polyBottom);
+            if(!inters.size()) {
+                player->setPos(r2.x(),r2.y());
+            } else {
+                //player->setPos(r2.x(),r2.y());
+                dead = true;
+            }
         }
-        player->setPos(r.x(),r.y()+velD);
     }
-    if(player->getRect().y()>=1600) {
+    if(player->getRect().y()>=1600||dead) {
         if(!revive) {
             if(active==1) {
                 flashOpacity = 0.5;
@@ -283,12 +408,12 @@ void FrmMain::on_tmain()
         }
     }
     for(int i=0;i<obstacles.size();i++) {
-        if(obstacles[i]->getTop().x()<-250) {
+        if((obstacles[i]->getTop().x()<-250&&!cave)||(obstacles[i]->getTop().x()<-600&&cave)) {
             delete obstacles[i];
             obstacles.removeAt(i);
             //qDebug()<<i;
             //break;
-        } else if(obstacles[i]->getTop().x()<=player->getRect().x()&&active==1&&!obstacles[i]->type&&!obstacles[i]->approved) {
+        } else if((obstacles[i]->getTop().x()<=player->getRect().x()&&active==1&&!obstacles[i]->type&&!obstacles[i]->approved)&&!cave) {
             obstacles[i]->approved = true;
             score++;
             if(movingObstacles) movingObstacles--;
@@ -305,13 +430,14 @@ void FrmMain::on_tmain()
                 }
             }
             if(!boost) {
-                if(score%100==0) {
+                if(score%100==0||(score%30==0&&hardcore)) {
                     on_shopBuy(1,false,true);
                     player->coins++;
                     write();
                 } else {
                     player->setBenis(player->getBenis()+(score*shop->multiplier));
                     int b = score*shop->multiplier;
+                    if(hardcore) b*=1.5;
                     blusse.append(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(b)));
                     for(int a=0;a<360;a+=12) {
                         blusse.append(new Blus(a,QRectF(player->getRect().center().x()-20,player->getRect().center().y()-20,40,40),blus));
@@ -324,22 +450,87 @@ void FrmMain::on_tmain()
 
 void FrmMain::on_tObst()
 {
-
+    if(pause) return;
+    if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) return;
+    if(shop->chosenBackground==1&&!cave) {
+        Blus *b = new Blus(random(55,125),QRectF(random(100,1500),-10,10,10),1,0.15,false);
+        b->color = QColor(210,210,210);
+        b->snow = true;
+        blusse.append(b);//new Blus(random(55,125),QRectF(random(100,1500),-25,25,25),snowPx,25,25,0.15,1,true));
+    }
+    if(newHS==1&&active==1) {
+        for(int a=0;a<360;a+=12) {
+            blusse.append(new Blus(a,QRectF(player->getRect().center().x()-20,player->getRect().center().y()-20,40,40),blus,40,40,1.5));
+        }
+        Blus *b = new Blus(90,QRectF(4,180,1,1),transl->getText_NHS().text);
+        b->color = QColor(255,0,130);
+        blusse.append(b);
+    }
     if(active!=1||schmuser||boxDeath) return;
-    if(obstacles.size()<=3) {
+    if((obstacles.size()<=3&&!cave)||(obstacles.size()<=5&&cave)) {
         //diff 600
+        int width = 100, min = 350, max = 1300, diff = 375, diff2 = 600;
+        if(cave) {
+            width = 2;
+            min = 400;
+            max = 1200;
+            diff = 400; //y abstand
+            diff2 = 350; //x abstand
+        }
         int x = 1200;
         if(obstacles.size()) {
-            x = obstacles[obstacles.size()-1]->getBottom().x()+600;
+            x = obstacles[obstacles.size()-1]->getBottom().x()+diff2;
         }
         QPixmap p;
-        if(!movingObstacles) {
+        if(!movingObstacles&&!hardcore) {
             p = QPixmap(":/images/pipe1.png");
         } else {
             p = QPixmap(":/images/pipe2.png");
         }
-        QRect top(x,0,100,random(300,1300));
-        QRect bottom(x,top.height()+350,100,1920-top.height()+350);
+        if(cave&&obstacles.size()) {
+            int diff3 = 125; //max unterschied median
+            if(!random(0,10)) {
+                diff3*=2;
+            }
+            if(obstacles.size()>1) {
+                min = obstacles[obstacles.size()-1]->getTop().height()-diff3;
+                max = obstacles[obstacles.size()-1]->getTop().height()+diff3;
+            }
+            if(min<0) min = 0;
+            if(max>1200) max = 1200;
+        }
+        QRect top,bottom;
+        if(obstacles.size()||!cave) {
+            top = QRect(x,0,width,random(min,max));
+            bottom = QRect(x,top.height()+diff,width,1920-top.height()+diff);
+        } else {
+            top = QRect(x,0,1,1);
+            bottom = QRect(x,1659,width,1);
+        }
+
+        if(cave&&!boost) {
+            caveSpawnCount++;
+            int w=40,h=40;
+            if(caveSpawnCount==2) {
+                QPixmap px = blus;
+                if((score+2)%100==0) {
+                    px = coinPx;
+                    w=16;
+                    h=16;
+                }
+                caveSpawnCount = 0;
+                Blus *b = new Blus(0,QRectF(top.x(),(bottom.y()-diff/2)-30,60,60),px,w,h,0,0);
+                b->item = 1;
+                blusse.append(b);
+                //qDebug()<<"caveSpawnCount";
+            } else if(!random(0,9)) {
+                w = 11;
+                h = 10;
+                Blus *b = new Blus(0,QRectF(top.x(),(bottom.y()-diff/2)-30,60,60),boxPx,w,h,0,0);
+                b->item = 2;
+                blusse.append(b);
+            }
+        }
         bool bA=false;
         bool type=false;
         if(active==1&&!boost) {
@@ -349,14 +540,17 @@ void FrmMain::on_tObst()
             }
         }
         Obstacle *o = new Obstacle(top,bottom,p,0,bA,type);
-        if(movingObstacles) o->dir = random(1,3);
+        if(movingObstacles||(hardcore&&!cave)) o->dir = random(1,3);
         obstacles.append(o);
     }
 }
 
 void FrmMain::on_tEvent()
 {
-    if(active!=1) return;
+    if(cave&&hardcore) {
+        hardcore = false;
+    }
+    if(active!=1||cave||hardcore) return;
     if(((score%20==0)&&(score!=0)&&(!boost))||schmuser) {
         for(int i=0;i<obstacles.size();i++) {
             if(obstacles[i]->getTop().x()>1930) {
@@ -506,6 +700,7 @@ void FrmMain::on_tflag()
         for(int i=0;i<10;i++) {
             Blus *spark = new Blus(random(0,180),QRectF(obstacles[num]->train.x()+x,1780,5,5),0.5,7.5);
             spark->color = QColor(Qt::yellow);
+            spark->spark = true;
             blusse.append(spark);
         }
     }
@@ -577,10 +772,22 @@ void FrmMain::on_tAnimation()
     int speed = 4;
     if(moveAn) {
         switch (moveAn) {
+            case -1: //end-los
+                if(endX<1080) {
+                    //mainX -= speed;
+                    endX += speed;
+                } else {
+                    moveAn = 0;
+                    active = -1;
+                    reset();
+                    endX = 0;
+                }
+            break;
             case 1: //end
                 if(mainX<0) {
                     mainX += speed;
                     endX += speed;
+                    radR += 5;
                 } else {
                     moveAn = 0;
                     active = 0;
@@ -600,6 +807,7 @@ void FrmMain::on_tAnimation()
                 if(mainX>-1080) {
                     mainX -= speed;
                     endX -= speed;
+                    radR -= 5;
                 } else {
                     moveAn = 0;
                     active = -1;
@@ -704,14 +912,25 @@ void FrmMain::loadData()
                 }
                 if(list.size()>16) {
                     shop->chosenSkin = list.at(16).toInt();
+                    if(shop->skinPrice[shop->chosenSkin-1]>1) {
+                        player->reload(shop->chosenSkin-1);
+                    } else {
+                        player->reload(1);
+                    }
                 }
                 if(list.size()>17) {
                     shop->chosenBackground = list.at(17).toInt();
+                    if(shop->chosenBackground==4) {
+                        cave = true;
+                    }
                 }
                 if(list.size()>19) {
                     QStringList ref = QString(list.at(18)).split("~");
                     referrals = ref.at(0).toInt();
                     invited = ref.at(1).toInt();
+                }
+                if(list.size()>20) {
+                    playTime = list.at(19).toDouble();
                 }
             }
 
@@ -734,29 +953,42 @@ void FrmMain::write()
         << QString::number(boxCount) << "#" << version << "#" << QString::number(player->coins) << "#"
         << shop->skinsToString() << "#" << QString::number(event) << "#" << shop->bgsToString() << "#"
         << QString::number(shop->chosenSkin) << "#" << QString::number(shop->chosenBackground) << "#"
-        << QString::number(referrals) << "~" << QString::number(invited) << "#";
+        << QString::number(referrals) << "~" << QString::number(invited) << "#"
+        << QString::number(playTime,'f',3) << "#";
     file.close();
 }
 
 void FrmMain::reset(int type)
 {
+    //qsrand(QTime::currentTime().)
     for(int i=0;i<obstacles.size();i++) {
         delete obstacles[i];
     }
     for(int i=0;i<blusse.size();i++) {
-        delete blusse[i];
+        if(!blusse[i]->snow) {
+            blusse[i]->move(-5000);
+        }
     }
     write();
-    blusse.resize(0);
+    //blusse.resize(0);
     obstacles.resize(0);
     if(!type) score = 0;
     QMetaObject::invokeMethod(t_boost,"stop");
     //QMetaObject::invokeMethod(t_an,"stop");
     QMetaObject::invokeMethod(t_tilt,"stop");
     enemylife = 10;
+    caveSpawnCount = 0;
     medal = 0;
+    if(localPlayTime>playTime) {
+        playTime = localPlayTime;
+        write();
+    }
+    localPlayTime = 0;
     boxDeath = 0;
     boxState = 0;
+    polyTop.resize(0);
+    polyBottom.resize(0);
+    newHS = false;
     schmuser = 0;
     movingObstacles = 0;
     enemydir = 1;
@@ -993,21 +1225,23 @@ void FrmMain::paintEvent(QPaintEvent *e)
     //painter.setBrush(QColor(0,143,255));
     //painter.drawRect(0,-2,1080,1922);
     painter.drawPixmap(0,0,1080,1660,backgrounds[shop->chosenBackground-1]->background);
-    if(flag) {
-        painter.drawRect(80,1237,20,13);
-        painter.drawRect(120,1237,10,13);
-        painter.drawRect(100,1300,20,10);
-        painter.drawRect(60,1300,20,10);
-        painter.setBrush(QColor(238,77,46));
-        painter.drawRect(50,1240,20,10);
-        painter.drawRect(50,1250,10,10);
-        painter.drawRect(100,1240,20,10);
-        painter.drawRect(120,1300,10,10);
-        painter.drawRect(80,1300,20,10);
-    } else {
-        painter.setBrush(QColor(238,77,46));
-        painter.drawRect(50,1300,10,10);
-        painter.drawRect(50,1290,10,10);
+    if(!cave) {
+        if(flag) {
+            painter.drawRect(80,1237,20,13);
+            painter.drawRect(120,1237,10,13);
+            painter.drawRect(100,1300,20,10);
+            painter.drawRect(60,1300,20,10);
+            painter.setBrush(QColor(238,77,46));
+            painter.drawRect(50,1240,20,10);
+            painter.drawRect(50,1250,10,10);
+            painter.drawRect(100,1240,20,10);
+            painter.drawRect(120,1300,10,10);
+            painter.drawRect(80,1300,20,10);
+        } else {
+            painter.setBrush(QColor(238,77,46));
+            painter.drawRect(50,1300,10,10);
+            painter.drawRect(50,1290,10,10);
+        }
     }
     if(backgrounds[shop->chosenBackground-1]->windows) {
         painter.setBrush(QColor(49,49,49));
@@ -1032,15 +1266,23 @@ void FrmMain::paintEvent(QPaintEvent *e)
     painter.setBrush(QColor(255,153,0));
     painter.save();
     painter.translate(mainX+1080,0);
-    for(int i=0;i<obstacles.size();i++) {
-        painter.drawPixmap(obstacles[i]->getTop(),obstacles[i]->px,QRectF(0,0,64,64));
-        painter.drawPixmap(obstacles[i]->getBottom(),obstacles[i]->px,QRectF(0,0,64,64));
+    if(!cave) {
+        for(int i=0;i<obstacles.size();i++) {
+            if(obstacles[i]->getTop().intersects(QRectF(0,0,1080,1920))) {
+                painter.drawPixmap(obstacles[i]->getTop(),obstacles[i]->px,QRectF(0,0,64,64));
+                painter.drawPixmap(obstacles[i]->getBottom(),obstacles[i]->px,QRectF(0,0,64,64));
+            }
+        }
+    } else {
+        painter.setBrush(QColor(68,68,68));
+        painter.drawPolygon(polyBottom);
+        painter.drawPolygon(polyTop);
     }
     painter.restore();
     painter.drawPixmap(QRectF(g1x,1660,1080,260),ground,QRectF(0,0,108,25));
     painter.setBrush(QColor(0,143,255));
     //painter.drawRect(player->getRect());
-    if(active>0||active==-1||moveAn==3||moveAn==1) {
+    if(active>0||active==-1||moveAn==3||moveAn==1||moveAn==-1) {
         player->setPos((mainX+1080)+250,player->getRect().y());
         painter.save();
         painter.translate(player->getRect().center().x(),player->getRect().center().y());
@@ -1051,29 +1293,31 @@ void FrmMain::paintEvent(QPaintEvent *e)
                                   player->getRect().width(),player->getRect().height()),player->getPx(),QRectF(0,0,34,35));
         painter.restore();
     }
-    for(int i=0;i<obstacles.size();i++) {
-        painter.save();
-        painter.translate(mainX+1080,0);
-        painter.drawPixmap(obstacles[i]->train,trainPx,QRectF(0,0,20,8));
-        painter.drawPixmap(obstacles[i]->train2,train2Px,QRectF(0,0,20,8));
-        if(obstacles[i]->hasBox) {
-            switch(obstacles[i]->boxType) {
-                case -1:
-                    painter.drawPixmap(obstacles[i]->box,box3Px,QRectF(0,0,11,10));
-                break;
-                case 0:
-                    painter.drawPixmap(obstacles[i]->box,box2Px,QRectF(0,0,11,10));
-                break;
-                case 1:
-                    if(obstacles[i]->opacity<=1.0) {
-                        painter.setOpacity(obstacles[i]->opacity);
-                    }
-                    painter.drawPixmap(obstacles[i]->box,boxPx,QRectF(0,0,11,10));
-                    painter.setOpacity(1);
-                break;
+    if(!cave) {
+        for(int i=0;i<obstacles.size();i++) {
+            painter.save();
+            painter.translate(mainX+1080,0);
+            painter.drawPixmap(obstacles[i]->train,trainPx,QRectF(0,0,20,8));
+            painter.drawPixmap(obstacles[i]->train2,train2Px,QRectF(0,0,20,8));
+            if(obstacles[i]->hasBox) {
+                switch(obstacles[i]->boxType) {
+                    case -1:
+                        painter.drawPixmap(obstacles[i]->box,box3Px,QRectF(0,0,11,10));
+                    break;
+                    case 0:
+                        painter.drawPixmap(obstacles[i]->box,box2Px,QRectF(0,0,11,10));
+                    break;
+                    case 1:
+                        if(obstacles[i]->opacity<=1.0) {
+                            painter.setOpacity(obstacles[i]->opacity);
+                        }
+                        painter.drawPixmap(obstacles[i]->box,boxPx,QRectF(0,0,11,10));
+                        painter.setOpacity(1);
+                    break;
+                }
             }
+            painter.restore();
         }
-        painter.restore();
     }
     if(boxDeath>0) {
         QRectF area = obstacles[obsNum]->box;
@@ -1097,33 +1341,69 @@ void FrmMain::paintEvent(QPaintEvent *e)
         pen.setWidth(2);
         painter.setPen(pen);
     }
+    QRectF v = player->getRect();
+    v.adjust(-310,-310,310,310);
     for(int i=0;i<blusse.size();i++) {
-        if(!blusse[i]->isText()&&!blusse[i]->isRect) {
-            painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
-            painter.drawPixmap(blusse[i]->getRect(),blusse[i]->getPixmap(),QRectF(0,0,blusse[i]->width,blusse[i]->height));
-            painter.setOpacity(1);
-        } else if(blusse[i]->isRect) {
-            painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
-            painter.setBrush(blusse[i]->color);
-            painter.drawRect(blusse[i]->getRect());
-            painter.setOpacity(1);
+        if((hardcore&&blusse[i]->getRect().intersects(v)&&active)||(hardcore&&!active)||!hardcore||moveAn==1) {
+            if(!blusse[i]->isText()&&!blusse[i]->isRect) {
+                if(blusse[i]->getRect().intersects(QRectF(0,0,1080,1920))) {
+                    painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
+                    painter.drawPixmap(blusse[i]->getRect(),blusse[i]->getPixmap(),QRectF(0,0,blusse[i]->width,blusse[i]->height));
+                    painter.setOpacity(1);
+                }
+            } else if(blusse[i]->isRect&&!blusse[i]->spark) {
+                if(blusse[i]->getRect().intersects(QRectF(0,0,1080,1920))) {
+                    painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
+                    painter.setBrush(blusse[i]->color);
+                    painter.drawRect(blusse[i]->getRect());
+                    painter.setOpacity(1);
+                }
+            }
+        }
+    }
+    if(hardcore) {
+        painter.setPen(Qt::NoPen);
+        QPainterPath path;
+        QPainterPath inner;
+        int x;
+        if(moveAn==-1) {
+            x = 0;
         } else {
+            x = endX;
+        }
+        path.addRect(x,0,1080,1920);
+        inner.addEllipse(player->getRect().center(),radR,radR);
+        path = path.subtracted(inner);
+        painter.fillPath(path,QColor(22,22,24));
+    }
+    for(int i=0;i<blusse.size();i++) {
+        if(blusse[i]->isText()&&blusse[i]->size>0) {
             f.setPixelSize(blusse[i]->size);
             painter.setFont(f);
             if(blusse[i]->getOpacity()>0) {
-                painter.setPen(QPen(QColor(255,255,255,blusse[i]->getOpacity())));
+                QColor b = blusse[i]->color;
+                painter.setPen(QPen(QColor(b.red(),b.green(),b.blue(),blusse[i]->getOpacity())));
                 painter.drawText(blusse[i]->getRect().x(),blusse[i]->getRect().y(),blusse[i]->getText());
             }
         }
     }
     if(active==2) {
-        f.setPixelSize(68);
-        painter.setFont(f);
         //800*480
         painter.drawPixmap(endX+140,750,800,480,end);
         //300*150
-        painter.drawPixmap(endX+390,1300,300,150,btnPx);
+        painter.drawPixmap(endX+190,1300,300,150,btnPx);
+        painter.drawPixmap(endX+590,1300,300,150,btnPx);
+        if(newHS) {
+            painter.setBrush(QColor(255,153,0));
+            painter.drawRect(endX+600,1106,110,60);
+            painter.setPen(QColor(255,0,130));
+            f.setPixelSize(38);
+            painter.setFont(f);
+            painter.drawText(QRect(endX+601,1120,110,60),transl->getText_Neu().text);
+        }
         painter.setPen(QColor(0,143,255));
+        f.setPixelSize(68);
+        painter.setFont(f);
         switch(medal) {
             case 1:
                 painter.drawPixmap(endX+160,890,300,300,medal_bronze);
@@ -1143,9 +1423,10 @@ void FrmMain::paintEvent(QPaintEvent *e)
         }
         painter.drawText(endX+720,970,QString::number(score));
         painter.drawText(endX+720,1175,QString::number(highscore));
-        painter.drawText(endX+480,1410,"OK");
+        painter.drawText(QRect(endX+190,1300,300,150),Qt::AlignCenter,"Ok");
+        painter.drawText(QRect(endX+590,1300,300,150),Qt::AlignCenter,transl->getBtn_Go().text);
     }
-    if(active>0||active==-1||moveAn==3) {
+    if(active>0||active==-1||moveAn==3||moveAn==-1) {
         f.setPixelSize(56);
         painter.setFont(f);
         painter.setPen(QColor(255,0,130));
@@ -1211,14 +1492,30 @@ void FrmMain::paintEvent(QPaintEvent *e)
             painter.drawPixmap(mainX+180,1538,150,150,medal_bronze);
         }
         painter.setFont(f);
-        painter.setPen(QColor(0,143,255));
         painter.drawPixmap(QRect(mainX+390,900,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1100,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1300,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+439,1308,200,120),stats);
         painter.drawPixmap(QRect(mainX+10,1810,160,96),flag_de);
         painter.drawPixmap(QRect(mainX+175,1810,160,96),flag_en);
-        painter.drawPixmap(QRect(mainX+910,1810,160,100),referralPx1);
+        painter.drawPixmap(QRect(mainX+910,1810,160,96),referralPx1);
+        painter.setBrush(QColor(238,77,46));
+        painter.drawRect(QRect(mainX+725,1810,180,96));
+        painter.setBrush(QColor(162,162,162));
+        painter.drawRect(mainX,925,25,10);
+        painter.drawRect(mainX,1200,25,10);
+        painter.drawPixmap(QRect(mainX+20,900,75,325),btnPx);
+        f.setPixelSize(32);
+        painter.setFont(f);
+        painter.setPen(QColor(0,143,255));
+        if(hardcore) {
+            painter.drawText(QRect(mainX+23,900,75,325),Qt::AlignCenter,"H\nA\nR\nD\nC\nO\nR\nE");
+        } else {
+            painter.drawText(QRect(mainX+23,900,75,325),Qt::AlignCenter,"N\nO\nR\nM\nA\nL");
+        }
+        f.setPixelSize(25);
+        painter.setFont(f);
+        painter.drawText(QRect(mainX+725,1810,180,96),Qt::AlignCenter,"Spenden");
         painter.setBrush(QColor(22,22,24));
         painter.setOpacity(0.75);
         if(transl->locale.language()==QLocale::German) {
@@ -1227,6 +1524,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
             painter.drawRect(mainX+10,1810,160,96);
         }
         painter.setOpacity(1);
+        f.setPixelSize(go.size);
+        painter.setFont(f);
         painter.drawText(QPoint(mainX+go.pos.x(),go.pos.y()),go.text);
         f.setPixelSize(shopT.size);
         painter.setFont(f);
@@ -1296,7 +1595,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     switch(active) {
     case 0:
         if(shop->getActive()) {
-            shop->mousePress(QPoint(x,y));
+            shop->mousePress(QPoint(x,y),cave);
         } else if(scoreboard->active) {
             scoreboard->mpress(QPoint(x,y));
         }
@@ -1354,6 +1653,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     }
                 }*/
             } else if(QRect(x,y,1,1).intersects(QRect(390,900,300,150))) {
+                radR = 1700;
                 moveAn = 3;
             } else if(QRect(x,y,1,1).intersects(QRect(390,1100,300,150))) { //shop
                 moveAn = 2;
@@ -1382,13 +1682,15 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     scoreboard->first="0";
                 }
                 if(highscore&&ok) {
-                    scoreboard->setScore(highscore);
+                    int num = highscore;
+                    if(highscore*3>playTime) num = -1;
+                    scoreboard->setScore(num,highscore);
                     if(scoreboard->wasConnected) {
                         scoreboard->getScores();
                     }
                 }
                 if(ok&&scoreboard->wasConnected) scoreboard->active = true;
-            } else if(QRect(x,y,1,1).intersects(QRect(775,1550,150,135))) {
+            } else if(QRect(x,y,1,1).intersects(QRect(775,1550,150,135))) { //kiste
                 if(boxCount) {
                     if(boxState>2) {
                         boxState = 0;
@@ -1436,10 +1738,20 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         boxState++;
                     }
                 }
-            } else if(QRect(x,y,1,1).intersects(QRect(910,1810,160,100))) {
+            } else if(QRect(x,y,1,1).intersects(QRect(910,1810,160,100))) { //ref
                 refActive = true;
                 if(refkey!="") return;
                 for(int i=0;i<10;i++) refkey = genKey();
+            } else if(QRect(x,y,1,1).intersects(QRect(mainX+725,1810,180,96))) {//spenden
+                QMessageBox::information(this,"Info",transl->getText_Donate().text);
+            } else if(QRect(x,y,1,1).intersects(QRect(20,900,75,325))) { //hardcore
+                if(!cave) {
+                    if(hardcore) {
+                        hardcore = false;
+                    } else {
+                        hardcore = true;
+                    }
+                }
             }
         break;
         case -1:
@@ -1500,23 +1812,25 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         QMetaObject::invokeMethod(t_boost,"start",Q_ARG(int,50));
                     }
                 }
-                for(int i=0;i<obstacles.size();i++) {
-                    if(obstacles[i]->hasBox) {
-                        QRectF r = obstacles[i]->box;
-                        if(QRectF(x,y,1,1).intersects(QRectF(r.x()-20,r.y()-20,r.width()+40,r.height()+40))) {
-                            if(obstacles[i]->boxType&&obstacles[i]->opacity==1.1) {
-                                obstacles[i]->opacity=1.0;
-                                boxCount++;
-                                write();
-                            } else if(!boxDeath&&!obstacles[i]->boxType) {
-                                QMetaObject::invokeMethod(t_boxDeathAn,"start",Q_ARG(int,10));
-                                boxDeath = 0;
-                                obsNum = i;
-                                obstacles[obsNum]->boxType = -1;
-                                active = 3;
-                                flashOpacity = 0.5;
+                if(!cave) {
+                    for(int i=0;i<obstacles.size();i++) {
+                        if(obstacles[i]->hasBox) {
+                            QRectF r = obstacles[i]->box;
+                            if(QRectF(x,y,1,1).intersects(QRectF(r.x()-20,r.y()-20,r.width()+40,r.height()+40))) {
+                                if(obstacles[i]->boxType&&obstacles[i]->opacity==1.1) {
+                                    obstacles[i]->opacity=1.0;
+                                    boxCount++;
+                                    write();
+                                } else if(!boxDeath&&!obstacles[i]->boxType) {
+                                    QMetaObject::invokeMethod(t_boxDeathAn,"start",Q_ARG(int,10));
+                                    boxDeath = 0;
+                                    obsNum = i;
+                                    obstacles[obsNum]->boxType = -1;
+                                    active = 3;
+                                    flashOpacity = 0.5;
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
@@ -1540,8 +1854,23 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
             }
         break;
         case 2:
-            if(QRect(x,y,1,1).intersects(QRect(390,1300,300,150))) {
+            if(QRect(x,y,1,1).intersects(QRect(190,1300,300,150))) {
+                radR = 350;
                 moveAn = 1;
+                for(int i=0;i<polyTop.size();i++) {
+                    if(polyTop.at(i).x()<0) {
+                        polyTop[i] = QPointF(0,polyTop.at(i).y());
+                        polyTop[polyTop.size()-i-1] = QPointF(0,polyTop.at(polyTop.size()-i-1).y());
+                    }
+                }
+                for(int i=0;i<polyBottom.size();i++) {
+                    if(polyBottom.at(i).x()<0) {
+                        polyBottom[i] = QPointF(0,polyBottom.at(i).y());
+                        polyBottom[polyBottom.size()-i-1] = QPointF(0,polyBottom.at(polyBottom.size()-i-1).y());
+                    }
+                }
+            } else if(QRect(x,y,1,1).intersects(QRect(590,1300,300,150))) {
+                moveAn = -1;
             }
         break;
     }
@@ -1550,13 +1879,15 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
 void FrmMain::keyPressEvent(QKeyEvent *e)
 {
     if(moveAn) return;
+    write();
     if(e->key()==Qt::Key_Back) {
         if(shop->getActive()) {
             moveAn = 4;
         } else if(scoreboard->active){
             moveAn = 6;
         } else {
-            write();
+            QMetaObject::invokeMethod(t_blus,"stop");
+            QMetaObject::invokeMethod(t_main,"stop");
             QApplication::quit();
         }
     }
@@ -1566,4 +1897,6 @@ void FrmMain::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event)
     write();
+    QMetaObject::invokeMethod(t_blus,"stop");
+    QMetaObject::invokeMethod(t_main,"stop");
 }
