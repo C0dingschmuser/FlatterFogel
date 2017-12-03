@@ -435,8 +435,20 @@ Text Translation::getText_Changelog()
             t.text = "Neue Features:\n"
                      "-> Höhlenmpdus:\n"
                      "zum spielen letzten Hintergrund kaufen\n"
-                     "-> Scoreboard verbesserungen\n"
-                     "-> Bugfixes";
+                     "-> Neue Skins:\n"
+                     "Fliesentisch\n"
+                     "Schmuserkadser\n"
+                     "Fliegende Forelle\n"
+                     "-> Neuer Schnee\n"
+                     "-> Neue Medaille: Smaragd\n"
+                     "-> Verbesserungen:\n"
+                     "Scoreboard\n"
+                     "Shop-Auswahl\n"
+                     "Animationen\n"
+                     "Score wird erst nach passieren erhöht\n"
+                     "-> Bugfixes:\n"
+                     "Score größer als 999 wird jetzt angezeigt\n"
+                     "Weitere kleinere Fehler";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -445,7 +457,9 @@ Text Translation::getText_Changelog()
                      "-> Cave-Mode\n"
                      "   -> To activate purchase\n"
                      "      last Background\n"
-                     "-> Scoreboard improvements\n"
+                     "-> 3 new Skins\n"
+                     "-> New medal: Emerald\n"
+                     "-> General improvements\n"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
@@ -704,7 +718,8 @@ Text Translation::getText_Donate()
                      "du auf eine Spenderliste und darfst dir\n"
                      "einen Skin ausdenken, der dann für jedermann\n"
                      "in den Shop kommt.\n\n"
-                     ""
+                     "Edle Spender:\n"
+                     "- Archos405 10€\n\n"
                      "Meine Paypal-Email:\n"
                      "firediver98@gmail.com";
             t.pos = QPoint(525,1405);

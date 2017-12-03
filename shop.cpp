@@ -105,6 +105,9 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     skinPrice.append(1);
     skinPrice.append(1);
     skinPrice.append(2);
+    skinPrice.append(2);
+    skinPrice.append(2);
+    skinPrice.append(2);
     bgPrice.append(0);
     bgPrice.append(1);
     bgPrice.append(1);
@@ -250,6 +253,9 @@ void Shop::draw(QPainter &painter)
         drawSkin(shopX+500,800,100,100,10,painter);
         drawSkin(shopX+650,800,100,100,11,painter);
         drawSkin(shopX+200,950,100,100,12,painter);
+        drawSkin(shopX+350,950,100,100,13,painter);
+        drawSkin(shopX+500,950,100,100,14,painter);
+        drawSkin(shopX+650,950,100,100,15,painter);
         break;
     case 2:
         drawBg(shopX+200,500,248,381,0,painter);
@@ -308,7 +314,7 @@ void Shop::mousePress(QPoint pos, bool &cave)
         }
     } else {
         switch(page) {
-            case 1: //
+            case 1: //skins
                 if(r.intersects(QRect(200,500,100,100))) {
                     selected = 1;
                 } else if(r.intersects(QRect(350,500,100,100))) {
@@ -335,13 +341,19 @@ void Shop::mousePress(QPoint pos, bool &cave)
                     selected = 12;
                 } else if(r.intersects(QRect(200,950,100,100))) {
                     selected = 13;
+                } else if(r.intersects(QRect(350,950,100,100))) {
+                    selected = 14;
+                } else if(r.intersects(QRect(500,950,100,100))) {
+                    selected = 15;
+                } else if(r.intersects(QRect(650,950,100,100))) {
+                    selected = 16;
                 }
                 if(skinPrice[selected-1]>1) player->reload(selected-1);
                 if(ownedSkins.contains(selected-1)) {
                     chosenSkin = selected;
                 }
             break;
-            case 2:
+            case 2://bgs
                 if(r.intersects(QRect(200,500,248,381))) {
                     selected = 1;
                 } else if(r.intersects(QRect(481,500,248,381))) {

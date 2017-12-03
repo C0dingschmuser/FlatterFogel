@@ -84,6 +84,7 @@ private:
     double localPlayTime;
     bool hardcore;
     bool cave;
+    QDateTime currentDateTime;
     QTimer *t_draw;
     QTimer *t_main;
     QTimer *t_obst;
@@ -109,6 +110,7 @@ private:
     QPoint mousePos;
     QThread *workerThread;
     QThread *blusThread;
+    QThread *animationThread;
     QVector <Obstacle*> obstacles;
     QVector <Blus*> blusse;
     QVector <PxAn*> pxans;
@@ -132,6 +134,7 @@ private:
     QPixmap medal_gold;
     QPixmap medal_platin;
     QPixmap medal_diamond;
+    QPixmap medal_emerald;
     QPixmap flag_de;
     QPixmap flag_en;
     QPixmap stats;
@@ -151,6 +154,7 @@ private:
     QString enemy;
     QString version;
     QString refkey;
+    QString confirmkey;
     QRectF enemyRect;
     QPolygonF polyTop;
     QPolygonF polyBottom;

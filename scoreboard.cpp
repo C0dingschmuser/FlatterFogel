@@ -45,8 +45,10 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         painter.drawText(scoreX+50,550+(i*60),name);
         painter.drawText(scoreX+850,550+(i*60),score);
         int scoreI = score.toInt();
-        int medal;
-        if(scoreI>=300) {
+        int medal=0;
+        if(scoreI>=1000) {
+            medal = 5;
+        } else if(scoreI>=300) {
             medal = 4;
         } else if(scoreI>=175) {
             medal = 3;

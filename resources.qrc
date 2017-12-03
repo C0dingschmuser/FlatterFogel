@@ -92,12 +92,18 @@
 		<file>images/player/skins/10.png</file>
 		<file>images/player/skins/11.png</file>
 		<file>images/player/skins/12.png</file>
+		<file>images/player/skins/13.png</file>
+		<file>images/player/skins/14.png</file>
+		<file>images/player/skins/15.png</file>
 		<file>images/player/an1_1.png</file>
 		<file>images/player/an1_2.png</file>
 		<file>images/player/an1_3.png</file>
 		<file>images/player/an12_1.png</file>
 		<file>images/player/an12_2.png</file>
 		<file>images/player/an12_3.png</file>
+		<file>images/player/an15_1.png</file>
+		<file>images/player/an15_2.png</file>
+		<file>images/player/an15_3.png</file>
 		<file>font/PressStart2P.ttf</file>
 		<file>font/LICENSE.txt</file>
 		<file>images/medals/bronze.png</file>
@@ -105,6 +111,7 @@
 		<file>images/medals/gold.png</file>
 		<file>images/medals/platin.png</file>
 		<file>images/medals/diamant.png</file>
+		<file>images/medals/smaragd.png</file>
 		<file>images/flag/de.png</file>
 		<file>images/flag/en.png</file>
 		<file>images/referral.png</file>

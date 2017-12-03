@@ -16,17 +16,19 @@ Player::Player(QRectF rect)
 
 QPixmap Player::getPx()
 {
+    QPixmap ret;
     switch(an) {
         case 0:
-            return g0;
+            ret = g0;
         break;
         case 1:
-            return g1;
+            ret = g1;
         break;
         case 2:
-            return g2;
+            ret = g2;
         break;
     }
+    return ret;
 }
 
 void Player::setPos(double x, double y)
