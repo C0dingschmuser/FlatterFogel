@@ -3,14 +3,16 @@
 #include <QRect>
 #include <QPolygonF>
 #include <QPixmap>
+#include <QVector>
 #include <QDebug>
 
 class Player
 {
 private:
     QRectF rect;
+    QRectF collRect;
     double velD;
-    int benis;
+    unsigned long long benis;
 public:
     Player(QRectF rect);
     QPixmap g0;
@@ -19,17 +21,21 @@ public:
     int an;
     int coins;
     bool dir;
+    bool circle;
+    bool hasAn;
     double tilt;
     bool tdir;
     double tstep;
     QPixmap getPx();
     void setPos(double x, double y);
     void setVelD(double velD);
-    void setBenis(int benis);
+    void setBenis(unsigned long long benis);
+    void setCollRect(int offX, int offY, int offW, int offH);
     void reload(int id);
-    int getBenis();
+    unsigned long long getBenis();
     double getVelD();
     QRectF getRect();
+    QRectF getCollRect();
     QPolygonF getPoly();
 };
 

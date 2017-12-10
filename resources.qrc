@@ -14,6 +14,7 @@
 		<file>images/buttons/btnBG.png</file>
 		<file>images/buttons/btnPow.png</file>
 		<file>images/buttons/btnSkins.png</file>
+		<file>images/buttons/btnPipe.png</file>
 		<file>images/coin.png</file>
 		<file>images/box/box.png</file>
 		<file>images/box/box2.png</file>
@@ -69,8 +70,42 @@
 		<file>images/items/item4.png</file>
 		<file>images/items/item_bc.png</file>
 		<file>images/shopM.png</file>
-		<file>images/pipe1.png</file>
-		<file>images/pipe2.png</file>
+		<file>images/pipes/thumbs/0.jpg</file>
+		<file>images/pipes/thumbs/1.jpg</file>
+		<file>images/pipes/thumbs/2.jpg</file>
+		<file>images/pipes/thumbs/3.jpg</file>
+		<file>images/pipes/thumbs/4.jpg</file>
+		<file>images/pipes/thumbs/5.jpg</file>
+		<file>images/pipes/thumbs/6.jpg</file>
+		<file>images/pipes/thumbs/7.jpg</file>
+		<file>images/pipes/thumbs/8.jpg</file>
+		<file>images/pipes/thumbs/9.jpg</file>
+		<file>images/pipes/thumbs/10.jpg</file>
+		<file>images/pipes/thumbs/11.jpg</file>
+		<file>images/pipes/thumbs/12.jpg</file>
+		<file>images/pipes/thumbs/13.jpg</file>
+		<file>images/pipes/thumbs/14.jpg</file>
+		<file>images/pipes/thumbs/15.jpg</file>
+		<file>images/pipes/thumbs/16.jpg</file>
+		<file>images/pipes/thumbs/17.jpg</file>
+		<file>images/pipes/thumbs/18.jpg</file>
+		<file>images/pipes/thumbs/19.jpg</file>
+		<file>images/pipes/thumbs/20.jpg</file>
+		<file>images/pipes/thumbs/21.jpg</file>
+		<file>images/pipes/thumbs/22.jpg</file>
+		<file>images/pipes/thumbs/23.jpg</file>
+		<file>images/pipes/thumbs/24.jpg</file>
+		<file>images/pipes/thumbs/25.jpg</file>
+		<file>images/pipes/thumbs/26.jpg</file>
+		<file>images/pipes/thumbs/27.jpg</file>
+		<file>images/pipes/thumbs/28.jpg</file>
+		<file>images/pipes/0.png</file>
+		<file>images/pipes/1.png</file>
+		<file>images/pipes/2.png</file>
+		<file>images/pipes/3.png</file>
+		<file>images/pipes/4.png</file>
+		<file>images/pipes/5.png</file>
+		<file>images/pipes/6.png</file>
 		<file>images/ground.png</file>
 		<file>images/backgrounds/bg1.png</file>
 		<file>images/backgrounds/bg2.png</file>
@@ -95,6 +130,11 @@
 		<file>images/player/skins/13.png</file>
 		<file>images/player/skins/14.png</file>
 		<file>images/player/skins/15.png</file>
+		<file>images/player/skins/16.png</file>
+		<file>images/player/skins/17.png</file>
+		<file>images/player/skins/18.png</file>
+		<file>images/player/skins/19.png</file>
+		<file>images/player/skins/20.png</file>
 		<file>images/player/an1_1.png</file>
 		<file>images/player/an1_2.png</file>
 		<file>images/player/an1_3.png</file>
@@ -104,6 +144,9 @@
 		<file>images/player/an15_1.png</file>
 		<file>images/player/an15_2.png</file>
 		<file>images/player/an15_3.png</file>
+		<file>images/player/an18_1.png</file>
+		<file>images/player/an18_2.png</file>
+		<file>images/player/an18_3.png</file>
 		<file>font/PressStart2P.ttf</file>
 		<file>font/LICENSE.txt</file>
 		<file>images/medals/bronze.png</file>
@@ -115,5 +158,6 @@
 		<file>images/flag/de.png</file>
 		<file>images/flag/en.png</file>
 		<file>images/referral.png</file>
+		<file>images/mieserkadser.png</file>
     </qresource>
 </RCC>

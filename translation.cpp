@@ -197,13 +197,13 @@ Text Translation::getText_Shop_Item4()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Kann nur vor Spielbeginn aktiviert werden.\n"
-                     "Boostet den Spieler bis zu einer Score von 40.";
+                     "Boostet den Spieler bis zu einer Score von 45.";
             t.pos = QPoint(7,1688);
             t.size = 25;
         break;
         default:
             t.text = "Can only used before the game starts.\n"
-                     "Boosts the Player to a Score of 40.";
+                     "Boosts the Player to a Score of 45.";
             t.pos = QPoint(20,1696);
             t.size = 35;
         break;
@@ -433,33 +433,32 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Höhlenmpdus:\n"
-                     "zum spielen letzten Hintergrund kaufen\n"
-                     "-> Neue Skins:\n"
-                     "Fliesentisch\n"
-                     "Schmuserkadser\n"
-                     "Fliegende Forelle\n"
-                     "-> Neuer Schnee\n"
-                     "-> Neue Medaille: Smaragd\n"
-                     "-> Verbesserungen:\n"
-                     "Scoreboard\n"
-                     "Shop-Auswahl\n"
-                     "Animationen\n"
-                     "Score wird erst nach passieren erhöht\n"
+                     "-> Säulenskins\n"
+                     "-> Max Benis von 2 Milliarden auf 18 Trillionen erhöht\n"
+                     "-> Mieserkadser alle 30\n"
+                     "-> Erweiterte Rundeninfos\n"
+                     "-> Minus beim Fliesentisch\n"
+                     "-> Pause-Button vergrößert\n"
+                     "-> Bessere Hitbox\n"
+                     "-> Skins:\n"
+                     "Spurdo Original\n"
+                     "Reichsflugscheibe\n"
+                     "Gerondolom\n"
+                     "Andreas\n"
+                     "Bf109\n"
                      "-> Bugfixes:\n"
-                     "Score größer als 999 wird jetzt angezeigt\n"
-                     "Weitere kleinere Fehler";
+                     "Benis beim Höhlenmodus\n"
+                     "Speedboost-länge gefixt\n"
+                     "Speedboost im Höhlenmodus gefixt\n"
+                     "Schmuserkadser-Skin korrigiert\n"
+                     "Weitere kleine Fehler";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "-> Cave-Mode\n"
-                     "   -> To activate purchase\n"
-                     "      last Background\n"
-                     "-> 3 new Skins\n"
-                     "-> New medal: Emerald\n"
-                     "-> General improvements\n"
+                     "-> Added Pipeskins\n"
+                     "-> New Skins"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
@@ -719,7 +718,9 @@ Text Translation::getText_Donate()
                      "einen Skin ausdenken, der dann für jedermann\n"
                      "in den Shop kommt.\n\n"
                      "Edle Spender:\n"
-                     "- Archos405 10€\n\n"
+                     "- Archos405 10€\n"
+                     "- TimBeam   10€\n"
+                     "- Elevate   5€\n\n"
                      "Meine Paypal-Email:\n"
                      "firediver98@gmail.com";
             t.pos = QPoint(525,1405);
@@ -764,6 +765,24 @@ Text Translation::getText_Neu()
         break;
         default:
             t.text = "NEW";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_CN()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Namen zurücksetzen?";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Reset Name?";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;

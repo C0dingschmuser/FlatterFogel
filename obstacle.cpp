@@ -5,15 +5,16 @@ Obstacle::Obstacle()
 
 }
 
-Obstacle::Obstacle(QRect top, QRect bottom, QPixmap px, int type, bool box, int boxType)
+Obstacle::Obstacle(QRect top, QRect bottom, int type, bool box, int boxType)
 {
     dir = 0;
+    am = -1;
+    del = false;
     this->type = type;
     this->top = QRectF(top);
     this->bottom = QRectF(bottom);
     train = QRectF(top.x()-150,1780,200,80);
     train2 = QRectF(top.x()+50,1780,200,80);
-    this->px = px;
     this->hasBox = box;
     if(hasBox) {
         this->box = QRectF(top.x()+120,1789,60,50);

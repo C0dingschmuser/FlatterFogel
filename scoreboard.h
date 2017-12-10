@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QTcpSocket>
+#include <QMessageBox>
 #include "translation.h"
 
 class Scoreboard : public QObject

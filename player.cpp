@@ -12,6 +12,8 @@ Player::Player(QRectF rect)
     tilt = 45;
     tdir = 0;
     tstep = 1;
+    circle = false;
+    an=true;
 }
 
 QPixmap Player::getPx()
@@ -33,7 +35,10 @@ QPixmap Player::getPx()
 
 void Player::setPos(double x, double y)
 {
+    double diffX = collRect.x()-rect.x();
+    double diffY = collRect.y()-rect.y();
     rect.moveTo(x,y);
+    collRect.moveTo(x+diffX,y+diffY);
 }
 
 void Player::setVelD(double velD)
@@ -41,9 +46,14 @@ void Player::setVelD(double velD)
     this->velD = velD;
 }
 
-void Player::setBenis(int benis)
+void Player::setBenis(unsigned long long benis)
 {
     this->benis = benis;
+}
+
+void Player::setCollRect(int offX, int offY, int offW, int offH)
+{
+    collRect = QRect(rect.x()+offX,rect.y()+offY,rect.width()+offW,rect.height()+offH);
 }
 
 void Player::reload(int id)
@@ -53,7 +63,7 @@ void Player::reload(int id)
     g2 = QPixmap(":/images/player/an"+QString::number(id)+"_3.png");
 }
 
-int Player::getBenis()
+unsigned long long Player::getBenis()
 {
     return benis;
 }
@@ -66,6 +76,11 @@ double Player::getVelD()
 QRectF Player::getRect()
 {
     return rect;
+}
+
+QRectF Player::getCollRect()
+{
+    return collRect;
 }
 
 QPolygonF Player::getPoly()

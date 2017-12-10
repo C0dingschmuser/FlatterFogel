@@ -18,6 +18,8 @@
 #include <QInputDialog>
 #include <QTime>
 #include <QGuiApplication>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QInputMethod>
 #include <QFontDatabase>
 #include <QFont>
@@ -50,7 +52,6 @@ private slots:
     void on_shopBack();
     void on_shopMsg(QString msg);
     void on_shopBuy(int amount, bool buy=true, bool coin=false);
-    void on_trevive();
     void on_tboxDeathAn();
     void on_tboost();
     void on_tAn();
@@ -77,19 +78,23 @@ private:
     int endX;
     bool anDir;
     int newHS;
-    int movingObstacles;
+    int stationaryObstacles;
     int moveAn;
+    unsigned long cBox;
+    unsigned long cBTouch;
+    unsigned long cBPipe;
     double radR;
     double playTime;
     double localPlayTime;
+    double reviveTime;
     bool hardcore;
     bool cave;
+    bool loading;
     QDateTime currentDateTime;
     QTimer *t_draw;
     QTimer *t_main;
     QTimer *t_obst;
     QTimer *t_event;
-    QTimer *t_revive;
     QTimer *t_boost;
     QTimer *t_an;
     QTimer *t_tilt;
@@ -117,6 +122,8 @@ private:
     QVector <Window*> windows;
     QVector <Star*> stars;
     QVector <QPixmap> skins;
+    QVector <QPixmap> pipes;
+    QVector <QPixmap> thumbs;
     QVector <Background*> backgrounds;
     int currentskin;
     int random(int min, int max);
@@ -149,17 +156,20 @@ private:
     QPixmap cloudPx;
     QPixmap referralPx1;
     QPixmap referralPx2;
+    QPixmap mieserkadserPx;
     QVector <QPixmap> boxPxAn;
     QVector <QPixmap> explosion;
     QString enemy;
     QString version;
     QString refkey;
     QString confirmkey;
+    QString lastPost;
     QRectF enemyRect;
     QPolygonF polyTop;
     QPolygonF polyBottom;
     QPolygonF polyColl;
     bool fastboost;
+    bool newpost;
     Translation *transl;
     Scoreboard *scoreboard;
     QString name;
@@ -202,6 +212,9 @@ private:
     QString lucaAlg(QString text);
     bool checkKey(QString key);
     bool checkConfirm(QString key);
+    bool intersectsWithCircle(QRectF rect, QRectF circle);
+    void checkPost();
+    double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);

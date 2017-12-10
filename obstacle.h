@@ -2,6 +2,7 @@
 #define OBSTACLE_H
 #include <QRectF>
 #include <QPixmap>
+#include <QVector>
 #include <QDebug>
 
 class Obstacle
@@ -11,13 +12,18 @@ private:
     QRectF bottom;
 public:
     Obstacle();
-    Obstacle(QRect top, QRect bottom, QPixmap px, int type=0, bool box=false, int boxType=0);
+    Obstacle(QRect top, QRect bottom, int type=0, bool box=false, int boxType=0);
     QPixmap px;
     bool approved;
     bool hasBox;
+    bool del;
     int dir;
     int type;
     int boxType;
+    int am;
+    int am2;
+    QVector <int> nums;
+    QVector <int> nums2;
     double opacity;
     QRectF getTop();
     QRectF getBottom();

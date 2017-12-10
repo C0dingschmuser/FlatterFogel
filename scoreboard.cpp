@@ -69,7 +69,7 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     painter.setPen(Qt::magenta);
     f.setPixelSize(36);
     painter.setFont(f);
-    painter.drawText(scoreX+50,550+12*60,"Server ist instabil. WIP.");
+    //painter.drawText(scoreX+50,550+12*60,"Server ist instabil. WIP.");
     painter.drawPixmap(scoreX+24,1324,300,130,btnPx);
     painter.drawPixmap(scoreX+500,1324,560,130,btnPx);
     painter.setPen(QColor(0,143,255));
@@ -86,7 +86,7 @@ void Scoreboard::draw(QPainter &painter,int highscore)
 void Scoreboard::setScore(int score, int hs)
 {
     this->hs = hs;
-    socket->connectToHost("37.120.177.121",38900);
+    socket->connectToHost("82.165.77.251",38900);
     socket->waitForConnected(1000);
     if(socket->state()==QTcpSocket::ConnectedState) {
         QString data = ".0#"+name+"#"+QString::number(score)+"#"+first+"#~";
@@ -139,7 +139,7 @@ void Scoreboard::setScore(int score, int hs)
 void Scoreboard::getScores()
 {
     if(!wasConnected) return;
-    socket->connectToHost("37.120.177.121",38900);
+    socket->connectToHost("82.165.77.251",38900);
     socket->waitForConnected(2000);
     if(socket->state()==QTcpSocket::ConnectedState) {
         QString data = ".1#"+name+"#~";
@@ -188,30 +188,38 @@ void Scoreboard::mpress(QPoint pos)
     }
     if(!players.size()) return;
     if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(500,1324,560,130))) {
-        socket->connectToHost("37.120.177.121",38900);
-        socket->waitForConnected(1000);
-        if(socket->state()==QTcpSocket::ConnectedState) {
-            QString data = ".2#"+name+"#~";
-            socket->write(data.toUtf8());
-            socket->waitForBytesWritten(2000);
-        } else {
-            socket->close();
-            socket->connectToHost("flatterfogel.ddns.net",38900);
+        QMessageBox boxMsg;
+        boxMsg.setWindowTitle("Info");
+        boxMsg.setText(transl->getText_CN().text);
+        boxMsg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        boxMsg.setDefaultButton(QMessageBox::No);
+        int ret = boxMsg.exec();
+        if(ret==QMessageBox::Yes) {
+            socket->connectToHost("37.120.177.121",38900);
             socket->waitForConnected(1000);
-            if(socket->state()!=QTcpSocket::ConnectedState) {
-                emit connFail();
-                return;
-            } else {
+            if(socket->state()==QTcpSocket::ConnectedState) {
                 QString data = ".2#"+name+"#~";
                 socket->write(data.toUtf8());
                 socket->waitForBytesWritten(2000);
+            } else {
+                socket->close();
+                socket->connectToHost("flatterfogel.ddns.net",38900);
+                socket->waitForConnected(1000);
+                if(socket->state()!=QTcpSocket::ConnectedState) {
+                    emit connFail();
+                    return;
+                } else {
+                    QString data = ".2#"+name+"#~";
+                    socket->write(data.toUtf8());
+                    socket->waitForBytesWritten(2000);
+                }
             }
+            socket->close();
+            wasConnected = false;
+            this->name = "";
+            this->first = "0";
+            emit write();
+            this->active = false;
         }
-        socket->close();
-        wasConnected = false;
-        this->name = "";
-        this->first = "0";
-        emit write();
-        this->active = false;
     }
 }

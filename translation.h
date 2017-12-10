@@ -47,6 +47,7 @@ public:
     Text getText_Donate();
     Text getText_NHS();
     Text getText_Neu();
+    Text getText_CN();
 };
 
 #endif // LOCALE_H

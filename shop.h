@@ -27,6 +27,7 @@ private:
     QPixmap btnPowPx;
     QPixmap btnBGPx;
     QPixmap btnSkinsPx;
+    QPixmap btnPipePx;
     QPixmap coinPx;
     QPixmap itemBcPx;
     QPixmap cloudPx;
@@ -36,6 +37,7 @@ private:
     Translation* transl;
     void drawSkin(int x, int y, int w, int h, int num, QPainter &painter);
     void drawBg(int x, int y, int w, int h, int num, QPainter &painter);
+    void drawPipe(int x, int y, int w, int h, int num, QPainter &painter);
 public:
     explicit Shop(Player *player,QFont font,Translation *transl,QPixmap coinPx, QPixmap cloudPx, QObject *parent = nullptr);
     QPixmap background;
@@ -44,32 +46,38 @@ public:
     int item2Count;
     int item3Count;
     int item4Count;
-    int item1Price;
-    int item2Price;
-    int item3Price;
-    int item4Price;
+    unsigned int item1Price;
+    unsigned int item2Price;
+    unsigned int item3Price;
+    unsigned int item4Price;
     int multiplier;
     int tapMultiplier;
     int speedLvl;
-    int mMax;
-    int tMax;
+    unsigned long mMax;
+    unsigned long tMax;
     int chosenSkin;
     int chosenBackground;
+    int chosenPipe;
     int shopX;
     QVector <int> skinPrice;
     QVector <int> bgPrice;
+    QVector <int> pipePrice;
     QVector <int> ownedSkins;
     QVector <Background*> backgrounds;
     QVector <int> ownedbackgrounds;
+    QVector <int> ownedPipes;
     void load(int ic1,int ic2, int ic3, int ic4);
     void draw(QPainter &painter);
     void setActive(bool active);
     bool getActive();
     void mousePress(QPoint pos, bool &cave);
+    void setSkin(int num);
     QString skinsToString();
     QString bgsToString();
+    QString pipesToString();
     QPixmap getPixmap(int item);
     QVector <QPixmap> skins;
+    QVector <QPixmap> pipes;
 
 signals:
     void back();
