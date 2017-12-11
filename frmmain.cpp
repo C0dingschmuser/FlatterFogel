@@ -6,7 +6,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2261812";
+    lastPost = "2272657";
     loading = true;
     mainX = 0;
     newHS = 0;
@@ -25,7 +25,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     anDir = false;
     moveAn = false;
     refActive = false;
-    version = "1.2.6b3";
+    version = "1.2.6.1";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -326,7 +326,7 @@ void FrmMain::on_tmain()
                 flashOpacity = 0.5;
             }
         }
-        if(score>highscore&&!newHS&&highscore&&!boost) {
+        if(score>highscore&&!newHS&&highscore) {
             newHS = 1;
             Blus *b = new Blus(90,QRectF(4,180,1,1),transl->getText_NHS().text);
             b->color = QColor(255,0,130);
@@ -485,12 +485,12 @@ void FrmMain::on_tmain()
                     windows[ok]->visible = false;
                 }
             }
-            if(!boost) {
-                if(score%100==0||(score%30==0&&hardcore)) {
-                    on_shopBuy(1,false,true);
-                    player->coins++;
-                    write();
-                } else {
+            if(score%100==0||(score%30==0&&hardcore)) {
+                on_shopBuy(1,false,true);
+                player->coins++;
+                write();
+            } else {
+                if(!boost) {
                     player->setBenis(player->getBenis()+(score*shop->multiplier));
                     unsigned long b = score*shop->multiplier;
                     if(hardcore) b*=1.5;
@@ -631,13 +631,11 @@ void FrmMain::on_tObst()
             QRect top,bottom;
             bool ok=false;
             do {
-                top = QRect(random(1300,3580),random(0,1300),200,200);
+                top = QRect(random(1450,3580),random(0,1300),200,200);
                 ok = false;
                 for(int i=0;i<obstacles.size();i++) {
-                    if(obstacles[i]->type) {
-                        if(obstacles[i]->getTop().intersects(top)||
-                                getDistance(obstacles[i]->getTop().center(),top.center())<500) ok = true;
-                    }
+                    if(obstacles[i]->getTop().intersects(top)||
+                            getDistance(obstacles[i]->getTop().center(),top.center())<500) ok = true;
                 }
             } while(ok);
             Obstacle *o = new Obstacle(top,bottom,1);
@@ -1690,7 +1688,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setFont(f);
         painter.setPen(QColor(238,77,46));
         painter.drawText((mainX+1080)+100,1755,QString::number(shop->item1Count)+"x");
-        if(!shop->item2Count||active!=-1||(active==-1&&score)) {
+        if(!shop->item2Count||active!=-1||(active==-1&&score)||hardcore) {
             painter.setOpacity(0.5);
         }
         painter.drawPixmap((mainX+1080)+250,1640,90,90,shop->getPixmap(2)); //item2
@@ -1702,7 +1700,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawPixmap((mainX+1080)+400,1640,90,90,shop->getPixmap(3)); //item3
         painter.setOpacity(1);
         painter.drawText((mainX+1080)+400,1755,QString::number(shop->item3Count)+"x");
-        if(!shop->item4Count||active!=-1||(active==-1&&score)) {
+        if(!shop->item4Count||active!=-1||(active==-1&&score)||hardcore) {
             painter.setOpacity(0.5);
         }
         painter.drawPixmap((mainX+1080)+550,1640,90,90,shop->getPixmap(4)); //item4
@@ -2038,7 +2036,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     }
                 }
                 if(QRectF(x,y,1,1).intersects(QRectF(250,1640,90,90))&&go) {  //item2
-                    if(shop->item2Count&&!boost) {
+                    if(shop->item2Count&&!boost&&!hardcore) {
                         shop->item2Count--;
                         boost=10;
                         localPlayTime+=60;
@@ -2054,7 +2052,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     }
                 }
                 if(QRectF(x,y,1,1).intersects(QRectF(550,1640,90,90))&&go) {  //item4
-                    if(shop->item4Count&&!boost) {
+                    if(shop->item4Count&&!boost&&!hardcore) {
                         shop->item4Count--;
                         boost=15;
                         localPlayTime+=120;

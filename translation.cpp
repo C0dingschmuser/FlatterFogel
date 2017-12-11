@@ -433,25 +433,9 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Säulenskins\n"
-                     "-> Max Benis von 2 Milliarden auf 18 Trillionen erhöht\n"
-                     "-> Mieserkadser alle 30\n"
-                     "-> Erweiterte Rundeninfos\n"
-                     "-> Minus beim Fliesentisch\n"
-                     "-> Pause-Button vergrößert\n"
-                     "-> Bessere Hitbox\n"
-                     "-> Skins:\n"
-                     "Spurdo Original\n"
-                     "Reichsflugscheibe\n"
-                     "Gerondolom\n"
-                     "Andreas\n"
-                     "Bf109\n"
-                     "-> Bugfixes:\n"
-                     "Benis beim Höhlenmodus\n"
-                     "Speedboost-länge gefixt\n"
-                     "Speedboost im Höhlenmodus gefixt\n"
-                     "Schmuserkadser-Skin korrigiert\n"
-                     "Weitere kleine Fehler";
+                     "-> Schmuserkadser spawnt"
+                     "jetzt nicht mehr in Säulen\n"
+                     "-> Weitere Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -718,6 +702,7 @@ Text Translation::getText_Donate()
                      "einen Skin ausdenken, der dann für jedermann\n"
                      "in den Shop kommt.\n\n"
                      "Edle Spender:\n"
+                     "- LuxusDrea 15€"
                      "- Archos405 10€\n"
                      "- TimBeam   10€\n"
                      "- Elevate   5€\n\n"
