@@ -22,6 +22,8 @@ Blus::Blus(int angle, QRectF rect, QPixmap p, int w, int h, double oSpeed, doubl
     spark = false;
     item = false;
     used = false;
+    gift = false;
+    tail = false;
 }
 
 Blus::Blus(int angle, QRectF rect, QString text, int size)
@@ -40,6 +42,8 @@ Blus::Blus(int angle, QRectF rect, QString text, int size)
     spark = false;
     item = false;
     used = false;
+    gift = false;
+    tail = false;
 }
 
 Blus::Blus(int angle, QRectF rect, double vSpeed,double oSpeed, bool hardcore)
@@ -56,13 +60,15 @@ Blus::Blus(int angle, QRectF rect, double vSpeed,double oSpeed, bool hardcore)
     spark = false;
     item = false;
     used = false;
+    gift = false;
+    tail = false;
 }
 
 void Blus::move(double s)
 {
     double sx = vx;
     double sy = vy;
-    if(snow||item) {
+    if(snow||item||tail) {
         sx+=s;
         sy*=0.5;
     }

@@ -8,8 +8,6 @@
 class Blus
 {
 private:
-    double vx;
-    double vy;
     QRectF rect;
     QPixmap p;
     bool text;
@@ -25,10 +23,14 @@ public:
     bool hardcore;
     bool spark;
     bool used;
+    bool gift;
+    bool tail;
     int item;
     int size;
     int width;
     int height;
+    double vx;
+    double vy;
     bool isRect;
     QColor color;
     void move(double s);

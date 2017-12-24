@@ -21,20 +21,26 @@ private slots:
 private:
     QPixmap bg;
     QPixmap btnPx;
+    QPixmap btnNormal;
+    QPixmap btnCave;
+    QPixmap btnHardcore;
     QVector<QString>players;
     QFont font;
     Translation *transl;
+    int hs;
+    int hs_H;
+    int hs_C;
     QString maas(QString n);
 public:
     explicit Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent = nullptr);
     void draw(QPainter &painter, int highscore);
-    void setScore(int score, int hs);
+    void setScore(int his=0, int his_H=0, int his_C=0);
     void getScores();
     void mpress(QPoint pos);
     bool active;
     bool wasConnected;
     int scoreX;
-    int hs;
+    int page;
     QString first;
     QString name;
     QTcpSocket *socket;
@@ -43,7 +49,7 @@ public:
 signals:
     void wrongName();
     void connFail();
-    void write();
+    void write(int type);
     void back();
 public slots:
 };

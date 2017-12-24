@@ -51,7 +51,7 @@ private slots:
     void on_tEvent();
     void on_shopBack();
     void on_shopMsg(QString msg);
-    void on_shopBuy(int amount, bool buy=true, bool coin=false);
+    void on_shopBuy(int amount, bool buy=true, bool coin=false, bool mid=false);
     void on_tboxDeathAn();
     void on_tboost();
     void on_tAn();
@@ -64,10 +64,11 @@ private slots:
     void on_write();
     void on_tresume();
     void on_scoreBack();
-    void on_scoreWrite();
+    void on_scoreWrite(int type=0);
     void on_tAnimation();
     void on_tblus();
     void on_tnewHS();
+    void on_tTail();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -90,6 +91,8 @@ private:
     bool hardcore;
     bool cave;
     bool loading;
+    bool lowGraphics;
+    bool donator;
     QDateTime currentDateTime;
     QTimer *t_draw;
     QTimer *t_main;
@@ -106,6 +109,7 @@ private:
     QTimer *t_animation;
     QTimer *t_blus;
     QTimer *t_newHS;
+    QTimer *t_tail;
     QFont font;
     double scaleX;
     double scaleY;
@@ -123,6 +127,7 @@ private:
     QVector <Star*> stars;
     QVector <QPixmap> skins;
     QVector <QPixmap> pipes;
+    QVector <QPixmap> tails;
     QVector <QPixmap> thumbs;
     QVector <Background*> backgrounds;
     int currentskin;
@@ -158,7 +163,6 @@ private:
     QPixmap referralPx2;
     QPixmap mieserkadserPx;
     QVector <QPixmap> boxPxAn;
-    QVector <QPixmap> explosion;
     QString enemy;
     QString version;
     QString refkey;
@@ -170,6 +174,7 @@ private:
     QPolygonF polyColl;
     bool fastboost;
     bool newpost;
+    bool crate;
     Translation *transl;
     Scoreboard *scoreboard;
     QString name;
@@ -178,6 +183,8 @@ private:
     int enemylife;
     int score;
     int highscore;
+    int highscore_H;
+    int highscore_C;
     int schmuser;
     int maxX;
     int maxY;
@@ -190,8 +197,14 @@ private:
     int event;
     int referrals;
     int caveSpawnCount;
+    int cnum1;
+    int cnum2;
+    int cnum3;
+    int cnum4;
+    int go;
     bool invited;
     bool refActive;
+    bool outdated;
     double cloud1X;
     double cloud2X;
     double flashOpacity;
@@ -208,6 +221,7 @@ private:
     void reset(int type=0);
     void moveGround(double speed);
     void createWindows();
+    void handleBox();
     QString genKey();
     QString lucaAlg(QString text);
     bool checkKey(QString key);

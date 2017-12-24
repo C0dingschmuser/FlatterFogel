@@ -47,12 +47,12 @@ Text Translation::getBtn_Shop_Back()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Zurück";
-            t.pos = QPoint(195,1545);
+            t.pos = QPoint(195,1615);
             t.size = 40;
         break;
         default:
             t.text = "Back";
-            t.pos = QPoint(220,1545);
+            t.pos = QPoint(220,1615);
             t.size = 50;
         break;
     }
@@ -197,7 +197,7 @@ Text Translation::getText_Shop_Item4()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Kann nur vor Spielbeginn aktiviert werden.\n"
-                     "Boostet den Spieler bis zu einer Score von 45.";
+                     "Boostet den Spieler bis zu einer Score von 65.";
             t.pos = QPoint(7,1688);
             t.size = 25;
         break;
@@ -433,15 +433,28 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Schmuserkadser spawnt"
-                     "jetzt nicht mehr in Säulen\n"
-                     "-> Weitere Bugfixes";
+                     "-> Getrennte Bestenlisten für Modi\n"
+                     "-> Schweife\n"
+                     "-> Neue Skins:\n"
+                     "Zuckerstangensäule\n"
+                     "Nyan Cat\n"
+                     "Doge\n"
+                     "-> Low-Grafik Modus hinzugefügt\n"
+                     "siehe 'Animationen'-Button\n"
+                     "-> Belohnungen für Spender hinzugefügt\n"
+                     "-> Boosts überarbeitet\n"
+                     "-> Lootboxen überarbeitet\n"
+                     "-> Ladescreen hinzugefügt\n"
+                     "-> Performanceverbesserungen\n"
+                     "-> Neuer Wechselkurs: 1 Coin = 300k\n"
+                     "-> Viele Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "-> Added Pipeskins\n"
+                     "-> Scoreboard tables\n"
+                     "-> Tails\n"
                      "-> New Skins"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
@@ -689,25 +702,27 @@ Text Translation::getText_Donate()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Hilf bei der Entwicklung von Flatterfogel\n\n"
-                     "Weil ich nicht EA bin, gibt es keine unfairen\n"
-                     "In-App Käufe und/oder Werbung. Flatterfogel\n"
-                     "ist nicht aus Geldgier entstanden, sondern\n"
-                     "aus Liebe zum Pr0. Wenn dir Flatterfogel\n"
-                     "so gut gefällt, dass du die Entwicklung\n"
-                     "unterstützen möchtest, kannst du das indem\n"
-                     "du mir einen beliebigen Betrag spendest.\n"
-                     "Im Gegenzug für deine Großzügigkeit kommst\n"
-                     "du auf eine Spenderliste und darfst dir\n"
-                     "einen Skin ausdenken, der dann für jedermann\n"
-                     "in den Shop kommt.\n\n"
-                     "Edle Spender:\n"
-                     "- LuxusDrea 15€"
-                     "- Archos405 10€\n"
-                     "- TimBeam   10€\n"
-                     "- Elevate   5€\n\n"
-                     "Meine Paypal-Email:\n"
-                     "firediver98@gmail.com";
+            t.text = "Hilf bei der Entwicklung von Flatterfogel<br><br>"
+                     "Weil ich nicht EA bin, gibt es keine unfairen<br>"
+                     "In-App Käufe und/oder Werbung. Flatterfogel<br>"
+                     "ist nicht aus Geldgier entstanden, sondern<br>"
+                     "aus Liebe zum Pr0. Wenn dir Flatterfogel<br>"
+                     "so gut gefällt, dass du die Entwicklung<br>"
+                     "unterstützen möchtest, kannst du das indem<br>"
+                     "du mir einen beliebigen Betrag spendest.<br>"
+                     "Im Gegenzug für deine Großzügigkeit kommst<br>"
+                     "du auf eine Spenderliste, darfst an der Entwicklung<br>"
+                     "mitwirken und <b>erhältst einen exklusiven<br>"
+                     "Hintergrund, Skin und Säulenskin</b><br><br>"
+                     "Edle Spender:<br>"
+                     "- Lunaaa    15€<br>"
+                     "- LuxusDrea 15€<br>"
+                     "- Archos405 10€<br>"
+                     "- TimBeam   10€<br>"
+                     "- CX500     7.77€<br>"
+                     "- Elevate   5€<br><br>"
+                     "Meine Paypal-Email:<br>"
+                     "<b>firediver98@gmail.com</b>";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;

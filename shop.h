@@ -28,6 +28,7 @@ private:
     QPixmap btnBGPx;
     QPixmap btnSkinsPx;
     QPixmap btnPipePx;
+    QPixmap btnTailPx;
     QPixmap coinPx;
     QPixmap itemBcPx;
     QPixmap cloudPx;
@@ -38,6 +39,7 @@ private:
     void drawSkin(int x, int y, int w, int h, int num, QPainter &painter);
     void drawBg(int x, int y, int w, int h, int num, QPainter &painter);
     void drawPipe(int x, int y, int w, int h, int num, QPainter &painter);
+    void drawTail(int x, int y, int w, int h, int num, QPainter &painter);
 public:
     explicit Shop(Player *player,QFont font,Translation *transl,QPixmap coinPx, QPixmap cloudPx, QObject *parent = nullptr);
     QPixmap background;
@@ -58,14 +60,18 @@ public:
     int chosenSkin;
     int chosenBackground;
     int chosenPipe;
+    int chosenTail;
     int shopX;
+    int yOffset;
     QVector <int> skinPrice;
     QVector <int> bgPrice;
     QVector <int> pipePrice;
+    QVector <int> tailPrice;
     QVector <int> ownedSkins;
     QVector <Background*> backgrounds;
     QVector <int> ownedbackgrounds;
     QVector <int> ownedPipes;
+    QVector <int> ownedTails;
     void load(int ic1,int ic2, int ic3, int ic4);
     void draw(QPainter &painter);
     void setActive(bool active);
@@ -75,14 +81,16 @@ public:
     QString skinsToString();
     QString bgsToString();
     QString pipesToString();
+    QString tailsToString();
     QPixmap getPixmap(int item);
     QVector <QPixmap> skins;
     QVector <QPixmap> pipes;
+    QVector <QPixmap> tails;
 
 signals:
     void back();
     void msg(QString msg);
-    void buy(int am, bool bu=true, bool co=false);
+    void buy(int am, bool bu=true, bool co=false, bool mid=false);
 public slots:
 };
 
