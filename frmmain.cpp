@@ -27,7 +27,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     anDir = false;
     moveAn = false;
     refActive = false;
-    version = "1.2.7r1";
+    version = "1.2.7r2";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -1759,7 +1759,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.save();
         painter.translate(player->getRect().center().x(),player->getRect().center().y());
         painter.rotate(player->tilt-45);
-        if(shop->chosenSkin!=22&&shop->chosenSkin!=18) {
+        if(shop->chosenSkin!=22&&shop->chosenSkin!=19) {
             painter.drawPixmap(QRect(-player->getRect().width()/2,-player->getRect().height()/2,
                                       player->getRect().width(),player->getRect().height()),skins[shop->chosenSkin-1]);
         }
@@ -2007,7 +2007,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         f.setPixelSize(26);
         painter.setFont(f);
         if(lowGraphics) painter.setOpacity(0.7);
-        painter.drawText(QRect(350,1810,360,96),Qt::AlignCenter,"Animationen");
+        painter.drawText(QRect(mainX+350,1810,360,96),Qt::AlignCenter,"Animationen");
         painter.setOpacity(1);
         f.setPixelSize(32);
         painter.setFont(f);
