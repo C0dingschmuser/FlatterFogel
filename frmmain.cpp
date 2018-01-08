@@ -6,7 +6,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2294406";
+    lastPost = "2296177";
     loading = true;
     mainX = 0;
     newHS = 0;
@@ -22,12 +22,14 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     cBTouch = 0;
     cBPipe = 0;
     go = 1;
+    rgb_red = 255, rgb_green = 0, rgb_blue = 0, rgb_mode = 0;
     hardcore = false;
     radR = 2700;
     anDir = false;
     moveAn = false;
     refActive = false;
-    version = "1.2.7r2";
+    soundEnabled = false;
+    version = "1.2.9r1";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -44,12 +46,20 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_blus = new QTimer();
     t_newHS = new QTimer();
     t_tail = new QTimer();
+    t_rgb = new QTimer();
     flashOpacity = 0;
     pause = false;
+    ad = 0;
     transl = new Translation();
     int id = QFontDatabase::addApplicationFont(":/font/PressStart2P.ttf");
     QString fam = QFontDatabase::applicationFontFamilies(id).at(0);
     font = QFont(fam);
+    playlist = new QMediaPlaylist();
+    playlist->addMedia(QUrl("qrc:/sound/pg.mp3"));
+    playlist->setPlaybackMode(QMediaPlaylist::Loop);
+    sound = new QMediaPlayer();
+    connect(sound,SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),this,SLOT(on_mediastateChanged(QMediaPlayer::MediaStatus)));
+    sound->setPlaylist(playlist);
     connect(t_event,SIGNAL(timeout()),this,SLOT(on_tEvent()));
     connect(t_main,SIGNAL(timeout()),this,SLOT(on_tmain()));
     connect(t_draw,SIGNAL(timeout()),this,SLOT(on_tdraw()));
@@ -66,6 +76,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     connect(t_blus,SIGNAL(timeout()),this,SLOT(on_tblus()));
     connect(t_newHS,SIGNAL(timeout()),this,SLOT(on_tnewHS()));
     connect(t_tail,SIGNAL(timeout()),this,SLOT(on_tTail()));
+    connect(t_rgb,SIGNAL(timeout()),this,SLOT(on_tRgb()));
+    connect(qApp,SIGNAL(applicationStateChanged(Qt::ApplicationState)),this,SLOT(on_appStateChanged(Qt::ApplicationState)));
     //this->showMaximized();
     referrals = 3;
     invited = false;
@@ -99,14 +111,17 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     box3Px = QPixmap(":/images/box/box3.png");
     pause0 = QPixmap(":/images/buttons/pause0.png");
     pause1 = QPixmap(":/images/buttons/pause1.png");
+    vol0 = QPixmap(":/images/buttons/vol0.png");
+    vol1 = QPixmap(":/images/buttons/vol1.png");
     coinPx = QPixmap(":/images/coin.png");
     referralPx1 = QPixmap(":/images/referral.png");
     referralPx2 = QPixmap(":/images/referral2.png");
     mieserkadserPx = QPixmap(":/images/mieserkadser.png");
+    ad_px = QPixmap(":/images/ad.png");
     for(int i=0;i<24;i++) {
         skins.append(QPixmap(":/images/player/skins/"+QString::number(i)+".png"));
     }
-    for(int i=0;i<9;i++) {
+    for(int i=0;i<11;i++) {
         pipes.append(QPixmap(":/images/pipes/"+QString::number(i)+".png"));
     }
     for(int i=0;i<6;i++) {
@@ -114,6 +129,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     }
     for(int i=0;i<29;i++) {
         thumbs.append(QPixmap(":/images/pipes/thumbs/"+QString::number(i)+".jpg"));
+    }
+    for(int i=1;i<5;i++) {
+        powerupPx.append(QPixmap(":/images/powerups/p"+QString::number(i)+".png"));
     }
     backgrounds.append(new Background(1,QColor(22,22,24),true,false,true));
     backgrounds.append(new Background(2,QColor(0,143,255),false,true,true));
@@ -164,13 +182,16 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     crate = false;
     fastboost = false;
     lowGraphics = false;
+    suspended = false;
     cave = false;
     outdated = false;
     medal = 0;
     g1x = 0;
     g2x = 1080;
     boxCount = 0;
+    ad_active = false;
     revive = false;
+    boostused = false;
     qsrand(QDateTime::currentDateTime().toTime_t());
     currentDateTime = QDateTime::currentDateTime();
     loadData();
@@ -180,6 +201,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_main->start(5);
     t_draw->setTimerType(Qt::PreciseTimer);
     t_draw->start(10);
+    t_rgb->start(10);
     t_obst->start(50);
     t_blus->start(5);
     t_event->start(500);
@@ -190,6 +212,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_animation->start(1);
     t_tchange->setSingleShot(true);
     t_animation->moveToThread(animationThread);
+    t_rgb->moveToThread(workerThread);
     t_an->moveToThread(workerThread);
     t_main->moveToThread(workerThread);
     t_obst->moveToThread(workerThread);
@@ -238,10 +261,51 @@ void FrmMain::checkPost()
                 donator = true;
             }
         }
-        if(split.at(2)!=version&&!split.at(2).contains("b")) outdated = true;
+        if(split.at(2)!=version) {
+            if(version.contains("r")) outdated = true;
+        }
     }
     socket->close();
     delete socket;
+}
+
+void FrmMain::initSound()
+{
+    /*QtAndroid::PermissionResult cam = QtAndroid::checkPermission("android.permission.CAMERA");
+    QtAndroid::PermissionResult mic = QtAndroid::checkPermission("android.permission.RECORD_AUDIO");
+    QtAndroid::PermissionResult net = QtAndroid::checkPermission("android.permission.ACCESS_NETWORK_STATE");
+    QtAndroid::PermissionResult sto = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+    QStringList request;
+    if(cam==QtAndroid::PermissionResult::Denied) {
+        request.append("android.permission.CAMERA");
+    }
+    if(mic==QtAndroid::PermissionResult::Denied) {
+        request.append("android.permission.RECORD_AUDIO");
+    }
+    if(net==QtAndroid::PermissionResult::Denied) {
+        request.append("android.permission.ACCESS_NETWORK_STATE");
+    }
+    if(sto==QtAndroid::PermissionResult::Denied) {
+        request.append("android.permission.WRITE_EXTERNAL_STORAGE");
+    }
+    if(request.size()) {
+        QtAndroid::requestPermissionsSync(request);
+    }
+    cam = QtAndroid::checkPermission("android.permission.CAMERA");
+    mic = QtAndroid::checkPermission("android.permission.RECORD_AUDIO");
+    net = QtAndroid::checkPermission("android.permission.ACCESS_NETWORK_STATE");
+    sto = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+    if(cam!=QtAndroid::PermissionResult::Granted||
+            mic!=QtAndroid::PermissionResult::Granted||
+            net!=QtAndroid::PermissionResult::Granted||
+            sto!=QtAndroid::PermissionResult::Granted) {
+        soundEnabled = false;
+        return;
+    }
+    sound = new QMediaPlayer();
+    connect(sound,SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),this,SLOT(on_mediastateChanged(QMediaPlayer::MediaStatus)));
+    sound->setMedia(QUrl("qrc:/sound/pg.mp3"));*/
+    //play erst nachdem fertig geladen
 }
 
 double FrmMain::getDistance(QPointF p1, QPointF p2)
@@ -251,7 +315,7 @@ double FrmMain::getDistance(QPointF p1, QPointF p2)
 
 void FrmMain::on_tTail()
 {
-    if(boost||pause) return;
+    if(boost||pause||suspended) return;
     switch(shop->chosenTail) {
     case 2: //blus
     case 3: //minus
@@ -273,22 +337,86 @@ void FrmMain::on_tTail()
     }
 }
 
+void FrmMain::on_tRgb()
+{
+    if(suspended) return;
+    if(active==1||active==-1||shop->getActive()) {
+        switch(rgb_mode) {
+        case 0: //rot- grün+
+            rgb_red--;
+            rgb_green++;
+            if(!rgb_red) rgb_mode = 1;
+            break;
+        case 1: //grün- blau+
+            rgb_green--;
+            rgb_blue++;
+            if(!rgb_green) rgb_mode = 2;
+            break;
+        case 2: //blau- rot+
+            rgb_blue--;
+            rgb_red++;
+            if(!rgb_blue) rgb_mode = 0;
+            break;
+        }
+//rgb-säulen
+    }
+}
+
+void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
+{
+    if(status == QMediaPlayer::MediaStatus::LoadedMedia&&soundEnabled) {
+        sound->setVolume(25);
+        sound->play();
+    }
+}
+
+void FrmMain::on_appStateChanged(Qt::ApplicationState state)
+{
+    if(state==Qt::ApplicationActive) {
+        if(soundEnabled) {
+            if(sound->state()==QMediaPlayer::PausedState) {
+                sound->play();
+            }
+        }
+        if(!suspended) return;
+        QMetaObject::invokeMethod(t_draw,"start",Q_ARG(int,10));
+        QMetaObject::invokeMethod(t_main,"start",Q_ARG(int,5));
+        QMetaObject::invokeMethod(t_blus,"start",Q_ARG(int,5));
+        QMetaObject::invokeMethod(t_obst,"start",Q_ARG(int,50));
+        QMetaObject::invokeMethod(t_star,"start",Q_ARG(int,125));
+        QMetaObject::invokeMethod(t_an,"start",Q_ARG(int,150));
+        suspended = false;
+    } else if(state==Qt::ApplicationInactive||
+              state==Qt::ApplicationSuspended) {
+        QMetaObject::invokeMethod(t_draw,"stop");
+        QMetaObject::invokeMethod(t_main,"stop");
+        QMetaObject::invokeMethod(t_blus,"stop");
+        QMetaObject::invokeMethod(t_obst,"stop");
+        QMetaObject::invokeMethod(t_star,"stop");
+        QMetaObject::invokeMethod(t_an,"stop");
+        suspended = true;
+        if(active==1&&!pause) {
+            pause = true;
+        }
+        if(soundEnabled) {
+            if(sound->state()==QMediaPlayer::PlayingState) sound->pause();
+        }
+    }
+//active
+//inactive
+}
+
 void FrmMain::on_tdraw()
 {
-    if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) {
-        if(active==1&&!pause) {
-            if(!t_boost->isActive()&&!revive) pause = true;
-        }
-        return;
-    }
+    //qDebug()<<QGuiApplication::applicationState();
+    if(suspended) return;
     update();
 }
 
 void FrmMain::on_tblus()
 {
-    if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) return;
+    if(suspended||pause) return;
     for(int i=0;i<blusse.size();i++) {
-        if(pause) return;
         if(boost) {
             blusse[i]->move(-boost);
         } else {
@@ -320,7 +448,7 @@ void FrmMain::on_tnewHS()
 
 void FrmMain::on_tmain()
 {
-    if(pause) return;
+    if(pause||suspended) return;
     //moveAn = 3;
     if(flashOpacity) {
         flashOpacity -= 0.0125;
@@ -464,7 +592,20 @@ void FrmMain::on_tmain()
             if(r.y()+velD>1600) {
                 velD = 1600-r.y();
             }
-            player->setPos(r.x(),r.y()+velD);
+            bool ok=true;
+            QRectF newr = player->getCollRect();
+            newr.moveTo(newr.x(),newr.y()+velD);
+            for(int i=0;i<obstacles.size();i++) {
+                if(newr.intersects(obstacles[i]->getBottom())||
+                        newr.intersects(obstacles[i]->getTop())) {
+                    ok = false;
+                    dead = true;
+                    break;
+                }
+            }
+            if(ok) {
+                player->setPos(r.x(),r.y()+velD);
+            }
         } else {
             QRectF r2 = QRectF(r.x(),r.y()+velD,r.width(),r.height());
             QPolygonF inters = QPolygonF(r2).intersected(polyBottom);
@@ -567,13 +708,39 @@ void FrmMain::on_tmain()
 
 void FrmMain::on_tObst()
 {
-    if(pause) return;
+    if(pause||suspended) return;
     if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) return;
     if(shop->chosenBackground==1&&!cave&&!lowGraphics) { //Schnee
         Blus *b = new Blus(random(55,125),QRectF(random(100,1500),-10,10,10),1,0.15,false);
         b->color = QColor(210,210,210);
         b->snow = true;
         blusse.append(b);//new Blus(random(55,125),QRectF(random(100,1500),-25,25,25),snowPx,25,25,0.15,1,true));
+    } else if(shop->chosenBackground==5&&!lowGraphics) {//shekel
+        for(int i=0;i<3;i++) {
+            int y = random(600,680);
+            int x = random(835,985);
+            double os = 0.65;
+            if(x>872) {
+                os = 0.75;
+            } else if(x>909) {
+                os = 0.95;
+            } else if(x>947) {
+                os = 1.30;
+            }
+            Blus *b = new Blus(98,QRectF(x,y,10,10),1,os,false);
+            QColor color(255,201,14);
+            switch(random(0,3)) {
+            case 1:
+                color = QColor(223,173,0);
+                break;
+            case 2:
+                color = QColor(255,221,102);
+            }
+            b->color = color;
+            b->bg = true;
+            b->snow = 2;
+            blusse.append(b);
+        }
     }
     if(newHS==1&&active==1&&!lowGraphics) {
         for(int a=0;a<360;a+=12) { //newhs
@@ -648,14 +815,14 @@ void FrmMain::on_tObst()
                         b->item = 1;
                         blusse.append(b);
                         //qDebug()<<"caveSpawnCount";
-                    } else if(!random(0,9)&&!boost) {
+                    } else if(!random(0,10)&&!boost) {
                         w = 46;
                         h = 40;
                         Blus *b = new Blus(0,QRectF(top.x(),(bottom.y()-diff/2)-30,70,60),boxPx,w,h,0,0);
                         b->item = 2;
                         blusse.append(b);
                     }
-                } else if(!random(0,9)&&!boost) {
+                } else if(!random(0,10)&&!boost) {
                     QRect target;
                     int x = random(top.x()+top.width()+100,top.x()+top.width()+350);
                     int y = random(300,1300);
@@ -705,10 +872,16 @@ void FrmMain::on_tObst()
 
 void FrmMain::on_tEvent()
 {
+    if(suspended) return;
     if(cave&&hardcore) {
         hardcore = false;
     }
     if(loading) {
+        /*if(soundEnabled&&sound==NULL) {
+            initSound();
+        } else {
+            sound = NULL;
+        }*/
         checkPost();
         if(newpost) {
             QUrl link("http://www.pr0gramm.com/new/"+lastPost);
@@ -730,6 +903,12 @@ void FrmMain::on_tEvent()
             write();
         }
         loading = false;
+    } else if(!ad&&!donator&&!ad_active) {
+        if(!shop->ownedbackgrounds.contains(4)||!shop->ownedPipes.contains(8)||
+                !shop->ownedSkins.contains(23)) {
+            ad = 1;
+            ad_active = true;
+        }
     }
     if(active!=1||cave||hardcore) return;
     if((((score+2)%30==0)&&(score!=0)&&(!boost))||schmuser) {
@@ -819,6 +998,43 @@ void FrmMain::on_tboost()
 
 void FrmMain::on_tAn()
 {
+    if(suspended) return;
+    /*---Raketen für Silvester---
+    if(!lowGraphics&&!pause) {
+        for(int i=0;i<2;i++) {
+            int c = random(0,5);
+            QColor color(Qt::red);
+            switch(c) {
+            case 1:
+                color = QColor(Qt::green);
+                break;
+            case 2:
+                color = QColor(Qt::blue);
+                break;
+            case 3:
+                color = QColor(Qt::yellow);
+                break;
+            case 4:
+                color = QColor(Qt::lightGray);
+                break;
+            case 5:
+                color = QColor(Qt::magenta);
+                break;
+            case 6:
+                color = QColor(Qt::cyan);
+                break;
+            }
+            QRectF r = QRectF(random(100,950),random(900,1200),5,5);
+            double v = random(10,100)/100.0;
+            double o = random(100,200)/100.0;
+            for(int a=0;a<360;a+=12) {
+                Blus *b = new Blus(a,r,v,o);
+                b->color = color;
+                b->bg = true;
+                blusse.append(b);
+            }
+        }
+    }*/
     if(active==2) return;
     if(player->dir) {
         player->an--;
@@ -898,7 +1114,7 @@ void FrmMain::on_tflag()
 
 void FrmMain::on_tstar()
 {
-    if(lowGraphics) return;
+    if(lowGraphics||suspended) return;
     for(int i=0;i<stars.size();i++) {
         if(stars[i]->dir) {//dunkler
             stars[i]->opacity+=0.025;
@@ -1170,6 +1386,16 @@ void FrmMain::loadData()
                 if(list.size()>26) {
                     shop->chosenTail = list.at(25).toInt();
                 }
+                if(list.size()>27) {
+                    if(list.at(26).toInt()) {
+                        soundEnabled = true;
+                    } else {
+                        soundEnabled = false;
+                    }
+                }
+                if(list.size()>28) {
+                    ad = list.at(27).toInt();
+                }
             }
 
         }
@@ -1195,7 +1421,8 @@ void FrmMain::write()
         << QString::number(referrals) << "~" << QString::number(invited) << "#"
         << QString::number(playTime,'f',3) << "#" << shop->pipesToString() << "#"
         << QString::number(shop->chosenPipe) << "#" << lastPost << "#" << QString::number(lowGraphics) << "#"
-        << shop->tailsToString() << "#" << QString::number(shop->chosenTail) << "#";
+        << shop->tailsToString() << "#" << QString::number(shop->chosenTail) << "#"
+        << QString::number(soundEnabled) << "#" << QString::number(ad) << "#";
     file.close();
 }
 
@@ -1214,6 +1441,7 @@ void FrmMain::reset(int type)
     //blusse.resize(0);
     obstacles.resize(0);
     if(!type) {
+        boostused = false;
         go = 1;
         score = 0;
         cBox = 0;
@@ -1222,6 +1450,7 @@ void FrmMain::reset(int type)
     } else {
         go = 2;
     }
+    player->fin = false;
     QMetaObject::invokeMethod(t_boost,"stop");
     //QMetaObject::invokeMethod(t_an,"stop");
     QMetaObject::invokeMethod(t_tilt,"stop");
@@ -1684,6 +1913,19 @@ void FrmMain::paintEvent(QPaintEvent *e)
         }
     }
     painter.setOpacity(1);
+    int scb = shop->chosenBackground;
+    if(scb!=2&&scb!=4) {
+        for(int i=0;i<blusse.size();i++) {
+            if(blusse[i]->bg) {
+                if(blusse[i]->getRect().intersects(QRectF(0,0,1080,1920))) {
+                    painter.setOpacity((blusse[i]->getOpacity()/2.55)/100.0);
+                    painter.setBrush(blusse[i]->color);
+                    painter.drawRect(blusse[i]->getRect());
+                    painter.setOpacity(1);
+                }
+            }
+        }
+    }
     if(backgrounds[shop->chosenBackground-1]->cloud) {
         painter.drawPixmap(QRectF(cloud1X,800,1080,280),cloudPx,QRectF(0,0,108,28));
         painter.drawPixmap(QRectF(cloud2X,800,1080,280),cloudPx,QRectF(0,0,108,28));
@@ -1731,6 +1973,25 @@ void FrmMain::paintEvent(QPaintEvent *e)
                             }
                         }
                         break;
+                    case 10:
+                        painter.drawPixmap(obstacles[i]->getTop(),pipes[shop->chosenPipe-1],QRectF(0,0,100,100));
+                        painter.drawPixmap(obstacles[i]->getBottom(),pipes[shop->chosenPipe-1],QRectF(0,0,100,100));
+                        painter.setBrush(QColor(rgb_red,rgb_green,rgb_blue,100));
+                        painter.drawRect(obstacles[i]->getTop());
+                        painter.drawRect(obstacles[i]->getBottom());
+                        break;
+                    case 11:
+                    {
+                        QPen p(QColor(0,143,255));
+                        p.setWidth(6);
+                        painter.setPen(p);
+                        painter.setBrush(Qt::transparent);
+                        painter.translate(0,-5);
+                        painter.drawRect(obstacles[i]->getTop());
+                        painter.translate(0,5);
+                        painter.drawRect(obstacles[i]->getBottom());
+                        break;
+                    }
                     default:
                             painter.drawPixmap(obstacles[i]->getTop(),pipes[shop->chosenPipe-1],QRectF(0,0,100,100));
                             painter.drawPixmap(obstacles[i]->getBottom(),pipes[shop->chosenPipe-1],QRectF(0,0,100,100));
@@ -1801,7 +2062,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
     v.adjust(-310,-310,310,310);
     painter.setPen(Qt::NoPen);
     for(int i=0;i<blusse.size();i++) {
-        if(!blusse[i]->gift) {
+        if(!blusse[i]->gift&&!blusse[i]->bg) {
             if((hardcore&&blusse[i]->getRect().intersects(v)&&active)||(hardcore&&!active)||!hardcore||moveAn==1) {
                 if(!blusse[i]->tail||(blusse[i]->tail&&!boost)) {
                     if(!blusse[i]->isText()&&!blusse[i]->isRect) {
@@ -1840,7 +2101,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.fillPath(path,QColor(22,22,24));
     }
     for(int i=0;i<blusse.size();i++) {
-        if(!blusse[i]->gift) {
+        if(!blusse[i]->gift&&!blusse[i]->bg) {
             if(blusse[i]->isText()&&blusse[i]->size>0) {
                 f.setPixelSize(blusse[i]->size);
                 painter.setFont(f);
@@ -1931,30 +2192,38 @@ void FrmMain::paintEvent(QPaintEvent *e)
         if(!shop->item1Count||active==-1||boost) {
             painter.setOpacity(0.5);
         }
-        painter.drawPixmap((mainX+1080)+100,1640,90,90,shop->getPixmap(1)); //item1
+        painter.setPen(Qt::NoPen);
+        painter.drawPixmap((mainX+1080)+10,1680,250,90,powerupPx[0]); //item1
         painter.setOpacity(1);
         f.setPixelSize(44);
         painter.setFont(f);
         painter.setPen(QColor(238,77,46));
-        painter.drawText((mainX+1080)+100,1755,QString::number(shop->item1Count)+"x");
+        painter.drawText((mainX+1080)+120,1750,shop->getItemCount(1)+"x");
         if(!shop->item2Count||active!=-1||(active==-1&&score)||hardcore||cave) {
             painter.setOpacity(0.5);
         }
-        painter.drawPixmap((mainX+1080)+250,1640,90,90,shop->getPixmap(2)); //item2
+        painter.setPen(Qt::NoPen);
+        painter.drawPixmap((mainX+1080)+280,1680,250,90,powerupPx[1]); //item2
         painter.setOpacity(1);
-        painter.drawText((mainX+1080)+250,1755,QString::number(shop->item2Count)+"x");
+        painter.setPen(QColor(238,77,46));
+        painter.drawText((mainX+1080)+400,1750,shop->getItemCount(2)+"x");
         if(!shop->item3Count||active==-1) {
             painter.setOpacity(0.5);
         }
-        painter.drawPixmap((mainX+1080)+400,1640,90,90,shop->getPixmap(3)); //item3
+        painter.setPen(Qt::NoPen);
+        painter.drawPixmap((mainX+1080)+550,1680,250,90,powerupPx[2]); //item3
         painter.setOpacity(1);
-        painter.drawText((mainX+1080)+400,1755,QString::number(shop->item3Count)+"x");
+        painter.setPen(QColor(238,77,46));
+        painter.drawText((mainX+1080)+660,1750,shop->getItemCount(3)+"x");
         if(!shop->item4Count||active!=-1||(active==-1&&score)||hardcore||cave) {
             painter.setOpacity(0.5);
         }
-        painter.drawPixmap((mainX+1080)+550,1640,90,90,shop->getPixmap(4)); //item4
+        painter.setPen(Qt::NoPen);
+        painter.drawPixmap((mainX+1080)+820,1680,250,90,powerupPx[3]); //item4
         painter.setOpacity(1);
-        painter.drawText((mainX+1080)+550,1755,QString::number(shop->item4Count)+"x");
+        painter.setPen(QColor(238,77,46));
+        painter.drawText((mainX+1080)+930,1750,shop->getItemCount(4)+"x");
+        //collboxen updaten
         if(!shop->item4Count||active==-1) {
             painter.setOpacity(0.5);
         }
@@ -2122,9 +2391,14 @@ void FrmMain::paintEvent(QPaintEvent *e)
         f.setPixelSize(42);
         painter.setFont(f);
         if(outdated) painter.drawText(mainX+25,200,"Ein Update ist verfügbar!");
+        if(soundEnabled) {
+            painter.drawPixmap(mainX+955,0,125,125,vol0);
+        } else {
+            painter.drawPixmap(mainX+955,0,125,125,vol1);
+        }
     }
     if((!active&&shop->getActive())||(moveAn==2||moveAn==4)) {
-        shop->draw(painter);
+        shop->draw(painter,rgb_red,rgb_green,rgb_blue);
     } else if((!active&&scoreboard->active)||(moveAn==5||moveAn==6)) {
         scoreboard->draw(painter,highscore);
     }
@@ -2147,6 +2421,9 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setFont(f);
         painter.drawText(500,1000,QString::number(resumeTime));
     }
+    if(ad_active) {
+        painter.drawPixmap(165,585,750,750,ad_px);
+    }
 }
 
 void FrmMain::mousePressEvent(QMouseEvent *e)
@@ -2166,6 +2443,11 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     if(moveAn||shop->getActive()||scoreboard->active||loading) return;
     switch(active) {
         case 0:
+            if(ad_active) {
+                if(QRect(x,y,1,1).intersects(QRect(165,585,750,750))) QMessageBox::information(this,"Info",transl->getText_Donate().text);
+                ad_active = 0;
+                return;
+            }
             if(crate) {
                 if(QRect(x,y,1,1).intersects(QRect(340,760,400,453))) {
                     handleBox();
@@ -2292,6 +2574,16 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     lowGraphics = true;
                 }
                 write();
+            } else if(QRect(x,y,1,1).intersects(QRect(955,0,125,125))) { //sound
+                if(soundEnabled) {
+                    sound->pause();
+                    soundEnabled = false;
+                } else {
+                    sound->setVolume(25);
+                    sound->play();
+                    soundEnabled = true;
+                }
+                write();
             }
         break;
         case -1:
@@ -2336,7 +2628,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 player->tdir = true;
                 QMetaObject::invokeMethod(t_tchange,"stop");
                 QMetaObject::invokeMethod(t_tchange,"start",Q_ARG(int,200));
-                if(!go&&QRectF(x,y,1,1).intersects(QRectF(100,1640,90,90))) { //item1
+                if(active==1&&QRectF(x,y,1,1).intersects(QRectF(10,1680,250,90))) { //item1
                     if(shop->item1Count&&!revive&&!boost) {
                         buy = true;
                         shop->item1Count--;
@@ -2344,26 +2636,28 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         reviveTime = 30000;
                     }
                 }
-                if(QRectF(x,y,1,1).intersects(QRectF(250,1640,90,90))&&go==1) {  //item2
+                if(QRectF(x,y,1,1).intersects(QRectF(280,1680,250,90))&&go==1&&!boostused) {  //item2
                     if(shop->item2Count&&!boost&&!hardcore&&!cave) {
                         shop->item2Count--;
                         boost=11;
+                        boostused = true;
                         localPlayTime+=60;
                         fastboost = false;
                         QMetaObject::invokeMethod(t_boost,"start",Q_ARG(int,50));
                     }
                 }
-                if(QRectF(x,y,1,1).intersects(QRectF(400,1640,90,90))) {  //item3
+                if(active==1&&QRectF(x,y,1,1).intersects(QRectF(550,1680,250,90))) {  //item3
                     if(shop->item3Count&&!revive&&!boost) {
                         shop->item3Count--;
                         revive = 2;
                         buy = true;
                     }
                 }
-                if(QRectF(x,y,1,1).intersects(QRectF(550,1640,90,90))&&go==1) {  //item4
+                if(QRectF(x,y,1,1).intersects(QRectF(820,1680,250,90))&&go==1&&!boostused) {  //item4
                     if(shop->item4Count&&!boost&&!hardcore&&!cave) {
                         shop->item4Count--;
                         boost=20;
+                        boostused = true;
                         localPlayTime+=120;
                         fastboost = true;
                         QMetaObject::invokeMethod(t_boost,"start",Q_ARG(int,50));

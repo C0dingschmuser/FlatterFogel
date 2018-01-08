@@ -10,6 +10,7 @@
 #include <QColor>
 #include <QVector>
 #include <QMessageBox>
+#include <QMediaPlayer>
 #include <QThread>
 #include <QMouseEvent>
 #include <QPixmap>
@@ -26,6 +27,10 @@
 #include <bitset>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QMediaPlaylist>
+#ifdef Q_OS_ANDROID
+    #include <QtAndroid>
+#endif
 #include "translation.h"
 #include "blus.h"
 #include "player.h"
@@ -69,12 +74,19 @@ private slots:
     void on_tblus();
     void on_tnewHS();
     void on_tTail();
+    void on_tRgb();
+    void on_mediastateChanged(QMediaPlayer::MediaStatus status);
+    void on_appStateChanged(Qt::ApplicationState state);
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
 
 private:
     Ui::FrmMain *ui;
+    QMediaPlayer *sound;
+    QMediaPlaylist *playlist;
+    bool soundEnabled;
+    bool suspended;
     int mainX;
     int endX;
     bool anDir;
@@ -93,6 +105,8 @@ private:
     bool loading;
     bool lowGraphics;
     bool donator;
+    int ad;
+    bool ad_active;
     QDateTime currentDateTime;
     QTimer *t_draw;
     QTimer *t_main;
@@ -110,6 +124,7 @@ private:
     QTimer *t_blus;
     QTimer *t_newHS;
     QTimer *t_tail;
+    QTimer *t_rgb;
     QFont font;
     double scaleX;
     double scaleY;
@@ -129,9 +144,12 @@ private:
     QVector <QPixmap> pipes;
     QVector <QPixmap> tails;
     QVector <QPixmap> thumbs;
+    QVector <QPixmap> powerupPx;
     QVector <Background*> backgrounds;
     int currentskin;
     int random(int min, int max);
+    QPixmap vol0;
+    QPixmap vol1;
     QPixmap end;
     QPixmap blus;
     QPixmap minus;
@@ -162,6 +180,7 @@ private:
     QPixmap referralPx1;
     QPixmap referralPx2;
     QPixmap mieserkadserPx;
+    QPixmap ad_px;
     QVector <QPixmap> boxPxAn;
     QString enemy;
     QString version;
@@ -202,9 +221,14 @@ private:
     int cnum3;
     int cnum4;
     int go;
+    int rgb_red;
+    int rgb_blue;
+    int rgb_green;
+    int rgb_mode;
     bool invited;
     bool refActive;
     bool outdated;
+    bool boostused;
     double cloud1X;
     double cloud2X;
     double flashOpacity;
@@ -228,6 +252,7 @@ private:
     bool checkConfirm(QString key);
     bool intersectsWithCircle(QRectF rect, QRectF circle);
     void checkPost();
+    void initSound();
     double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);

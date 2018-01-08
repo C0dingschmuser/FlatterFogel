@@ -433,29 +433,17 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Getrennte Bestenlisten für Modi\n"
-                     "-> Schweife\n"
-                     "-> Neue Skins:\n"
-                     "Zuckerstangensäule\n"
-                     "Nyan Cat\n"
-                     "Doge\n"
-                     "-> Low-Grafik Modus hinzugefügt\n"
-                     "siehe 'Animationen'-Button\n"
-                     "-> Belohnungen für Spender hinzugefügt\n"
-                     "-> Boosts überarbeitet\n"
-                     "-> Lootboxen überarbeitet\n"
-                     "-> Ladescreen hinzugefügt\n"
-                     "-> Performanceverbesserungen\n"
-                     "-> Neuer Wechselkurs: 1 Coin = 300k\n"
-                     "-> Viele Bugfixes";
+                     "-> Powerup-Buttons überarbeitet\n"
+                     "-> 2 neue Säulenskins\n"
+                     "RGB & Minimalistisch\n"
+                     "-> Shekel-Hintergrund animiert\n"
+                     "-> Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "-> Scoreboard tables\n"
-                     "-> Tails\n"
-                     "-> New Skins"
+                     "-> New Skins\n"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
@@ -715,12 +703,14 @@ Text Translation::getText_Donate()
                      "mitwirken und <b>erhältst einen exklusiven<br>"
                      "Hintergrund, Skin und Säulenskin</b><br><br>"
                      "Edle Spender:<br>"
-                     "- Lunaaa    15€<br>"
-                     "- LuxusDrea 15€<br>"
-                     "- Archos405 10€<br>"
-                     "- TimBeam   10€<br>"
-                     "- CX500     7.77€<br>"
-                     "- Elevate   5€<br><br>"
+                     "- Holzklotzkiller 30€<br>"
+                     "- Lunaaa          15€<br>"
+                     "- LuxusDrea       15€<br>"
+                     "- ICQ             13.37€<br>"
+                     "- Archos405       10€<br>"
+                     "- TimBeam         10€<br>"
+                     "- CX500           7.77€<br>"
+                     "- Elevate         5€<br><br>"
                      "Meine Paypal-Email:<br>"
                      "<b>firediver98@gmail.com</b>";
             t.pos = QPoint(525,1405);

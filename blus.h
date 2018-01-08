@@ -19,12 +19,13 @@ public:
     Blus(int angle, QRectF rect, QString text, int size=48);
     Blus(int angle, QRectF rect, double vSpeed=8, double oSpeed=1, bool hardcore=false);
     double oSpeed;
-    bool snow;
+    int snow;
     bool hardcore;
     bool spark;
     bool used;
     bool gift;
     bool tail;
+    bool bg;
     int item;
     int size;
     int width;

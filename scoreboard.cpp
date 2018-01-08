@@ -50,7 +50,7 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     painter.drawPixmap(scoreX+350,473,160,160,btnCave);
     painter.setOpacity(1);
     QFont f = font;
-    f.setPixelSize(48);
+    f.setPixelSize(40);
     painter.setFont(f);
     painter.setPen(Qt::white);
     int own = -1;
@@ -72,8 +72,8 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         if(score.contains("-")) {
             painter.setPen(QColor(28,185,146));
         }
-        painter.drawText(scoreX+50,700+(i*60),name);
-        painter.drawText(scoreX+850,700+(i*60),score2);
+        painter.drawText(scoreX+45,700+(i*60),name);
+        painter.drawText(scoreX+845,700+(i*60),score2);
         int scoreI = score2.toInt();
         int medal=0;
         if(scoreI>=1000) {
@@ -89,7 +89,7 @@ void Scoreboard::draw(QPainter &painter,int highscore)
         } else if(scoreI>=30) {
             medal = 0;
         }
-        painter.drawPixmap(scoreX+790,640+(i*60),55,55,medals[medal]);
+        painter.drawPixmap(scoreX+785,647+(i*60),50,50,medals[medal]);
     }
     if(own==-1) {
         painter.setPen(Qt::red);

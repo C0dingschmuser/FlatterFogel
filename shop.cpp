@@ -75,6 +75,8 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     pipePrice.append(1);
     pipePrice.append(1);
     pipePrice.append(99);
+    pipePrice.append(3);
+    pipePrice.append(2);
     tailPrice.append(0);
     tailPrice.append(1);
     tailPrice.append(1);
@@ -191,7 +193,7 @@ void Shop::load(int ic1, int ic2, int ic3, int ic4)
     tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
 }
 
-void Shop::draw(QPainter &painter)
+void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue)
 {
     QFont f = font;
     painter.drawPixmap(shopX+165,460,750,1200,background);
@@ -344,6 +346,11 @@ void Shop::draw(QPainter &painter)
         drawPipe(shopX+500,650,100,100,6,painter);
         drawPipe(shopX+650,650,100,100,7,painter);
         drawPipe(shopX+200,800,100,100,8,painter);
+        drawPipe(shopX+350,800,100,100,9,painter);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(rgb_red,rgb_green,rgb_blue,100));
+        painter.drawRect(shopX+350,800,100,100);
+        drawPipe(shopX+500,800,100,100,10,painter);
         break;
     case 4:
         drawTail(shopX+200,500,100,100,0,painter);
@@ -505,6 +512,10 @@ void Shop::mousePress(QPoint pos, bool &cave)
                     selected = 8;
                 } else if(r.intersects(QRect(200,800,100,100))) {
                     selected = 9;
+                } else if(r.intersects(QRect(350,800,100,100))) {
+                    selected = 10;
+                } else if(r.intersects(QRect(500,800,100,100))) {
+                    selected = 11;
                 }
                 if(ownedPipes.contains(selected-1)) {
                     chosenPipe = selected;
@@ -859,6 +870,29 @@ QString Shop::tailsToString()
         s.append(QString::number(ownedTails[i])+"~");
     }
     return s;
+}
+
+QString Shop::getItemCount(int num)
+{
+    int count = 0;
+    switch(num) {
+    case 1:
+        count = item1Count;
+        break;
+    case 2:
+        count = item2Count;
+        break;
+    case 3:
+        count = item3Count;
+        break;
+    case 4:
+        count = item4Count;
+        break;
+    }
+    if(count>99) count = 99;
+    QString string = QString::number(count);
+    if(count<10) string.insert(0,"0");
+    return string;
 }
 
 QPixmap Shop::getPixmap(int item)

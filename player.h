@@ -23,6 +23,7 @@ public:
     bool dir;
     bool circle;
     bool hasAn;
+    bool fin;
     double tilt;
     bool tdir;
     double tstep;

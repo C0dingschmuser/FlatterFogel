@@ -73,7 +73,7 @@ public:
     QVector <int> ownedPipes;
     QVector <int> ownedTails;
     void load(int ic1,int ic2, int ic3, int ic4);
-    void draw(QPainter &painter);
+    void draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue);
     void setActive(bool active);
     bool getActive();
     void mousePress(QPoint pos, bool &cave);
@@ -82,6 +82,7 @@ public:
     QString bgsToString();
     QString pipesToString();
     QString tailsToString();
+    QString getItemCount(int num);
     QPixmap getPixmap(int item);
     QVector <QPixmap> skins;
     QVector <QPixmap> pipes;

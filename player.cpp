@@ -14,6 +14,7 @@ Player::Player(QRectF rect)
     tstep = 1;
     circle = false;
     an=true;
+    fin=false;
 }
 
 QPixmap Player::getPx()
