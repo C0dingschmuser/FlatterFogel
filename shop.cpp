@@ -3,10 +3,10 @@
 Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPixmap cloudPx, QObject *parent) : QObject(parent)
 {
     shopX = -1080;
-    ownedSkins.insert(0,0);
-    ownedbackgrounds.insert(0,0);
-    ownedPipes.insert(0,0);
-    ownedTails.insert(0,0);
+    ownedSkins.insert(ownedSkins.begin(),0);
+    ownedbackgrounds.insert(ownedbackgrounds.begin(),0);
+    ownedPipes.insert(ownedPipes.begin(),0);
+    ownedTails.insert(ownedTails.begin(),0);
     this->transl = transl;
     active = false;
     this->player = player;
@@ -126,7 +126,7 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
     }
     painter.setPen(Qt::white);
     painter.setOpacity(1);
-    if(!ownedSkins.contains(num)) {
+    if(!vContains(ownedSkins,num)) {
         painter.drawText(x+45,y+140,QString::number(skinPrice[num]));
         painter.drawPixmap(x,y+95,42,42,coinPx);
     }
@@ -138,7 +138,7 @@ void Shop::drawPipe(int x, int y, int w, int h, int num, QPainter &painter)
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(x,y,w,h,pipes[num]);
     painter.setPen(Qt::white);
-    if(!ownedPipes.contains(num)) {
+    if(!vContains(ownedPipes,num)) {
         painter.drawText(x+45,y+140,QString::number(pipePrice[num]));
         painter.drawPixmap(x,y+95,42,42,coinPx);
     }
@@ -151,7 +151,7 @@ void Shop::drawTail(int x, int y, int w, int h, int num, QPainter &painter)
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(x,y,w,h,tails[num]);
     painter.setPen(Qt::white);
-    if(!ownedTails.contains(num)) {
+    if(!vContains(ownedTails,num)) {
         painter.drawText(x+45,y+140,QString::number(tailPrice[num]));
         painter.drawPixmap(x,y+95,42,42,coinPx);
     }
@@ -177,7 +177,7 @@ void Shop::drawBg(int x, int y, int w, int h, int num, QPainter &painter)
     }
     painter.setPen(Qt::white);
     painter.setOpacity(1);
-    if(!ownedbackgrounds.contains(num)) {
+    if(!vContains(ownedbackgrounds,num)) {
         painter.drawText(x+45,y+240,QString::number(bgPrice[num]));
         painter.drawPixmap(x,y+195,42,42,coinPx);
     }
@@ -468,7 +468,7 @@ void Shop::mousePress(QPoint pos, bool &cave)
                     selected = 24;
                 }
                 //if(skinPrice[selected-1]>1) player->reload(selected-1);
-                if(ownedSkins.contains(selected-1)) {
+                if(vContains(ownedSkins,selected-1)) {
                     setSkin(selected);
                 }
             break;
@@ -484,7 +484,7 @@ void Shop::mousePress(QPoint pos, bool &cave)
                 } else if(r.intersects(QRect(350,750,124,190))) {
                     selected = 5;
                 }
-                if(ownedbackgrounds.contains(selected-1)) {
+                if(vContains(ownedbackgrounds,selected-1)) {
                     chosenBackground = selected;
                     if(chosenBackground==4) {
                         cave = true;
@@ -517,7 +517,7 @@ void Shop::mousePress(QPoint pos, bool &cave)
                 } else if(r.intersects(QRect(500,800,100,100))) {
                     selected = 11;
                 }
-                if(ownedPipes.contains(selected-1)) {
+                if(vContains(ownedPipes,selected-1)) {
                     chosenPipe = selected;
                 }
             break;
@@ -535,7 +535,7 @@ void Shop::mousePress(QPoint pos, bool &cave)
             } else if(r.intersects(QRect(350,650,100,100))) {
                 selected = 6;
             }
-            if(ownedTails.contains(selected-1)) {
+            if(vContains(ownedTails,selected-1)) {
                 chosenTail = selected;
             }
             break;
@@ -628,9 +628,9 @@ void Shop::mousePress(QPoint pos, bool &cave)
                     int price = skinPrice[selected-1];
                     if(coins<price) {
                         emit msg(transl->getText_Shop_NotEnough("Coins").text);
-                    } else if(!ownedSkins.contains(selected-1)) {
+                    } else if(!vContains(ownedSkins,selected-1)) {
                         coins-=price;
-                        ownedSkins.append(selected-1);
+                        ownedSkins.push_back(selected-1);
                         setSkin(selected);
                         player->coins = coins;
                         emit buy(price,true,true);
@@ -642,9 +642,9 @@ void Shop::mousePress(QPoint pos, bool &cave)
                     int price = bgPrice[selected-1];
                     if(coins<price) {
                         emit msg(transl->getText_Shop_NotEnough("Coins").text);
-                    } else if(!ownedbackgrounds.contains(selected-1)){
+                    } else if(!vContains(ownedbackgrounds,selected-1)){
                         coins-=price;
-                        ownedbackgrounds.append(selected-1);
+                        ownedbackgrounds.push_back(selected-1);
                         chosenBackground = selected;
                         player->coins = coins;
                         emit buy(price,true,true);
@@ -656,9 +656,9 @@ void Shop::mousePress(QPoint pos, bool &cave)
                 int price = pipePrice[selected-1];
                 if(coins<price) {
                     emit msg(transl->getText_Shop_NotEnough("Coins").text);
-                } else if(!ownedPipes.contains(selected-1)) {
+                } else if(!vContains(ownedPipes,selected-1)) {
                     coins-=price;
-                    ownedPipes.append(selected-1);
+                    ownedPipes.push_back(selected-1);
                     chosenPipe = selected;
                     player->coins = coins;
                     emit buy(price,true,true);
@@ -670,9 +670,9 @@ void Shop::mousePress(QPoint pos, bool &cave)
                 int price = tailPrice[selected-1];
                 if(coins<price) {
                     emit msg(transl->getText_Shop_NotEnough("Coins").text);
-                } else if(!ownedTails.contains(selected-1)) {
+                } else if(!vContains(ownedTails,selected-1)) {
                     coins-=price;
-                    ownedTails.append(selected-1);
+                    ownedTails.push_back(selected-1);
                     chosenTail = selected;
                     player->coins = coins;
                     emit buy(price,true,true);
@@ -839,7 +839,7 @@ void Shop::setSkin(int num)
 QString Shop::skinsToString()
 {
     QString s;
-    for(int i=1;i<ownedSkins.size();i++) {
+    for(uint i=1;i<ownedSkins.size();i++) {
         s.append(QString::number(ownedSkins[i])+"~");
     }
     return s;
@@ -848,7 +848,7 @@ QString Shop::skinsToString()
 QString Shop::bgsToString()
 {
     QString s;
-    for(int i=1;i<ownedbackgrounds.size();i++) {
+    for(uint i=1;i<ownedbackgrounds.size();i++) {
         s.append(QString::number(ownedbackgrounds[i])+"~");
     }
     return s;
@@ -857,7 +857,7 @@ QString Shop::bgsToString()
 QString Shop::pipesToString()
 {
     QString s;
-    for(int i=1;i<ownedPipes.size();i++) {
+    for(uint i=1;i<ownedPipes.size();i++) {
         s.append(QString::number(ownedPipes[i])+"~");
     }
     return s;
@@ -866,7 +866,7 @@ QString Shop::pipesToString()
 QString Shop::tailsToString()
 {
     QString s;
-    for(int i=1;i<ownedTails.size();i++) {
+    for(uint i=1;i<ownedTails.size();i++) {
         s.append(QString::number(ownedTails[i])+"~");
     }
     return s;
@@ -914,4 +914,11 @@ QPixmap Shop::getPixmap(int item)
 
     }
     return p;
+}
+
+bool Shop::vContains(std::vector<int> v, int value)
+{
+    bool ok=false;
+    if (std::find(v.begin(), v.end(),value)!=v.end()) ok=true;
+    return ok;
 }

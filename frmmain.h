@@ -135,17 +135,16 @@ private:
     QThread *workerThread;
     QThread *blusThread;
     QThread *animationThread;
-    QVector <Obstacle*> obstacles;
-    QVector <Blus*> blusse;
-    QVector <PxAn*> pxans;
+    std::vector <Obstacle*> obstacles;
+    std::vector <Blus*> blusse;
     QVector <Window*> windows;
     QVector <Star*> stars;
-    QVector <QPixmap> skins;
-    QVector <QPixmap> pipes;
-    QVector <QPixmap> tails;
+    std::vector <QPixmap> skins;
+    std::vector <QPixmap> pipes;
+    std::vector <QPixmap> tails;
     QVector <QPixmap> thumbs;
     QVector <QPixmap> powerupPx;
-    QVector <Background*> backgrounds;
+    std::vector <Background*> backgrounds;
     int currentskin;
     int random(int min, int max);
     QPixmap vol0;
@@ -229,6 +228,7 @@ private:
     bool refActive;
     bool outdated;
     bool boostused;
+    bool vContains(std::vector<int> v, int value);
     double cloud1X;
     double cloud2X;
     double flashOpacity;
@@ -253,6 +253,8 @@ private:
     bool intersectsWithCircle(QRectF rect, QRectF circle);
     void checkPost();
     void initSound();
+    void error(QString errorString);
+    void startStop(bool start);
     double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);

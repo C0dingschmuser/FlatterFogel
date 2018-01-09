@@ -67,11 +67,11 @@ public:
     QVector <int> bgPrice;
     QVector <int> pipePrice;
     QVector <int> tailPrice;
-    QVector <int> ownedSkins;
-    QVector <Background*> backgrounds;
-    QVector <int> ownedbackgrounds;
-    QVector <int> ownedPipes;
-    QVector <int> ownedTails;
+    std::vector <int> ownedSkins;
+    std::vector <Background*> backgrounds;
+    std::vector <int> ownedbackgrounds;
+    std::vector <int> ownedPipes;
+    std::vector <int> ownedTails;
     void load(int ic1,int ic2, int ic3, int ic4);
     void draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue);
     void setActive(bool active);
@@ -84,10 +84,10 @@ public:
     QString tailsToString();
     QString getItemCount(int num);
     QPixmap getPixmap(int item);
-    QVector <QPixmap> skins;
-    QVector <QPixmap> pipes;
-    QVector <QPixmap> tails;
-
+    std::vector <QPixmap> skins;
+    std::vector <QPixmap> pipes;
+    std::vector <QPixmap> tails;
+    bool vContains(std::vector<int> v, int value);
 signals:
     void back();
     void msg(QString msg);
