@@ -19,6 +19,7 @@ Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, 
     this->btnNormal = QPixmap(":/images/buttons/btnNormal.png");
     this->btnCave = QPixmap(":/images/buttons/btnCave.png");
     this->btnHardcore = QPixmap(":/images/buttons/btnHardcore.png");
+    this->btnSpace = QPixmap(":/images/buttons/btnSpace.png");
     hs=0;
     hs_H=0;
     hs_C=0;
@@ -31,7 +32,7 @@ Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, 
     connect(socket,SIGNAL(readyRead()),this,SLOT(on_tcpRecv()));
 }
 
-void Scoreboard::draw(QPainter &painter,int highscore)
+void Scoreboard::draw(QPainter &painter, int highscore, QColor textColor)
 {
     highscore = hs;
     if(page==1) {
@@ -48,6 +49,9 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     painter.setOpacity(1);
     if(page!=2) painter.setOpacity(0.4);
     painter.drawPixmap(scoreX+350,473,160,160,btnCave);
+    painter.setOpacity(1);
+    if(page!=3) painter.setOpacity(0.4);
+    painter.drawPixmap(scoreX+510,473,160,160,btnSpace);
     painter.setOpacity(1);
     QFont f = font;
     f.setPixelSize(40);
@@ -102,7 +106,7 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     //painter.drawText(scoreX+50,550+12*60,"Server ist instabil. WIP.");
     painter.drawPixmap(scoreX+24,1324,300,130,btnPx);
     painter.drawPixmap(scoreX+500,1324,560,130,btnPx);
-    painter.setPen(QColor(0,143,255));
+    painter.setPen(textColor);
     Text t = transl->getBtn_Scoreboard_Back();
     f.setPixelSize(t.size);
     painter.setFont(f);
@@ -113,13 +117,14 @@ void Scoreboard::draw(QPainter &painter,int highscore)
     painter.drawText(QPoint(scoreX+t.pos.x(),t.pos.y()),t.text);
 }
 
-void Scoreboard::setScore(int his, int his_H, int his_C)
+void Scoreboard::setScore(int his, int his_H, int his_C, int his_S)
 {
     bool ok=true;
-    if(his||his_H||his_C) {
+    if(his||his_H||his_C||his_S) {
         this->hs = his;
         this->hs_H = his_H;
         this->hs_C = his_C;
+        this->hs_S = his_S;
         ok=false;
     }
     int score = hs;
@@ -127,6 +132,8 @@ void Scoreboard::setScore(int his, int his_H, int his_C)
         score = hs_H;
     } else if(page==2) {
         score = hs_C;
+    } else if(page==3) {
+        score = hs_S;
     }
     socket->connectToHost("flatterfogel.ddns.net",38900);
     socket->waitForConnected(1000);
@@ -201,6 +208,12 @@ void Scoreboard::mpress(QPoint pos)
     } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(350,473,160,160))) { //cave
         if(page!=2) {
             page = 2;
+            setScore();
+            getScores();
+        }
+    } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(510,473,160,160))) { //space
+        if(page!=3) {
+            page = 3;
             setScore();
             getScores();
         }

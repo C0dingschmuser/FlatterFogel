@@ -102,6 +102,7 @@ private:
     double reviveTime;
     bool hardcore;
     bool cave;
+    bool space;
     bool loading;
     bool lowGraphics;
     bool donator;
@@ -142,6 +143,7 @@ private:
     std::vector <QPixmap> skins;
     std::vector <QPixmap> pipes;
     std::vector <QPixmap> tails;
+    std::vector <QPixmap> planets;
     QVector <QPixmap> thumbs;
     QVector <QPixmap> powerupPx;
     std::vector <Background*> backgrounds;
@@ -180,6 +182,8 @@ private:
     QPixmap referralPx2;
     QPixmap mieserkadserPx;
     QPixmap ad_px;
+    QPixmap btnup;
+    QPixmap btndown;
     QVector <QPixmap> boxPxAn;
     QString enemy;
     QString version;
@@ -196,6 +200,7 @@ private:
     Translation *transl;
     Scoreboard *scoreboard;
     QString name;
+    QColor textColor;
     int enemytype;
     int enemydir;
     int enemylife;
@@ -203,6 +208,7 @@ private:
     int highscore;
     int highscore_H;
     int highscore_C;
+    int highscore_S;
     int schmuser;
     int maxX;
     int maxY;
@@ -224,11 +230,16 @@ private:
     int rgb_blue;
     int rgb_green;
     int rgb_mode;
+    double planetX;
+    double planetY;
+    int chosenPlanet;
     bool invited;
     bool refActive;
     bool outdated;
     bool boostused;
+    bool flip;
     bool vContains(std::vector<int> v, int value);
+    double textFade;
     double cloud1X;
     double cloud2X;
     double flashOpacity;
@@ -255,6 +266,7 @@ private:
     void initSound();
     void error(QString errorString);
     void startStop(bool start);
+    void tap(int x, int y);
     double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);

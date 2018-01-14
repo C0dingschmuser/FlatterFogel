@@ -24,17 +24,19 @@ private:
     QPixmap btnNormal;
     QPixmap btnCave;
     QPixmap btnHardcore;
+    QPixmap btnSpace;
     QVector<QString>players;
     QFont font;
     Translation *transl;
     int hs;
     int hs_H;
     int hs_C;
+    int hs_S;
     QString maas(QString n);
 public:
     explicit Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent = nullptr);
-    void draw(QPainter &painter, int highscore);
-    void setScore(int his=0, int his_H=0, int his_C=0);
+    void draw(QPainter &painter, int highscore, QColor textColor);
+    void setScore(int his=0, int his_H=0, int his_C=0, int his_S=0);
     void getScores();
     void mpress(QPoint pos);
     bool active;

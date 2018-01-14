@@ -48,6 +48,9 @@ public:
     Text getText_NHS();
     Text getText_Neu();
     Text getText_CN();
+    Text getText_Begin();
+    Text getText_BeginSpaceTop();
+    Text getText_BeginSpaceBottom();
 };
 
 #endif // LOCALE_H

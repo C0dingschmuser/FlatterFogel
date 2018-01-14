@@ -57,10 +57,10 @@ public:
     int speedLvl;
     unsigned long mMax;
     unsigned long tMax;
-    int chosenSkin;
-    int chosenBackground;
-    int chosenPipe;
-    int chosenTail;
+    uint chosenSkin;
+    uint chosenBackground;
+    uint chosenPipe;
+    uint chosenTail;
     int shopX;
     int yOffset;
     QVector <int> skinPrice;
@@ -73,10 +73,10 @@ public:
     std::vector <int> ownedPipes;
     std::vector <int> ownedTails;
     void load(int ic1,int ic2, int ic3, int ic4);
-    void draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue);
+    void draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QColor textColor);
     void setActive(bool active);
     bool getActive();
-    void mousePress(QPoint pos, bool &cave);
+    void mousePress(QPoint pos, bool &cave, bool &space, bool &flip);
     void setSkin(int num);
     QString skinsToString();
     QString bgsToString();

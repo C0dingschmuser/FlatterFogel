@@ -433,10 +433,11 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Powerup-Buttons überarbeitet\n"
-                     "-> 2 neue Säulenskins\n"
-                     "RGB & Minimalistisch\n"
-                     "-> Shekel-Hintergrund animiert\n"
+                     "-> Neue Hintergründe mit Modi\n"
+                     "-> Neue Säulenskins\n"
+                     "-> Neue Schweife\n"
+                     "-> Neue Textfarbe"
+                     "-> Preise angepasst\n"
                      "-> Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
@@ -479,7 +480,7 @@ Text Translation::getText_Shop_Skin()
                      "nachdem du ihn gekauft hast. Die für\n"
                      "den Kauf benötigten Coins findest du\n"
                      "in Kisten. Zusätzlich bekommst du\n"
-                     "jedes mal wenn du die 100 knackst\n"
+                     "jedes mal wenn du die 200 knackst\n"
                      "einen Coin.";
             t.pos = QPoint(525,1405);
             t.size = 30;
@@ -489,8 +490,8 @@ Text Translation::getText_Shop_Skin()
                      "have purchased the Skin. You can\n"
                      "find the Coins required for a\n"
                      "Purchase in Crates. In addition\n"
-                     "everytime you get a score greater\n"
-                     "than 100 you get a coin.";
+                     "everytime you get a score dividable\n"
+                     "by 200 you get a coin.";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -503,12 +504,12 @@ Text Translation::getText_Shop_Background()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Tippe einen Hintergrund an um ihn auszuwählen\n"
-                     "nachdem du ihn gekauft hast. Die für\n"
-                     "den Kauf benötigten Coins findest du\n"
-                     "in Kisten. Zusätzlich bekommst du\n"
-                     "jedes mal wenn du die 100 knackst\n"
-                     "einen Coin.";
+            t.text = "Tippe einen Hintergrund an um ihn auszuwählen<br>"
+                     "nachdem du ihn gekauft hast. <b>Rot hinterlegte<br>"
+                     "Hintergründe beinhalten einen besonderen Modus.</b><br>"
+                     "Die für den Kauf benötigten Coins findest du<br>"
+                     "in Kisten. Zusätzlich bekommst du jedes mal<br>"
+                     "wenn du die 200 knackst einen Coin.";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -517,8 +518,8 @@ Text Translation::getText_Shop_Background()
                      "after you have purchased it. You can\n"
                      "find the Coins required for a\n"
                      "Purchase in Crates. In addition\n"
-                     "everytime you get a score greater\n"
-                     "than 100 you get a coin.";
+                     "everytime you get a score dividable\n"
+                     "by 200 you get a coin.";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -700,8 +701,9 @@ Text Translation::getText_Donate()
                      "du mir einen beliebigen Betrag spendest.<br>"
                      "Im Gegenzug für deine Großzügigkeit kommst<br>"
                      "du auf eine Spenderliste, darfst an der Entwicklung<br>"
-                     "mitwirken und <b>erhältst einen exklusiven<br>"
-                     "Hintergrund, Skin und Säulenskin</b><br><br>"
+                     "mitwirken und <b>erhältst 2 exklusive<br>"
+                     "Hintergründe und Säulenskins & einen<br>"
+                     "Spielerskin.</b><br><br>"
                      "Edle Spender:<br>"
                      "- Holzklotzkiller 30€<br>"
                      "- Lunaaa          15€<br>"
@@ -709,10 +711,11 @@ Text Translation::getText_Donate()
                      "- ICQ             13.37€<br>"
                      "- Archos405       10€<br>"
                      "- TimBeam         10€<br>"
+                     "- KaisersNEEDU    10€<br>"
                      "- CX500           7.77€<br>"
+                     "- X6              6.66€<br>"
                      "- Elevate         5€<br><br>"
-                     "Meine Paypal-Email:<br>"
-                     "<b>firediver98@gmail.com</b>";
+                     "<b>Möchtest du Spenden?</b>";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -775,6 +778,48 @@ Text Translation::getText_CN()
             t.text = "Reset Name?";
             t.pos = QPoint(525,1405);
             t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Begin()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe um zu fliegen";
+        break;
+        default:
+            t.text = "Tap to stay in air";
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_BeginSpaceTop()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "über spieler = nach oben";
+        break;
+        default:
+            t.text = "above player = up";
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_BeginSpaceBottom()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "unter spieler = nach unten";
+        break;
+        default:
+            t.text = "below player = down";
         break;
     }
     return t;

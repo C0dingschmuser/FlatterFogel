@@ -23,8 +23,11 @@
 	<file>images/buttons/btnNormal.png</file>
 	<file>images/buttons/btnCave.png</file>
 	<file>images/buttons/btnHardcore.png</file>
+	<file>images/buttons/btnSpace.png</file>
 	<file>images/buttons/vol0.png</file>
 	<file>images/buttons/vol1.png</file>
+	<file>images/buttons/up.png</file>
+	<file>images/buttons/down.png</file>
 	<file>images/coin.png</file>
 	<file>images/box/box.png</file>
 	<file>images/box/box2.png</file>
@@ -78,19 +81,38 @@
 	<file>images/pipes/8.png</file>
 	<file>images/pipes/9.png</file>
 	<file>images/pipes/10.png</file>
+	<file>images/pipes/11.png</file>
+	<file>images/pipes/12.png</file>
+	<file>images/pipes/13.png</file>
+	<file>images/pipes/14.png</file>
+	<file>images/pipes/15.png</file>
+	<file>images/pipes/16.png</file>
 	<file>images/tails/0.png</file>
 	<file>images/tails/1.png</file>
 	<file>images/tails/2.png</file>
 	<file>images/tails/3.png</file>
 	<file>images/tails/4.png</file>
 	<file>images/tails/5.png</file>
-	<file>images/ground.png</file>
+	<file>images/tails/6.png</file>
+	<file>images/tails/7.png</file>
+	<file>images/backgrounds/ground/basic.png</file>
+	<file>images/backgrounds/ground/2.png</file>
+	<file>images/backgrounds/ground/3.png</file>
+	<file>images/backgrounds/ground/5.png</file>
+	<file>images/backgrounds/ground/6.png</file>
+	<file>images/backgrounds/planets/0.png</file>
+	<file>images/backgrounds/planets/1.png</file>
+	<file>images/backgrounds/planets/2.png</file>
+	<file>images/backgrounds/planets/3.png</file>
+	<file>images/backgrounds/planets/4.png</file>
 	<file>images/backgrounds/bg1.png</file>
 	<file>images/backgrounds/bg2.png</file>
 	<file>images/backgrounds/bg3.png</file>
 	<file>images/backgrounds/bg4.png</file>
 	<file>images/backgrounds/bg4p.png</file>
 	<file>images/backgrounds/bg5.png</file>
+	<file>images/backgrounds/bg6.png</file>
+	<file>images/backgrounds/bg8.png</file>
 	<file>images/cloud.png</file>
 	<file>images/stats.png</file>
 	<file>images/player/skins/0.png</file>
