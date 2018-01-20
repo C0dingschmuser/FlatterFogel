@@ -25,6 +25,7 @@ private:
     QPixmap btnCave;
     QPixmap btnHardcore;
     QPixmap btnSpace;
+    QPixmap btnUM;
     QVector<QString>players;
     QFont font;
     Translation *transl;
@@ -32,11 +33,12 @@ private:
     int hs_H;
     int hs_C;
     int hs_S;
+    int hs_UM;
     QString maas(QString n);
 public:
     explicit Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, QObject *parent = nullptr);
     void draw(QPainter &painter, int highscore, QColor textColor);
-    void setScore(int his=0, int his_H=0, int his_C=0, int his_S=0);
+    void setScore(int his=0, int his_H=0, int his_C=0, int his_S=0, int his_UM=0);
     void getScores();
     void mpress(QPoint pos);
     bool active;

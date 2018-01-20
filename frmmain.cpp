@@ -6,7 +6,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2320657";
+    lastPost = "2334835";
     loading = true;
     mainX = 0;
     newHS = 0;
@@ -30,7 +30,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     moveAn = false;
     refActive = false;
     soundEnabled = false;
-    version = "1.3.0.r";
+    soundEffectsEnabled = false;
+    version = "1.3.1.r";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -82,8 +83,11 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     //this->showMaximized();
     referrals = 3;
     invited = false;
+    underwater = false;
     space = false;
     flip = false;
+    gameSpeed = 1;
+    lastbenpos = nullptr;
     btnup = QPixmap(":/images/buttons/up.png");
     btndown = QPixmap(":/images/buttons/down.png");
     end = QPixmap(":/images/end.png");
@@ -123,13 +127,13 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     referralPx2 = QPixmap(":/images/referral2.png");
     mieserkadserPx = QPixmap(":/images/mieserkadser.png");
     ad_px = QPixmap(":/images/ad.png");
-    for(int i=0;i<24;i++) {
+    for(int i=0;i<25;i++) {
         skins.push_back(QPixmap(":/images/player/skins/"+QString::number(i)+".png"));
     }
-    for(int i=0;i<17;i++) {
+    for(int i=0;i<18;i++) {
         pipes.push_back(QPixmap(":/images/pipes/"+QString::number(i)+".png"));
     }
-    for(int i=0;i<8;i++) {
+    for(int i=0;i<12;i++) {
         tails.push_back(QPixmap(":/images/tails/"+QString::number(i)+".png"));
     }
     for(int i=0;i<29;i++) {
@@ -141,6 +145,15 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     for(int i=0;i<5;i++) {
         planets.push_back(QPixmap(":/images/backgrounds/planets/"+QString::number(i)+".png"));
     }
+    /*QFile f,f2;
+    QString p = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/flatter.wav";
+    QString p2 = ":/sounds/flatter.wav";
+    f.setFileName(p);
+    f2.setFileName(p2);
+    if(!f.exists()) {
+       f2.copy(p);
+    }
+    qDebug()<<f2.errorString();*/
     backgrounds.push_back(new Background(1,QColor(22,22,24),true,false,true));
     backgrounds.push_back(new Background(2,QColor(0,143,255),false,true,true,false,true,true));
     backgrounds.push_back(new Background(3,QColor(95,95,95),true,false,false,false,false,true));
@@ -148,12 +161,16 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     backgrounds.push_back(new Background(5,QColor(255,207,43),false,false,false,false,false,true));
     backgrounds.push_back(new Background(6,QColor(22,22,24),true,false,false,false,false,true));
     backgrounds.push_back(new Background(7,QColor(22,22,24),true,false,true,false,true,false,1));
-    backgrounds.push_back(new Background(8,QColor(22,22,24),false,true,false,false,true,false));
+    backgrounds.push_back(new Background(8,QColor(22,22,24),false,true,false,false,true,false,0,false));
+    backgrounds.push_back(new Background(9,QColor(22,22,24),false,false,false,false,false,true,0,false));
+    backgrounds.push_back(new Background(10,QColor(22,22,24),false,false,false,false,false,true,0,false));
+    backgrounds.push_back(new Background(11,QColor(22,22,24),false,false,false,false,false,true,0,false));
     for(int i=0;i<3;i++) {
         boxPxAn.append(QPixmap(":/images/box/box_"+QString::number(i+1)+".png"));
     }
     player = new Player(QRectF(1080/2-250,1920/2-40,80,80));
     shop = new Shop(player,font,transl,coinPx,cloudPx);
+    settings = new Settings(&shop->background,&btnPx,transl);
     shop->skins = skins;
     shop->pipes = pipes;
     shop->tails = tails;
@@ -168,6 +185,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     connect(shop,SIGNAL(back()),this,SLOT(on_shopBack()));
     connect(shop,SIGNAL(msg(QString)),this,SLOT(on_shopMsg(QString)));
     connect(shop,SIGNAL(buy(int,bool,bool,bool)),this,SLOT(on_shopBuy(int,bool,bool,bool)));
+    connect(settings,SIGNAL(back()),this,SLOT(on_settingsBack()));
+    connect(settings,SIGNAL(play()),this,SLOT(on_settingsPlay()));
     enemyRect = QRectF(-300,100,300,200);
     textColor = QColor(255,153,0);
     enemy = "Mieserkadser";
@@ -194,6 +213,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     highscore_H = 0;
     highscore_C = 0;
     highscore_S = 0;
+    highscore_UM = 0;
     boost = 0;
     crate = false;
     fastboost = false;
@@ -206,6 +226,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     g2x = 1080;
     boxCount = 0;
     ad_active = false;
+    unlockedSpeed = false;
     revive = false;
     boostused = false;
     qsrand(QDateTime::currentDateTime().toTime_t());
@@ -214,6 +235,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     workerThread = new QThread();
     blusThread = new QThread();
     animationThread = new QThread();
+    musicThread = new QThread();
     t_main->start(5);
     t_draw->setTimerType(Qt::PreciseTimer);
     t_draw->start(10);
@@ -227,24 +249,34 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_animation->setTimerType(Qt::PreciseTimer);
     t_animation->start(1);
     t_tchange->setSingleShot(true);
-    t_animation->moveToThread(animationThread);
-    t_rgb->moveToThread(workerThread);
-    t_an->moveToThread(workerThread);
-    t_main->moveToThread(workerThread);
-    t_obst->moveToThread(workerThread);
-    t_boost->moveToThread(workerThread);
-    t_tilt->moveToThread(workerThread);
-    t_tchange->moveToThread(workerThread);
-    t_flag->moveToThread(workerThread);
-    t_star->moveToThread(workerThread);
+    t_animation->moveToThread(animationThread); //
+    t_rgb->moveToThread(workerThread); //
+    t_an->moveToThread(workerThread); //
+    t_main->moveToThread(workerThread); //
+    t_obst->moveToThread(workerThread); //
+    t_boost->moveToThread(workerThread); //
+    t_tilt->moveToThread(workerThread); //
+    t_tchange->moveToThread(workerThread); //
+    t_flag->moveToThread(workerThread); //
+    t_star->moveToThread(workerThread); //
     t_boxDeathAn->moveToThread(workerThread);
     t_resume->moveToThread(workerThread);
-    t_blus->moveToThread(blusThread);
-    t_tail->moveToThread(blusThread);
-    t_newHS->moveToThread(workerThread);
+    t_blus->moveToThread(blusThread); //
+    t_tail->moveToThread(blusThread); //
+    t_newHS->moveToThread(workerThread); //
+    for(int i=0;i<10;i++) {
+        QSoundEffect *effect = new QSoundEffect();
+        effect->setSource(QUrl::fromLocalFile(":/sound/flatter.wav"));
+        effect->setVolume(0.4);
+        effect->moveToThread(musicThread);
+        soundEffects.push_back(effect);
+    }
+    sound->moveToThread(musicThread);
     workerThread->start();
     blusThread->start();
+    musicThread->start();
     animationThread->start();
+    //startStop(true);
     qApp->setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }");
 }
 
@@ -265,32 +297,62 @@ void FrmMain::checkPost()
         socket->waitForBytesWritten(500);
         socket->waitForReadyRead(1000);
         QString input = socket->readAll();
-        QStringList split = input.split("#");
-        if(split.at(0)!=lastPost) {
-            lastPost = split.at(0);
-            write();
-            newpost = true;
+        QStringList list = input.split("#");
+        std::vector <QString> split;
+        for(int i=0;i<list.size();i++) {
+            split.push_back(list.at(i));
         }
-        if(split.at(1).toInt()) { //spender
-            if(!vContains(shop->ownedbackgrounds,4)||!vContains(shop->ownedPipes,8)||
-                    !vContains(shop->ownedSkins,23)||!vContains(shop->ownedbackgrounds,7)||
-                    !vContains(shop->ownedPipes,11)) {
-                donator = true;
+        try {
+            if(split.at(0)!=lastPost) {
+                lastPost = split.at(0);
+                write();
+                newpost = true;
             }
-        }
-        if(split.at(2)!=version) {
-            //1.3.0.b
-            if(version.contains("r")) {
-                QStringList vlocal = version.split(".");
-                QStringList vserver = split.at(2).split(".");
-                if(vlocal.at(0).toInt()<vserver.at(0).toInt()) {
-                    outdated = true;
-                } else if(vlocal.at(1).toInt()<vserver.at(1).toInt()){
-                    outdated = true;
-                } else if(vlocal.at(2).toInt()<vserver.at(2).toInt()){
-                    outdated = true;
+            switch(split.at(1).toInt()) {
+                case 1:
+                    if(!vContains(shop->ownedbackgrounds,7)||
+                            !vContains(shop->ownedPipes,11)) donator = 1;
+                break;
+                case 2:
+                    if(!vContains(shop->ownedSkins,23)||
+                            !vContains(shop->ownedbackgrounds,4)||
+                            !vContains(shop->ownedPipes,8)||
+                            !vContains(shop->ownedbackgrounds,7)||
+                            !vContains(shop->ownedPipes,11)) donator = 2;
+                break;
+                case 3:
+                    if(!vContains(shop->ownedSkins,23)||
+                            !vContains(shop->ownedbackgrounds,4)||
+                            !vContains(shop->ownedPipes,8)||
+                            !vContains(shop->ownedbackgrounds,7)||
+                            !vContains(shop->ownedPipes,11)||
+                            !vContains(shop->ownedbackgrounds,8)||
+                            !unlockedSpeed) donator = 3;
+                break;
+            }
+            if(split.at(2)!=version) {
+                //1.3.0.b
+                if(version.contains("r")) {
+                    QStringList vlocal = version.split(".");
+                    QStringList vserver = split.at(2).split(".");
+                    if(vlocal.at(0).toInt()<vserver.at(0).toInt()) {
+                        outdated = true;
+                    } else if(vlocal.at(1).toInt()<vserver.at(1).toInt()){
+                        outdated = true;
+                    } else if(vlocal.at(2).toInt()<vserver.at(2).toInt()){
+                        outdated = true;
+                    }
                 }
             }
+            if(split.at(3)=="WIN") {
+                boxCount += 25;
+                write();
+                QMessageBox::information(this,"Info","Du hast gewonnen! Viel spaß mit den 25 Geschenken :D");
+            }
+        } catch(std::exception) {
+            socket->close();
+            delete socket;
+            return;
         }
     }
     socket->close();
@@ -368,51 +430,88 @@ void FrmMain::tap(int x, int y)
     player->setBenis(player->getBenis()+shop->tapMultiplier);
     if(!lowGraphics) {
         QPixmap bpx = blus;
-        if(shop->chosenSkin!=23) {
+        if(shop->chosenSkin!=23&&shop->chosenSkin!=25) {
             if(shop->chosenSkin==14) bpx = minus;
             blusse.push_back(new Blus(random(0,360),QRectF(x-20,y-20,40,40),bpx));
         } else {
             QString text;
-            switch(random(0,12)) {
-            case 0:
-                text = "such wow";
+            switch(shop->chosenSkin) {
+            case 23:
+                switch(random(0,12)) {
+                case 0:
+                    text = "such wow";
+                    break;
+                case 1:
+                    text = "very touch";
+                    break;
+                case 2:
+                    text = "much flatter";
+                    break;
+                case 3:
+                    text = "such blus";
+                    break;
+                case 4:
+                    text = "very wow";
+                    break;
+                case 5:
+                    text = "such difficult";
+                    break;
+                case 6:
+                    text = "so hardcore";
+                    break;
+                case 7:
+                    text = "much tap";
+                    break;
+                case 8:
+                    text = "wow";
+                    break;
+                case 9:
+                    text = "so doge";
+                    break;
+                case 10:
+                    text = "very pr0gramm";
+                    break;
+                case 11:
+                    text = "such score";
+                    break;
+                }
                 break;
-            case 1:
-                text = "very touch";
-                break;
-            case 2:
-                text = "much flatter";
-                break;
-            case 3:
-                text = "such blus";
-                break;
-            case 4:
-                text = "very wow";
-                break;
-            case 5:
-                text = "such difficult";
-                break;
-            case 6:
-                text = "so hardcore";
-                break;
-            case 7:
-                text = "much tap";
-                break;
-            case 8:
-                text = "wow";
-                break;
-            case 9:
-                text = "so doge";
-                break;
-            case 10:
-                text = "very pr0gramm";
-                break;
-            case 11:
-                text = "such score";
+            case 25:
+                switch(random(0,5)) {
+                case 0:
+                case 1:
+                case 2:
+                    text = "do you kno da wae";
+                    break;
+                case 3:
+                case 4:
+                    text = "*cluck*";
+                    break;
+                }
                 break;
             }
             blusse.push_back(new Blus(random(0,360),QRectF(x-20,y-20,40,40),text,random(35,46)));
         }
+    }
+}
+
+void FrmMain::changeSpeed(bool faster)
+{
+#ifdef QT_NO_DEBUG
+    if(!unlockedSpeed) return;
+#endif
+    if(lastbenpos) {
+        lastbenpos->move(-5000);
+    }
+    Blus *b = new Blus(0,QRect(200,500,10,10),"Geschw.: "+QString::number(gameSpeed,'f',2)+"x");
+    b->vx = 0;
+    b->speedDisplay = true;
+    blusse.push_back(b);
+    lastbenpos = b;
+    if(faster) {
+        if(gameSpeed<2.25) gameSpeed+=0.25;
+    } else {
+        if(gameSpeed>1) gameSpeed-=0.25;
     }
 }
 
@@ -438,6 +537,10 @@ void FrmMain::on_tTail()
     case 5: //de flag
     case 7: //re flag
     case 8: //au flag
+    case 9: //orange
+    case 10: //grün
+    case 11: //blau
+    case 12: //fliesentisch
         {
         Blus *b = new Blus(0,QRect(player->getRect().x()-10,player->getRect().y()+player->getRect().height()/2-40,5,80),tails[shop->chosenTail-1],5,60,0,0);
         b->tail = true;
@@ -476,7 +579,7 @@ void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
 {
     if(status == QMediaPlayer::MediaStatus::LoadedMedia&&soundEnabled) {
         sound->setVolume(25);
-        sound->play();
+        QMetaObject::invokeMethod(sound,"play");
     }
 }
 
@@ -485,7 +588,7 @@ void FrmMain::on_appStateChanged(Qt::ApplicationState state)
     if(state==Qt::ApplicationActive) {
         if(soundEnabled) {
             if(sound->state()==QMediaPlayer::PausedState) {
-                sound->play();
+                QMetaObject::invokeMethod(sound,"play");
             }
         }
         if(!suspended) return;
@@ -513,7 +616,27 @@ void FrmMain::on_appStateChanged(Qt::ApplicationState state)
         }
     }
 //active
-//inactive
+    //inactive
+}
+
+void FrmMain::on_test()
+{
+    qDebug()<<"finished";
+}
+
+void FrmMain::on_settingsBack()
+{
+    moveAn = 8;
+}
+
+void FrmMain::on_settingsPlay()
+{
+    if(soundEnabled) {
+        sound->setVolume(25);
+        QMetaObject::invokeMethod(sound,"play");
+    } else {
+        QMetaObject::invokeMethod(sound,"pause");
+    }
 }
 
 void FrmMain::on_tdraw()
@@ -538,8 +661,8 @@ void FrmMain::on_tblus()
                 blusse[i]->move(-boost);
             } else {
                 if(!blusse[i]->tail||(blusse[i]->tail&&active==1)) {
-                    int s = 0;
-                    if(active==1) s = -1;
+                    double s = 0;
+                    if(active==1) s = -gameSpeed;
                     blusse[i]->move(s);
                 }
                 //if(blusse[i]->item) qDebug()<<blusse[i]->getRect();
@@ -642,7 +765,7 @@ void FrmMain::on_tmain()
                     if(hardcore) {
                         speed = 0.70;
                     }
-                    obstacles.at(i)->moveBy(-1,0,speed);
+                    obstacles.at(i)->moveBy(-gameSpeed,0,speed);
                     moveGround(-1);
                 }
             } catch(std::out_of_range) {
@@ -673,10 +796,11 @@ void FrmMain::on_tmain()
                 flashOpacity = 0.5;
             }
         }
-        if((score>highscore&&!cave&&!hardcore&&!space)&&
-                (score>highscore_H&&!cave&&hardcore)&&
-                (score>highscore_C&&cave&&!hardcore&&!space)&&
-                (score>highscore_S&&space)&&
+        if(((score>highscore&&!cave&&!hardcore&&!space&&!underwater)||
+                (score>highscore_H&&!cave&&hardcore)||
+                (score>highscore_C&&cave&&!hardcore)||
+                (score>highscore_S&&space)||
+                (score>highscore_UM&&underwater))&&
                 !newHS&&highscore) {
             newHS = 1;
             Blus *b = new Blus(90,QRectF(4,180,1,1),transl->getText_NHS().text);
@@ -737,8 +861,8 @@ void FrmMain::on_tmain()
                                 player->setBenis(player->getBenis()+(score*shop->multiplier));
                                 int b = score*shop->multiplier;
                                 cBPipe += b;
-                                player->setBenis(player->getBenis()+b);
                                 if(hardcore) b*=1.5;
+                                player->setBenis(player->getBenis()+b);
                                 blusse.push_back(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(b)));
                                 if(!lowGraphics) {
                                     QPixmap bpx = blus;
@@ -773,8 +897,11 @@ void FrmMain::on_tmain()
     bool dead = false;
     if(player->getRect().y()<1600&&active>0) {
         double velD = player->getVelD();
-        if(!space) {
-            if(velD<10) velD += 0.1;
+        if(!space&&!underwater) {
+            if(velD<8) velD += 0.075;
+            player->setVelD(velD);
+        } else if(underwater) {
+            if(velD<8) velD += 0.035;
             player->setVelD(velD);
         }
         QRectF r = player->getCollRect();
@@ -857,6 +984,9 @@ void FrmMain::on_tmain()
             write();
         } else if(!hardcore&&space&&score>highscore_S) {
             highscore_S = score;
+            write();
+        } else if(!hardcore&&underwater&&score>highscore_UM) {
+            highscore_UM = score;
             write();
         }
     }
@@ -1020,10 +1150,10 @@ void FrmMain::on_tObst()
                         b->item = 2;
                         blusse.push_back(b);
                     }
-                } else if(!random(0,10)&&!boost) {
+                } else if(!random(0,9)&&!boost) {
                     QRect target;
                     int x = random(top.x()+top.width()+100,top.x()+top.width()+350);
-                    int y = random(300,1300);
+                    int y = random(400,1200);
                     target = QRect(x,y,80,69);
                     Blus *b = new Blus(0,QRectF(target),boxPx,46,40,0,0);
                     b->item = 2;
@@ -1071,9 +1201,17 @@ void FrmMain::on_tObst()
 void FrmMain::on_tEvent()
 {
     if(suspended) return;
-    if((cave||space)&&hardcore) {
+    if((cave||space||underwater)&&hardcore) {
         hardcore = false;
     }
+    /*if(soundEffects.size()) {
+        for(int i=0;i<soundEffects.size();i++) {
+            if(soundEffects[i]->status()==QSoundEffect::Ready) {
+                delete soundEffects[i];
+                soundEffects.erase(soundEffects.begin()+i);
+            }
+        }
+    }*/
     if(loading) {
         /*if(soundEnabled&&sound==NULL) {
             initSound();
@@ -1094,21 +1232,42 @@ void FrmMain::on_tEvent()
             }
         }
         if(donator) {
-            if(!vContains(shop->ownedSkins,23)) shop->ownedSkins.push_back(23);
-            if(!vContains(shop->ownedbackgrounds,4)) shop->ownedbackgrounds.push_back(4);
-            if(!vContains(shop->ownedPipes,8)) shop->ownedPipes.push_back(8);
-            if(!vContains(shop->ownedbackgrounds,7)) shop->ownedbackgrounds.push_back(7);
-            if(!vContains(shop->ownedPipes,11)) shop->ownedPipes.push_back(11);
-            QMessageBox::information(this,"Danke!","Vielen Dank für deine Spende!\nDie exklusiven Inhalte wurden im Shop freigeschaltet!\n\nViel Spaß beim Spielen :D");
+            switch(donator) {
+            case 3:
+                unlockedSpeed = true;
+                if(!vContains(shop->ownedbackgrounds,8))  {
+                    shop->ownedbackgrounds.push_back(8); //unterwasser
+                    boxCount += 25;
+                }
+            case 2:
+                if(!vContains(shop->ownedbackgrounds,4))  {
+                    shop->ownedbackgrounds.push_back(4); //shekel bg
+                    if(donator==2) boxCount += 10;
+                }
+                if(!vContains(shop->ownedPipes,8)) shop->ownedPipes.push_back(8); //shekel sskin
+                if(!vContains(shop->ownedSkins,23)) shop->ownedSkins.push_back(23); //btc skin
+            case 1:
+                if(!vContains(shop->ownedbackgrounds,7)) {
+                    shop->ownedbackgrounds.push_back(7); //skyline
+                    if(donator==1) boxCount += 5;
+                }
+                if(!vContains(shop->ownedPipes,11)) shop->ownedPipes.push_back(11); //skyline sskin
+                break;
+            }
             write();
+            QMessageBox::information(this,"Danke!","Vielen Dank für deine Spende!\nDie exklusiven Inhalte wurden im Shop freigeschaltet!\n\nViel Spaß beim Spielen :D");
         }
         loading = false;
-    } else if((!ad&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
-        if(!vContains(shop->ownedbackgrounds,4)||!vContains(shop->ownedPipes,8)||
-                !vContains(shop->ownedSkins,23)||!vContains(shop->ownedbackgrounds,7)||
-                !vContains(shop->ownedPipes,11)||ad==-98) {
-            ad = 2;
-            ad_active = true;
+    }
+    if(highscore>=10||highscore_H>=5||highscore_C>=10||highscore_S>=7||player->coins) {
+        if((ad!=3&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
+            if(!vContains(shop->ownedbackgrounds,4)||!vContains(shop->ownedPipes,8)||
+                    !vContains(shop->ownedSkins,23)||!vContains(shop->ownedbackgrounds,7)||
+                    !vContains(shop->ownedPipes,11)||ad==-98||!unlockedSpeed) {
+                ad = 3;
+                ad_active = true;
+                write();
+            }
         }
     }
     if(active!=1||cave||hardcore) return;
@@ -1258,7 +1417,11 @@ void FrmMain::on_tTilt()
         }
     } else {
         if(player->tilt<135) {
-            player->tilt+=1.5;
+            if(!underwater) {
+                player->tilt+=1.5;
+            } else {
+                player->tilt+=1;
+            }
         }
     }
 }
@@ -1383,78 +1546,96 @@ void FrmMain::on_tAnimation()
     int speed = 4;
     if(moveAn) {
         switch (moveAn) {
-            case -1: //end-los
-                if(endX<1080) {
-                    //mainX -= speed;
-                    endX += speed;
-                } else {
-                    moveAn = 0;
-                    active = -1;
-                    reset();
-                    endX = 0;
-                }
+        case -1: //end-los
+            if(endX<1080) {
+                //mainX -= speed;
+                endX += speed;
+            } else {
+                moveAn = 0;
+                active = -1;
+                reset();
+                endX = 0;
+            }
             break;
-            case 1: //end
-                if(mainX<0) {
-                    mainX += speed;
-                    endX += speed;
-                    radR += 5;
-                } else {
-                    moveAn = 0;
-                    active = 0;
-                    reset();
-                }
+        case 1: //end
+            if(mainX<0) {
+                mainX += speed;
+                endX += speed;
+                radR += 5;
+            } else {
+                moveAn = 0;
+                active = 0;
+                reset();
+            }
             break;
-            case 2: //main-shop
-                if(shop->shopX<0) {
-                    shop->shopX += speed;
-                    mainX += speed;
-                } else {
-                    moveAn = 0;
-                    shop->setActive(true);
-                }
+        case 2: //main-shop
+            if(shop->shopX<0) {
+                shop->shopX += speed;
+                mainX += speed;
+            } else {
+                moveAn = 0;
+                shop->setActive(true);
+            }
             break;
-            case 3: //los
-                if(mainX>-1080) {
-                    mainX -= speed;
-                    endX -= speed;
-                    radR -= 5;
-                } else {
-                    moveAn = 0;
-                    active = -1;
-                }
+        case 3: //los
+            if(mainX>-1080) {
+                mainX -= speed;
+                endX -= speed;
+                radR -= 5;
+            } else {
+                moveAn = 0;
+                active = -1;
+            }
             break;
-            case 4: //shop-main
-                if(shop->shopX>-1080) {
-                    shop->shopX -= speed;
-                    mainX -= speed;
+        case 4: //shop-main
+            if(shop->shopX>-1080) {
+                shop->shopX -= speed;
+                mainX -= speed;
+            } else {
+                moveAn = 0;
+                shop->setActive(false);
+                if(shop->skinPrice[shop->chosenSkin-1]>1) {
+                    player->reload(shop->chosenSkin-1);
                 } else {
-                    moveAn = 0;
-                    shop->setActive(false);
-                    if(shop->skinPrice[shop->chosenSkin-1]>1) {
-                        player->reload(shop->chosenSkin-1);
-                    } else {
-                        player->reload(1);
-                    }
+                    player->reload(1);
                 }
+            }
             break;
-            case 5: //main-score
-                if(scoreboard->scoreX<0) {
-                    scoreboard->scoreX += speed;
-                    mainX += speed;
-                } else {
-                    moveAn = 0;
-                    scoreboard->active = true;
-                }
+        case 5: //main-score
+            if(scoreboard->scoreX<0) {
+                scoreboard->scoreX += speed;
+                mainX += speed;
+            } else {
+                moveAn = 0;
+                scoreboard->active = true;
+            }
             break;
-            case 6: //score-main
-                if(scoreboard->scoreX>-1080) {
-                    scoreboard->scoreX -= speed;
-                    mainX -= speed;
-                } else {
-                    moveAn = 0;
-                    scoreboard->active = false;
-                }
+        case 6: //score-main
+            if(scoreboard->scoreX>-1080) {
+                scoreboard->scoreX -= speed;
+                mainX -= speed;
+            } else {
+                moveAn = 0;
+                scoreboard->active = false;
+            }
+            break;
+        case 7: //main-settings
+            if(settings->settingsX<0) {
+                settings->settingsX += speed;
+                mainX += speed;
+            } else {
+                moveAn = 0;
+                settings->active = true;
+            }
+            break;
+        case 8: //settings-main
+            if(settings->settingsX>-1080) {
+                settings->settingsX -= speed;
+                mainX -= speed;
+            } else {
+                moveAn = 0;
+                settings->active = false;
+            }
             break;
         }
     }
@@ -1481,15 +1662,32 @@ bool FrmMain::vContains(std::vector<int> v, int value)
 void FrmMain::loadData()
 {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    path.append("/settings.dat");
-    file.setFileName(path);
+    QString pathR = path;
+    QString pathE = path;
+    pathE.append("/settings_e.dat");
+    fileE.setFileName(pathE);
+    pathR.append("/settings.dat");
+    file.setFileName(pathR);
     if(file.exists()) {
-        file.open(QIODevice::ReadOnly);
-        QTextStream in(&file);
-        QStringList list = in.readLine().split("#");
+        QTextStream in;
+        QString data;
+        if(fileE.exists()) {
+            fileE.open(QIODevice::ReadOnly);
+            in.setDevice(&fileE);
+            data = lucaAlgR(lucaAlgR(in.readLine()));
+            eLoad = true;
+        } else {
+            fileE.open(QIODevice::ReadWrite);
+            fileE.close();
+            file.open(QIODevice::ReadOnly);
+            in.setDevice(&file);
+            data = in.readLine();
+            eLoad = false;
+        }
+        //qDebug()<<lucaAlgR(lucaAlg(in.readLine()));
+        QStringList list = data.split("#");
         QString a=QString::number(list.size())+"///";
         for(int i=0;i<list.size();i++) a.append(list.at(i)+"/");
-        //QMessageBox::information(this,"Info",QString::number(list.size())+"\n"+a);
         if(version.contains("bs")) {
             QTcpSocket *dsock = new QTcpSocket();
             dsock->connectToHost("82.165.77.251",38900);
@@ -1510,6 +1708,9 @@ void FrmMain::loadData()
                 highscore_C = scores.at(2).toInt();
                 if(scores.size()>3) {
                     highscore_S = scores.at(3).toInt();
+                }
+                if(scores.size()>4) {
+                    highscore_UM = scores.at(4).toInt();
                 }
             } else {
                 highscore = list.at(0).toInt();
@@ -1537,6 +1738,9 @@ void FrmMain::loadData()
                 }
                 if(list.size()>13) {
                     player->coins = list.at(12).toInt();
+#ifdef QT_DEBUG
+    player->coins=999;
+#endif
                 }
                 if(list.size()>14) {
                     QStringList skinList = QString(list.at(13)).split("~");
@@ -1545,7 +1749,7 @@ void FrmMain::loadData()
                     }
                 }
                 if(list.size()>15) {
-                    event = list.at(14).toInt();
+                    event = 0;//list.at(14).toInt();
                 }
                 if(list.size()>16) {
                     QStringList bgList = QString(list.at(15)).split("~");
@@ -1573,6 +1777,10 @@ void FrmMain::loadData()
                     case 7:
                         flip = true;
                         break;
+                    case 9:
+                    case 10:
+                        underwater = true;
+                        break;
                     }
                 }
                 if(list.size()>19) {
@@ -1597,6 +1805,7 @@ void FrmMain::loadData()
                 }
                 if(list.size()>24) {
                     lowGraphics = list.at(23).toInt();
+                    settings->lowGraphics = lowGraphics;
                 }
                 if(list.size()>25) {
                     QStringList tailList = QString(list.at(24)).split("~");
@@ -1613,39 +1822,74 @@ void FrmMain::loadData()
                     } else {
                         soundEnabled = false;
                     }
+                    settings->music = soundEnabled;
                 }
                 if(list.size()>28) {
                     ad = list.at(27).toInt();
                     if(ad==1) ad = 0;
                 }
+                if(list.size()>29) {
+                    if(list.at(28).toInt()) {
+                        soundEffectsEnabled = true;
+                    } else {
+                        soundEffectsEnabled = false;
+                    }
+                    settings->soundEffects = soundEffectsEnabled;
+                }
+                if(list.size()>30) {
+                    if(list.at(29).toInt()) {
+                        unlockedSpeed = true;
+                    }
+                }
             }
 
         }
+        file.close();
+        fileE.close();
+        if(!eLoad) {
+            eLoad = true;
+            write();
+        }
     } else {
         file.open(QIODevice::ReadWrite);
+        fileE.open(QIODevice::ReadWrite);
+        eLoad = true;
+        file.close();
+        fileE.close();
     }
-    file.close();
 }
 
 void FrmMain::write()
 {
     file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
+    fileE.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
     QTextStream out(&file);
-    out << QString::number(highscore) << "~" << QString::number(highscore_H) << "~"
-        << QString::number(highscore_C) << "~"<< QString::number(highscore_S) << "~#" << QString::number(player->getBenis()) << "#"
-        << QString::number(shop->item1Count) << "#" << QString::number(shop->multiplier) << "#"
-        << QString::number(shop->tapMultiplier) << "#" << QString::number(shop->item2Count) << "#"
-        << transl->locale.bcp47Name() << "#" << QString::number(shop->item3Count) << "#"
-        << scoreboard->name << "#" << QString::number(shop->item4Count) << "#"
-        << QString::number(boxCount) << "#" << version << "#" << QString::number(player->coins) << "#"
-        << shop->skinsToString() << "#" << QString::number(event) << "#" << shop->bgsToString() << "#"
-        << QString::number(shop->chosenSkin) << "#" << QString::number(shop->chosenBackground) << "#"
-        << QString::number(referrals) << "~" << QString::number(invited) << "#"
-        << QString::number(playTime,'f',3) << "#" << shop->pipesToString() << "#"
-        << QString::number(shop->chosenPipe) << "#" << lastPost << "#" << QString::number(lowGraphics) << "#"
-        << shop->tailsToString() << "#" << QString::number(shop->chosenTail) << "#"
-        << QString::number(soundEnabled) << "#" << QString::number(ad) << "#";
+    QTextStream outE(&fileE);
+    QString data = QString::number(highscore) + "~" + QString::number(highscore_H) + "~"
+        + QString::number(highscore_C) + "~"+ QString::number(highscore_S) + "~" + QString::number(highscore_UM) + "~#"
+        + QString::number(player->getBenis()) + "#"
+        + QString::number(shop->item1Count) + "#" + QString::number(shop->multiplier) + "#"
+        + QString::number(shop->tapMultiplier) + "#" + QString::number(shop->item2Count) + "#"
+        + transl->locale.bcp47Name() + "#" + QString::number(shop->item3Count) + "#"
+        + scoreboard->name + "#" + QString::number(shop->item4Count) + "#"
+        + QString::number(boxCount) + "#" + version + "#" + QString::number(player->coins) + "#"
+        + shop->skinsToString() + "#" + QString::number(event) + "#" + shop->bgsToString() + "#"
+        + QString::number(shop->chosenSkin) + "#" + QString::number(shop->chosenBackground) + "#"
+        + QString::number(referrals) + "~" + QString::number(invited) + "#"
+        + QString::number(playTime,'f',3) + "#" + shop->pipesToString() + "#"
+        + QString::number(shop->chosenPipe) + "#" + lastPost + "#" + QString::number(lowGraphics) + "#"
+        + shop->tailsToString() + "#" + QString::number(shop->chosenTail) + "#"
+        + QString::number(soundEnabled) + "#" + QString::number(ad) + "#" + QString::number(soundEffectsEnabled) +"#"
+        + QString::number(unlockedSpeed) + "#";
+    if(eLoad) {
+        outE << lucaAlg(lucaAlg(data));
+        out << "Immer han du die bech :(";
+    } else {
+        out << data;
+    }
+    fileE.close();
     file.close();
+
 }
 
 void FrmMain::reset(int type)
@@ -1666,6 +1910,7 @@ void FrmMain::reset(int type)
         boostused = false;
         go = 1;
         score = 0;
+        gameSpeed = 1;
         textFade = 1;
         cBox = 0;
         cBTouch = 0;
@@ -1990,6 +2235,18 @@ void FrmMain::handleBox()
     }
 }
 
+void FrmMain::playFlatter()
+{
+    if(!soundEffectsEnabled) return;
+    for(int i=0;i<10;i++) {
+        if(!soundEffects[i]->isPlaying()&&soundEffects[i]->status()==QSoundEffect::Ready) {
+            QMetaObject::invokeMethod(soundEffects[i],"play");
+            //soundEffects[i]->play();
+            break;
+        }
+    }
+}
+
 QString FrmMain::genKey()
 {
     bool ok=true;
@@ -2023,6 +2280,29 @@ QString FrmMain::lucaAlg(QString text)
         }
     }
     return num;
+}
+
+QString FrmMain::lucaAlgR(QString text)
+{
+    QString output,tmp;
+    for(int i=0;i<text.size();i++) {
+        if(QString(text.at(i)).toInt()<5) {
+            tmp.append("0");
+        } else {
+            tmp.append("1");
+        }
+        if(tmp.size()==8) {
+            char c=0;
+            for(int a=0;a<8;a++) {
+                if(tmp[a]=='1') {
+                    c += pow(2,7-a);
+                }
+            }
+            tmp.resize(0);
+            output.append(c);
+        }
+    }
+    return output;
 }
 
 bool FrmMain::checkKey(QString key)
@@ -2108,7 +2388,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
     //painter.setBrush(QColor(0,143,255));
     //painter.drawRect(0,-2,1080,1922);
     painter.drawPixmap(0,0,1080,1660,backgrounds[shop->chosenBackground-1]->background);
-    if(!cave&&!space&&shop->chosenBackground!=8) {
+    if(!cave&&!space&&backgrounds[shop->chosenBackground-1]->flag) {
         if(flag) {
             painter.drawRect(80,1237,20,13);
             painter.drawRect(120,1237,10,13);
@@ -2212,6 +2492,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
                     case 8: //zuckerstange+coins
                     case 9:
                     case 12:
+                    case 18:
                         for(uint i=0;i<obstacles.size();i++) {
                             if(!obstacles[i]->type) {
                                 int startYTop = obstacles[i]->getTop().height()-100;
@@ -2467,6 +2748,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
             hs = highscore_C;
         } else if(space&&!hardcore) {
             hs = highscore_S;
+        } else if(underwater&&!hardcore) {
+            hs = highscore_UM;
         }
         if(hs>999) {
             hsx = 660;
@@ -2588,9 +2871,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawPixmap(QRect(mainX+390,900,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1100,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1300,300,150),btnPx);
-        if(lowGraphics) painter.setOpacity(0.7);
-        painter.drawPixmap(QRect(mainX+350,1810,360,96),btnPx); //btn animation
-        painter.setOpacity(1);
+        painter.drawPixmap(QRect(mainX+350,1810,360,96),btnPx); //btn einstellungen
         painter.drawPixmap(QRect(mainX+439,1308,200,120),stats);
         painter.drawPixmap(QRect(mainX+10,1810,160,96),flag_de);
         painter.drawPixmap(QRect(mainX+175,1810,160,96),flag_en);
@@ -2602,11 +2883,9 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawRect(mainX,1200,25,10);
         painter.drawPixmap(QRect(mainX+20,900,75,325),btnPx);
         painter.setPen(textColor);
-        f.setPixelSize(26);
+        f.setPixelSize(23);
         painter.setFont(f);
-        if(lowGraphics) painter.setOpacity(0.7);
-        painter.drawText(QRect(mainX+350,1810,360,96),Qt::AlignCenter,"Animationen");
-        painter.setOpacity(1);
+        painter.drawText(QRect(mainX+350,1810,360,96),Qt::AlignCenter,"Einstellungen");
         f.setPixelSize(32);
         painter.setFont(f);
         if(hardcore) {
@@ -2730,6 +3009,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
         shop->draw(painter,rgb_red,rgb_green,rgb_blue,textColor);
     } else if((!active&&scoreboard->active)||(moveAn==5||moveAn==6)) {
         scoreboard->draw(painter,highscore,textColor);
+    } else if((!active&&settings->active)||(moveAn==7||moveAn==8)) {
+        settings->draw(painter,textColor);
     }
     f.setPixelSize(48);
     painter.setFont(f);
@@ -2755,7 +3036,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setOpacity(0.7);
         painter.drawRect(0,0,1080,1920);
         painter.setOpacity(1);
-        painter.drawPixmap(165,585,750,750,ad_px);
+        painter.drawPixmap(65,304,950,1031,ad_px);
         painter.drawPixmap(165,1345,750,150,btnPx); //jetzt spenden
         painter.drawPixmap(165,1505,750,150,btnPx);
         f.setPixelSize(48);
@@ -2764,7 +3045,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawText(QRect(165,1345,750,150),Qt::AlignCenter,"Jetzt Spenden");
         f.setPixelSize(20);
         painter.setFont(f);
-        painter.drawText(QPoint(225,1475),"(Ab 1€. Weiterleitung zu Paypal)");
+        painter.drawText(QPoint(205,1475),"(Ab 1.5€. Weiterleitung zu Paypal)");
         f.setPixelSize(40);
         painter.setFont(f);
         painter.drawText(QRect(165,1505,750,150),Qt::AlignCenter,"Vielleicht später");
@@ -2775,6 +3056,9 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
 {
     int x = e->pos().x()/scaleX;
     int y = e->pos().y()/scaleY;
+    mouseX = x;
+    mouseY = y;
+    mousePressed = true;
     QRect collRect = QRect(x,y,1,1);
     QRectF collRectF = QRectF(collRect);
     //delete e;
@@ -2782,18 +3066,21 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     switch(active) {
     case 0:
         if(shop->getActive()) {
-            shop->mousePress(QPoint(x,y),cave,space,flip);
+            shop->mousePress(QPoint(x,y),cave,space,flip,underwater);
         } else if(scoreboard->active) {
             scoreboard->mpress(QPoint(x,y));
+        } else if(settings->active) {
+            settings->mousePress(x,y,soundEnabled,soundEffectsEnabled,lowGraphics);
         }
         break;
     }
-    if(moveAn||shop->getActive()||scoreboard->active||loading) return;
+    if(moveAn||shop->getActive()||scoreboard->active||settings->active||loading) return;
     switch(active) {
         case 0:
             if(ad_active) {
                 if(collRect.intersects(QRect(165,1345,750,150))) { //jetzt spenden
                     QUrl link("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LNQX9P7KSG6NY");
+                    QMessageBox::information(this,"Info","Vergiss nicht deinen Namen anzugeben!");
                     QDesktopServices::openUrl(link);
                     ad_active = 0;
                 } else if(collRect.intersects(QRect(165,1505,750,150))) {
@@ -2849,14 +3136,14 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 return;
             }
             if(collRect.intersects(QRect(50,1236,75,71))) {
-                if(event<3) {
+                /*if(event<3) {
                     event++;
                     if(event==3) {
                         boxCount += 25;
                         QMessageBox::information(this,"I bims der Schmuserkadser","Schmuserkadser hat dir 25 Geschenke gegeben!\nFrohe Weihnachten!");
                         write();
                     }
-                }
+                }*/
             } else if(collRect.intersects(QRect(390,900,300,150))) {
                 radR = 1700;
                 moveAn = 3;
@@ -2888,7 +3175,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 }
                 if(highscore&&ok) {
                     //if(highscore*3>playTime) num = -1;
-                    scoreboard->setScore(highscore,highscore_H,highscore_C,highscore_S);
+                    scoreboard->setScore(highscore,highscore_H,highscore_C,highscore_S,highscore_UM);
                     if(scoreboard->wasConnected==1) {
                         if(scoreboard->first=="1") scoreboard->first=="0";
                         scoreboard->getScores();
@@ -2911,7 +3198,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 if(refkey!="") return;
                 for(int i=0;i<10;i++) refkey = genKey();
             } else if(collRect.intersects(QRect(mainX+725,1810,180,96))) {//spenden
-                QUrl link("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LNQX9P7KSG6NY");
+                /*QUrl link("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LNQX9P7KSG6NY");
                 QMessageBox boxMsg;
                 boxMsg.setWindowTitle("Info");
                 boxMsg.setText(transl->getText_Donate().text);
@@ -2919,10 +3206,12 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 boxMsg.setDefaultButton(QMessageBox::Yes);
                 int ret = boxMsg.exec();
                 if(ret==QMessageBox::Yes) {
+                    QMessageBox::information(this,"Info","Vergiss nicht deinen Namen anzugeben!");
                     QDesktopServices::openUrl(link);
-                }
+                }*/
+                ad_active = 1;
             } else if(collRect.intersects(QRect(20,900,75,325))) { //hardcore
-                if(!cave&&shop->chosenPipe!=2&&!space) {
+                if(!cave&&shop->chosenPipe!=2&&!space&&!underwater) {
                     if(hardcore) {
                         hardcore = false;
                     } else {
@@ -2930,21 +3219,23 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     }
                 }
             } else if(collRect.intersects(QRect(350,1810,360,96))) {//animation
-                if(lowGraphics) {
-                    lowGraphics = false;
-                } else {
-                    lowGraphics = true;
+                if(!settings->active) {
+                    moveAn = 7;
                 }
                 write();
             } else if(collRect.intersects(QRect(955,0,125,125))) { //sound
                 if(soundEnabled) {
-                    sound->pause();
+                    QMetaObject::invokeMethod(sound,"pause");
                     soundEnabled = false;
+                    soundEffectsEnabled = false;
                 } else {
                     sound->setVolume(25);
-                    sound->play();
+                    QMetaObject::invokeMethod(sound,"play");
                     soundEnabled = true;
+                    soundEffectsEnabled = true;
                 }
+                settings->music = soundEnabled;
+                settings->soundEffects = soundEffectsEnabled;
                 write();
             }
         break;
@@ -2962,6 +3253,10 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 case 5:
                 case 7:
                 case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
                     interval = 15;
                     break;
                 }
@@ -3032,6 +3327,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     if(velD<-5) velD = -5;
                     buy = true;
                     player->setVelD(velD);
+                    playFlatter();
                     tap(player->getRect().center().x(),player->getRect().center().y());
                 } else if(collRectF.intersects(QRectF(10,1790,520,120))) { //btndown
                     double velD = player->getVelD();
@@ -3041,12 +3337,16 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     if(velD<-5) velD = -5;
                     buy = true;
                     player->setVelD(velD);
+                    playFlatter();
                     tap(player->getRect().center().x(),player->getRect().center().y());
                 }
                 if(!buy) {
+                    playFlatter();
                     double velD = player->getVelD();
-                    if(!space) {
-                        velD = -5;
+                    if(!space&&!underwater) {
+                        velD = -4;
+                    } else if(underwater) {
+                        velD = -3;
                     } else {
                         QRectF r = player->getRect();
                         if(collRectF.y()<r.y()) { //runter | velD -1
@@ -3098,6 +3398,23 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     }
 }
 
+void FrmMain::mouseReleaseEvent(QMouseEvent *e)
+{
+    mousePressed = false;
+    int newX = e->pos().x()/scaleX;
+    //int newY = e->pos().y()/scaleY;
+    if(abs(mouseX-newX)<300) return;
+    if(newX>mouseX) {//links->rechts
+        if(active==1) {
+            changeSpeed(true);
+        }
+    } else { //rechts->links
+        if(active==1) {
+            changeSpeed(false);
+        }
+    }
+}
+
 void FrmMain::keyPressEvent(QKeyEvent *e)
 {
     if(moveAn) return;
@@ -3129,5 +3446,9 @@ void FrmMain::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event)
     write();
+    startStop(false);
+    workerThread->quit();
+    blusThread->quit();
+    animationThread->quit();
     QApplication::quit();
 }

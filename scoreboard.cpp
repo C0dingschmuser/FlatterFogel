@@ -20,6 +20,7 @@ Scoreboard::Scoreboard(QPixmap bg, QPixmap btnPx, QFont f, Translation *transl, 
     this->btnCave = QPixmap(":/images/buttons/btnCave.png");
     this->btnHardcore = QPixmap(":/images/buttons/btnHardcore.png");
     this->btnSpace = QPixmap(":/images/buttons/btnSpace.png");
+    this->btnUM = QPixmap(":/images/buttons/btnUM.png");
     hs=0;
     hs_H=0;
     hs_C=0;
@@ -39,6 +40,10 @@ void Scoreboard::draw(QPainter &painter, int highscore, QColor textColor)
         highscore = hs_H;
     } else if(page==2) {
         highscore = hs_C;
+    } else if(page==3) {
+        highscore = hs_S;
+    } else if(page==4) {
+        highscore = hs_UM;
     }
     painter.drawPixmap(scoreX+20,460,1040,1000,bg);
     if(page) painter.setOpacity(0.4);
@@ -52,6 +57,9 @@ void Scoreboard::draw(QPainter &painter, int highscore, QColor textColor)
     painter.setOpacity(1);
     if(page!=3) painter.setOpacity(0.4);
     painter.drawPixmap(scoreX+510,473,160,160,btnSpace);
+    painter.setOpacity(1);
+    if(page!=4) painter.setOpacity(0.4);
+    painter.drawPixmap(scoreX+670,473,160,160,btnUM);
     painter.setOpacity(1);
     QFont f = font;
     f.setPixelSize(40);
@@ -117,14 +125,15 @@ void Scoreboard::draw(QPainter &painter, int highscore, QColor textColor)
     painter.drawText(QPoint(scoreX+t.pos.x(),t.pos.y()),t.text);
 }
 
-void Scoreboard::setScore(int his, int his_H, int his_C, int his_S)
+void Scoreboard::setScore(int his, int his_H, int his_C, int his_S, int his_UM)
 {
     bool ok=true;
-    if(his||his_H||his_C||his_S) {
+    if(his||his_H||his_C||his_S||his_UM) {
         this->hs = his;
         this->hs_H = his_H;
         this->hs_C = his_C;
         this->hs_S = his_S;
+        this->hs_UM = his_UM;
         ok=false;
     }
     int score = hs;
@@ -134,6 +143,8 @@ void Scoreboard::setScore(int his, int his_H, int his_C, int his_S)
         score = hs_C;
     } else if(page==3) {
         score = hs_S;
+    } else if(page==4) {
+        score = hs_UM;
     }
     socket->connectToHost("flatterfogel.ddns.net",38900);
     socket->waitForConnected(1000);
@@ -214,6 +225,12 @@ void Scoreboard::mpress(QPoint pos)
     } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(510,473,160,160))) { //space
         if(page!=3) {
             page = 3;
+            setScore();
+            getScores();
+        }
+    } else if(QRect(pos.x(),pos.y(),1,1).intersects(QRect(670,473,160,160))) {
+        if(page!=4) {
+            page = 4;
             setScore();
             getScores();
         }

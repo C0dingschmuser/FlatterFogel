@@ -29,6 +29,8 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     itemBcPx = QPixmap(":/images/items/item_bc.png");
     this->cloudPx = cloudPx;
     selected = 0;
+    skinpage = 0;
+    bgpage = 0;
     item1Count = 2;
     item2Count = 2;
     item3Count = 0;
@@ -61,6 +63,7 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     skinPrice.append(4);
     skinPrice.append(4);
     skinPrice.append(99);
+    skinPrice.append(2);
     bgPrice.append(0);
     bgPrice.append(1);
     bgPrice.append(1);
@@ -69,6 +72,9 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     bgPrice.append(2);
     bgPrice.append(1);
     bgPrice.append(99);
+    bgPrice.append(99);
+    bgPrice.append(2);
+    bgPrice.append(2);
     pipePrice.append(0);
     pipePrice.append(3);
     pipePrice.append(2);
@@ -86,6 +92,7 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     pipePrice.append(1);
     pipePrice.append(1);
     pipePrice.append(1);
+    pipePrice.append(3);
     tailPrice.append(0);
     tailPrice.append(1);
     tailPrice.append(1);
@@ -94,6 +101,10 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     tailPrice.append(3);
     tailPrice.append(2);
     tailPrice.append(2);
+    tailPrice.append(1);
+    tailPrice.append(1);
+    tailPrice.append(1);
+    tailPrice.append(1);
     setSkin(1);
     chosenBackground = 1;
     chosenPipe = 1;
@@ -107,8 +118,10 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     tMax = tapMultiplier*500+((tapMultiplier*1000)*2);
 }
 
-void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
+void Shop::drawSkin(int x, int y, int w, int h, uint num, QPainter &painter)
 {
+    num += (skinpage*24);
+    if(num>=skins.size()) return;
     if(selected!=num+1) painter.setOpacity(0.4);
     painter.setPen(Qt::NoPen);
     if(num!=21) {
@@ -135,7 +148,11 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
             player->reload(1);
         }
     }
-    painter.setPen(Qt::white);
+    if(!checkDonatorItem(num,1)) {
+        painter.setPen(Qt::white);
+    } else {
+        painter.setPen(Qt::red);
+    }
     painter.setOpacity(1);
     if(!vContains(ownedSkins,num)) {
         painter.drawText(x+45,y+135,QString::number(skinPrice[num]));
@@ -143,12 +160,16 @@ void Shop::drawSkin(int x, int y, int w, int h, int num, QPainter &painter)
     }
 }
 
-void Shop::drawPipe(int x, int y, int w, int h, int num, QPainter &painter)
+void Shop::drawPipe(int x, int y, int w, int h, uint num, QPainter &painter)
 {
     if(selected!=num+1) painter.setOpacity(0.4);
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(x,y,w,h,pipes[num]);
-    painter.setPen(Qt::white);
+    if(!checkDonatorItem(num,2)) {
+        painter.setPen(Qt::white);
+    } else {
+        painter.setPen(Qt::red);
+    }
     if(!vContains(ownedPipes,num)) {
         painter.drawText(x+45,y+135,QString::number(pipePrice[num]));
         painter.drawPixmap(x,y+95,42,42,coinPx);
@@ -156,7 +177,7 @@ void Shop::drawPipe(int x, int y, int w, int h, int num, QPainter &painter)
     painter.setOpacity(1);
 }
 
-void Shop::drawTail(int x, int y, int w, int h, int num, QPainter &painter)
+void Shop::drawTail(int x, int y, int w, int h, uint num, QPainter &painter)
 {
     if(selected!=num+1) painter.setOpacity(0.4);
     painter.setPen(Qt::NoPen);
@@ -169,13 +190,15 @@ void Shop::drawTail(int x, int y, int w, int h, int num, QPainter &painter)
     painter.setOpacity(1);
 }
 
-void Shop::drawBg(int x, int y, int w, int h, int num, QPainter &painter)
+void Shop::drawBg(int x, int y, int w, int h, uint num, QPainter &painter)
 {
+    num += (bgpage*9);
+    if(num>=backgrounds.size()) return;
     painter.setPen(Qt::NoPen);
     if(selected!=num+1) {
         painter.setOpacity(0.4);
     } else {
-        if(selected==4||selected==6||selected==7) {
+        if(selected==4||selected==6||selected==7||selected==9||selected==10) {
             painter.setBrush(Qt::red);
         } else {
             painter.setBrush(Qt::blue);
@@ -201,7 +224,11 @@ void Shop::drawBg(int x, int y, int w, int h, int num, QPainter &painter)
         if(num==7) y2 = 7;
         painter.drawPixmap(x,y+y2,w,32,cloudPx);
     }
-    painter.setPen(Qt::white);
+    if(!checkDonatorItem(num,3)) {
+        painter.setPen(Qt::white);
+    } else {
+        painter.setPen(Qt::red);
+    }
     painter.setOpacity(1);
     if(!vContains(ownedbackgrounds,num)) {
         painter.drawText(x+45,y+235,QString::number(bgPrice[num]));
@@ -283,9 +310,13 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
     painter.drawPixmap(shopX+769,1194+yOffset,140,130,btnTailPx); //tail
     painter.setOpacity(1);
     painter.drawPixmap(shopX+769,1324+yOffset,140,130,btnInfoPx); //info
+    if(page==1||page==2) {
+        painter.drawPixmap(shopX+469,1520,300,130,btnShop); // seite 2
+    }
     Text back = transl->getBtn_Shop_Back();
     Text buy = transl->getBtn_Shop_Buy();
     Text sell = transl->getBtn_Shop_Sell();
+    Text p2 = transl->getBtn_Shop_Page();
     f.setPixelSize(buy.size);
     painter.setFont(f);
     painter.setPen(textColor);
@@ -297,6 +328,20 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
     f.setPixelSize(back.size);
     painter.setFont(f);
     painter.drawText(QRect(shopX+169,1520,300,130),Qt::AlignCenter,back.text);
+    if(page==1||page==2) {
+        QString pag = " 2";
+        switch(page) {
+        case 1:
+            if(skinpage) pag = " 1";
+            break;
+        case 2:
+            if(bgpage) pag = " 1";
+            break;
+        }
+        f.setPixelSize(p2.size);
+        painter.setFont(f);
+        painter.drawText(QRect(shopX+469,1520,300,130),Qt::AlignCenter,p2.text+pag);
+    }
     f.setPixelSize(30);
     painter.setFont(f);
     switch(page) {
@@ -366,6 +411,7 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
         drawBg(shopX+500,750,124,190,5,painter);
         drawBg(shopX+200,1000,124,190,6,painter);
         drawBg(shopX+350,1000,124,190,7,painter);
+        drawBg(shopX+500,1000,124,190,8,painter);
         break;
     case 3:
         drawPipe(shopX+200,500,100,100,0,painter);
@@ -388,6 +434,7 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
         drawPipe(shopX+500,950,100,100,14,painter);
         drawPipe(shopX+650,950,100,100,15,painter);
         drawPipe(shopX+200,1100,100,100,16,painter);
+        drawPipe(shopX+350,1100,100,100,17,painter);
         break;
     case 4:
         drawTail(shopX+200,500,100,100,0,painter);
@@ -398,6 +445,10 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
         drawTail(shopX+350,650,100,100,5,painter);
         drawTail(shopX+500,650,100,100,6,painter);
         drawTail(shopX+650,650,100,100,7,painter);
+        drawTail(shopX+200,800,100,100,8,painter);
+        drawTail(shopX+350,800,100,100,9,painter);
+        drawTail(shopX+500,800,100,100,10,painter);
+        drawTail(shopX+650,800,100,100,11,painter);
         break;
     }
 }
@@ -429,7 +480,24 @@ bool Shop::getActive()
     return active;
 }
 
-void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
+bool Shop::checkDonatorItem(int num, int type)
+{
+    bool ok=false;
+    switch(type) {
+    case 1: //skin
+        if(num==1||num==23) ok = true;
+        break;
+    case 2: //sskin
+        if(num==8||num==11) ok = true;
+        break;
+    case 3: //bg
+        if(num==4||num==7||num==8) ok = true;
+        break;
+    }
+    return ok;
+}
+
+void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip, bool &underwater)
 {
     QRect r(pos.x(),pos.y(),1,1);
     if(shopX!=0) return;
@@ -457,6 +525,117 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
     } else {
         switch(page) {
         case 1: //skins
+        {
+            uint tmpsel = selected;
+            if(r.intersects(QRect(200,500,100,100))) {
+                selected = 1;
+            } else if(r.intersects(QRect(350,500,100,100))) {
+                selected = 2;
+            } else if(r.intersects(QRect(500,500,100,100))) {
+                selected = 3;
+            } else if(r.intersects(QRect(650,500,100,100))) {
+                selected = 4;
+            } else if(r.intersects(QRect(200,650,100,100))) {
+                selected = 5;
+            } else if(r.intersects(QRect(350,650,100,100))) {
+                selected = 6;
+            } else if(r.intersects(QRect(500,650,100,100))) {
+                selected = 7;
+            } else if(r.intersects(QRect(650,650,100,100))) {
+                selected = 8;
+            } else if(r.intersects(QRect(200,800,100,100))) {
+                selected = 9;
+            } else if(r.intersects(QRect(350,800,100,100))) {
+                selected = 10;
+            } else if(r.intersects(QRect(500,800,100,100))) {
+                selected = 11;
+            } else if(r.intersects(QRect(650,800,100,100))) {
+                selected = 12;
+            } else if(r.intersects(QRect(200,950,100,100))) {
+                selected = 13;
+            } else if(r.intersects(QRect(350,950,100,100))) {
+                selected = 14;
+            } else if(r.intersects(QRect(500,950,100,100))) {
+                selected = 15;
+            } else if(r.intersects(QRect(650,950,100,100))) {
+                selected = 16;
+            } else if(r.intersects(QRect(200,1100,100,100))) {
+                selected = 17;
+            } else if(r.intersects(QRect(350,1100,100,100))) {
+                selected = 18;
+            } else if(r.intersects(QRect(500,1100,100,100))) {
+                selected = 19;
+            } else if(r.intersects(QRect(650,1100,100,100))) {
+                selected = 20;
+            } else if(r.intersects(QRect(200,1250,100,100))) {
+                selected = 21;
+            } else if(r.intersects(QRect(350,1250,100,100))) {
+                selected = 22;
+            } else if(r.intersects(QRect(500,1250,100,100))) {
+                selected = 23;
+            } else if(r.intersects(QRect(650,1250,100,100))) {
+                selected = 24;
+            }
+            if(selected!=tmpsel) selected += (24*skinpage);
+            //if(skinPrice[selected-1]>1) player->reload(selected-1);
+            if(vContains(ownedSkins,selected-1)) {
+                setSkin(selected);
+            }
+        }
+        break;
+        case 2://bgs
+        {
+            uint tmpsel = selected;
+            if(r.intersects(QRect(200,500,124,190))) {
+                selected = 1;
+            } else if(r.intersects(QRect(350,500,124,190))) {
+                selected = 2;
+            } else if(r.intersects(QRect(500,500,124,190))) {
+                selected = 3;
+            } else if(r.intersects(QRect(200,750,124,190))) {
+                selected = 4;
+            } else if(r.intersects(QRect(350,750,124,190))) {
+                selected = 5;
+            } else if(r.intersects(QRect(500,750,124,190))) {
+                selected = 6;
+            } else if(r.intersects(QRect(200,1000,124,190))) {
+                selected = 7;
+            } else if(r.intersects(QRect(350,1000,124,190))) {
+                selected = 8;
+            } else if(r.intersects(QRect(500,1000,124,190))) {
+                selected = 9;
+            }
+            if(selected!=tmpsel) selected += (9*bgpage);
+            if(vContains(ownedbackgrounds,selected-1)) {
+                chosenBackground = selected;
+                cave = false;
+                space = false;
+                flip = false;
+                underwater = false;
+                if(chosenBackground==4) {
+                    cave = true;
+                } else {
+                    cave = false;
+                }
+                if(chosenBackground==6) {
+                    space = true;
+                } else {
+                    space = false;
+                }
+                if(chosenBackground==7) {
+                    flip = true;
+                } else {
+                    flip = false;
+                }
+                if(chosenBackground==9||chosenBackground==10) {
+                    underwater = true;
+                } else {
+                    underwater = false;
+                }
+            }
+        }
+        break;
+        case 3: //pipeskins
                 if(r.intersects(QRect(200,500,100,100))) {
                     selected = 1;
                 } else if(r.intersects(QRect(350,500,100,100))) {
@@ -493,102 +672,6 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
                     selected = 17;
                 } else if(r.intersects(QRect(350,1100,100,100))) {
                     selected = 18;
-                } else if(r.intersects(QRect(500,1100,100,100))) {
-                    selected = 19;
-                } else if(r.intersects(QRect(650,1100,100,100))) {
-                    selected = 20;
-                } else if(r.intersects(QRect(200,1250,100,100))) {
-                    selected = 21;
-                } else if(r.intersects(QRect(350,1250,100,100))) {
-                    selected = 22;
-                } else if(r.intersects(QRect(500,1250,100,100))) {
-                    selected = 23;
-                } else if(r.intersects(QRect(650,1250,100,100))) {
-                    selected = 24;
-                }
-                //if(skinPrice[selected-1]>1) player->reload(selected-1);
-                if(vContains(ownedSkins,selected-1)) {
-                    setSkin(selected);
-                }
-            break;
-        case 2://bgs
-                if(r.intersects(QRect(200,500,124,190))) {
-                    selected = 1;
-                } else if(r.intersects(QRect(350,500,124,190))) {
-                    selected = 2;
-                } else if(r.intersects(QRect(500,500,124,190))) {
-                    selected = 3;
-                } else if(r.intersects(QRect(200,750,124,190))) {
-                    selected = 4;
-                } else if(r.intersects(QRect(350,750,124,190))) {
-                    selected = 5;
-                } else if(r.intersects(QRect(500,750,124,190))) {
-                    selected = 6;
-                } else if(r.intersects(QRect(200,1000,124,190))) {
-                    selected = 7;
-                } else if(r.intersects(QRect(350,1000,124,190))) {
-                    selected = 8;
-                }
-                if(vContains(ownedbackgrounds,selected-1)) {
-                    chosenBackground = selected;
-                    if(chosenBackground==4) {
-                        cave = true;
-                        space = false;
-                        flip = false;
-                    } else {
-                        cave = false;
-                    }
-                    if(chosenBackground==6) {
-                        space = true;
-                        cave = false;
-                        flip = false;
-                    } else {
-                        space = false;
-                    }
-                    if(chosenBackground==7) {
-                        flip = true;
-                        cave = false;
-                        space = false;
-                    } else {
-                        flip = false;
-                    }
-                }
-            break;
-        case 3: //pipeskins
-                if(r.intersects(QRect(200,500,100,100))) {
-                    selected = 1;
-                } else if(r.intersects(QRect(350,500,100,100))) {
-                    selected = 2;
-                } else if(r.intersects(QRect(500,500,100,100))) {
-                    selected = 3;
-                } else if(r.intersects(QRect(650,500,100,100))) {
-                    selected = 4;
-                } else if(r.intersects(QRect(200,650,100,100))) {
-                    selected = 5;
-                } else if(r.intersects(QRect(350,650,100,100))) {
-                    selected = 6;
-                } else if(r.intersects(QRect(500,650,100,100))) {
-                    selected = 7;
-                } else if(r.intersects(QRect(650,650,100,100))) {
-                    selected = 8;
-                } else if(r.intersects(QRect(200,800,100,100))) {
-                    selected = 9;
-                } else if(r.intersects(QRect(350,800,100,100))) {
-                    selected = 10;
-                } else if(r.intersects(QRect(500,800,100,100))) {
-                    selected = 11;
-                } else if(r.intersects(QRect(650,800,100,100))) {
-                    selected = 12;
-                } else if(r.intersects(QRect(200,950,100,100))) {
-                    selected = 13;
-                } else if(r.intersects(QRect(350,950,100,100))) {
-                    selected = 14;
-                } else if(r.intersects(QRect(500,950,100,100))) {
-                    selected = 15;
-                } else if(r.intersects(QRect(650,950,100,100))) {
-                    selected = 16;
-                } else if(r.intersects(QRect(200,1100,100,100))) {
-                    selected = 17;
                 }
                 if(vContains(ownedPipes,selected-1)) {
                     chosenPipe = selected;
@@ -611,6 +694,14 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
                 selected = 7;
             } else if(r.intersects(QRect(650,650,100,100))) {
                 selected = 8;
+            } else if(r.intersects(QRect(200,800,100,100))) {
+                selected = 9;
+            } else if(r.intersects(QRect(350,800,100,100))) {
+                selected = 10;
+            } else if(r.intersects(QRect(500,800,100,100))) {
+                selected = 11;
+            } else if(r.intersects(QRect(650,800,100,100))) {
+                selected = 12;
             }
             if(vContains(ownedTails,selected-1)) {
                 chosenTail = selected;
@@ -772,7 +863,7 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
                 emit msg(transl->getText_Shop_NotEnough("Coins").text);
             } else {
                 c--;
-                player->setBenis(player->getBenis()+150000);
+                player->setBenis(player->getBenis()+50000);
                 player->coins = c;
                 emit buy(1,true,true);
             }
@@ -816,9 +907,11 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
             break;
         }
     } else if(r.intersects(QRect(769,1324+yOffset,140,130))) { //info
-        Text t;
         if(!page) {
             switch(selected) {
+            case 0:
+                emit msg(transl->getText_Powerup().text);
+                break;
             case 1:
                 emit msg(transl->getText_Shop_MP1().text);
                 break;
@@ -840,14 +933,41 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip)
             }
         } else {
             switch(page) {
+            case -1:
+                emit msg(transl->getText_Shop_Coin().text);
+                break;
             case 1:
                 emit msg(transl->getText_Shop_Skin().text);
                 break;
             case 2:
                 emit msg(transl->getText_Shop_Background().text);
                 break;
+            case 3: //säulenskins
+                emit msg(transl->getText_Shop_Pipes().text);
+                break;
+            case 4: //schweife
+                emit msg(transl->getText_Shop_Tail().text);
+                break;
             }
         }
+    } else if(r.intersects(QRect(469,1520,300,130))) {  //seite 2
+        switch(page) {
+        case 1:
+            if(skinpage) {
+                skinpage = 0;
+            } else {
+                skinpage = 1;
+            }
+            break;
+        case 2:
+            if(bgpage) {
+                bgpage = 0;
+            } else {
+                bgpage = 1;
+            }
+            break;
+        }
+
     } else if(r.intersects(QRect(769,950+yOffset,140,130))) { //btnSkins
         if(page!=1) {
             selected = chosenSkin;

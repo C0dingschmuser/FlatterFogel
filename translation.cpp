@@ -95,6 +95,21 @@ Text Translation::getBtn_Shop_Sell()
     return t;
 }
 
+Text Translation::getBtn_Shop_Page()
+{
+    Text t;
+    t.size = 32;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Seite";
+        break;
+        default:
+            t.text = "Page";
+        break;
+    }
+    return t;
+}
+
 Text Translation::getText_Shop_Item1()
 {
     //f.setPixelSize(20);
@@ -433,11 +448,17 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
+                     "-> Physik angepasst\n"
+                     "-> Shop-Info verbessert\n"
+                     "-> Geschwindigkeit einstellbar\n"
+                     "(für Spender)\n"
+                     "-> UI-Verbesserungen\n"
+                     "-> Soundeffekte\n"
+                     "-> Einstellungsmenü\n"
+                     "-> Neuer Skin\n"
                      "-> Neue Hintergründe mit Modi\n"
                      "-> Neue Säulenskins\n"
                      "-> Neue Schweife\n"
-                     "-> Neue Textfarbe"
-                     "-> Preise angepasst\n"
                      "-> Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
@@ -445,6 +466,7 @@ Text Translation::getText_Changelog()
         default:
             t.text = "New Features:\n"
                      "-> New Skins\n"
+                     "-> Physic improvements\n"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;
@@ -540,6 +562,99 @@ Text Translation::getText_Shop_BC()
             t.text = "to";
             t.pos = QPoint(525,1405);
             t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Coin()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Hier kannst du Coins kaufen und verkaufen.<br>"
+                     "Mit Coins kannst du dir <b>neue Skins, Hintergründe,<br>"
+                     "Säulenskins usw. kaufen</b> um dein Spielerlebnis zu<br>"
+                     "verschönern. Alle 200 Punkte erhältst du einen Gratis-Coin.";
+        break;
+        default:
+            t.text = "Here you can buy and sell Coins.<br>"
+                     "With Coins you can <b>purchase Skins, Backgrounds,<br>"
+                     "etc.</b>";
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Pipes()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe einen Säulenskin an um ihn auszuwählen\n"
+                     "nachdem du ihn gekauft hast. Die für\n"
+                     "den Kauf benötigten Coins findest du\n"
+                     "in Kisten. Zusätzlich bekommst du\n"
+                     "jedes mal wenn du die 200 knackst\n"
+                     "einen Coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Tap on a Pipeskin to equip it after you\n"
+                     "have purchased the Skin. You can\n"
+                     "find the Coins required for a\n"
+                     "Purchase in Crates. In addition\n"
+                     "everytime you get a score dividable\n"
+                     "by 200 you get a coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Shop_Tail()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe einen Schweif an um ihn auszuwählen\n"
+                     "nachdem du ihn gekauft hast. Die für\n"
+                     "den Kauf benötigten Coins findest du\n"
+                     "in Kisten. Zusätzlich bekommst du\n"
+                     "jedes mal wenn du die 200 knackst\n"
+                     "einen Coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Tap on a Tail to equip it after you\n"
+                     "have purchased the Skin. You can\n"
+                     "find the Coins required for a\n"
+                     "Purchase in Crates. In addition\n"
+                     "everytime you get a score dividable\n"
+                     "by 200 you get a coin.";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Powerup()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Hier kannst du Powerups kaufen & verkaufen<br>"
+                     "oder deine Multiplikatoren erhöhen. Für mehr<br>"
+                     "Infos über spezielle Powerups wähle bitte eines aus.";
+        break;
+        default:
+            t.text = "Here you can buy Powerups and increase<br>"
+                     "the multiplier. For more specific Infos<br>"
+                     "about a Powerup please select one first.";
         break;
     }
     return t;

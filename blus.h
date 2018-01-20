@@ -26,6 +26,7 @@ public:
     bool gift;
     bool tail;
     bool bg;
+    bool speedDisplay;
     int item;
     int size;
     int width;

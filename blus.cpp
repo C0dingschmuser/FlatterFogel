@@ -25,6 +25,7 @@ Blus::Blus(int angle, QRectF rect, QPixmap p, int w, int h, double oSpeed, doubl
     used = false;
     gift = false;
     tail = false;
+    speedDisplay = false;
 }
 
 Blus::Blus(int angle, QRectF rect, QString text, int size)
@@ -46,6 +47,7 @@ Blus::Blus(int angle, QRectF rect, QString text, int size)
     used = false;
     gift = false;
     tail = false;
+    speedDisplay = false;
 }
 
 Blus::Blus(int angle, QRectF rect, double vSpeed,double oSpeed, bool hardcore)
@@ -65,6 +67,7 @@ Blus::Blus(int angle, QRectF rect, double vSpeed,double oSpeed, bool hardcore)
     used = false;
     gift = false;
     tail = false;
+    speedDisplay = false;
 }
 
 void Blus::move(double s)
@@ -75,7 +78,7 @@ void Blus::move(double s)
         if(snow!=2) sx+=s;
         sy*=0.5;
     }
-    if(opacity) {
+    if(opacity&&s!=-5000) {
         opacity -= oSpeed;
         rect.moveTo(rect.x()+sx,rect.y()+vy);
     } else {

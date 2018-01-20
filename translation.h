@@ -15,6 +15,7 @@ public:
     Text getBtn_Shop_Back();
     Text getBtn_Shop_Buy();
     Text getBtn_Shop_Sell();
+    Text getBtn_Shop_Page();
     Text getText_Shop_Item1();
     Text getText_Shop_MP1();
     Text getText_Shop_MP2();
@@ -38,6 +39,10 @@ public:
     Text getText_Shop_Skin();
     Text getText_Shop_Background();
     Text getText_Shop_BC();
+    Text getText_Shop_Coin();
+    Text getText_Shop_Pipes();
+    Text getText_Shop_Tail();
+    Text getText_Powerup();
     Text getText_Referral_Get(QString key, QString leftKeys);
     Text getText_Referral_WrongKey();
     Text getText_Referral_Confirmed();

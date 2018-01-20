@@ -24,6 +24,7 @@
 	<file>images/buttons/btnCave.png</file>
 	<file>images/buttons/btnHardcore.png</file>
 	<file>images/buttons/btnSpace.png</file>
+	<file>images/buttons/btnUM.png</file>
 	<file>images/buttons/vol0.png</file>
 	<file>images/buttons/vol1.png</file>
 	<file>images/buttons/up.png</file>
@@ -87,6 +88,7 @@
 	<file>images/pipes/14.png</file>
 	<file>images/pipes/15.png</file>
 	<file>images/pipes/16.png</file>
+	<file>images/pipes/17.png</file>
 	<file>images/tails/0.png</file>
 	<file>images/tails/1.png</file>
 	<file>images/tails/2.png</file>
@@ -95,11 +97,18 @@
 	<file>images/tails/5.png</file>
 	<file>images/tails/6.png</file>
 	<file>images/tails/7.png</file>
+	<file>images/tails/8.png</file>
+	<file>images/tails/9.png</file>
+	<file>images/tails/10.png</file>
+	<file>images/tails/11.png</file>
 	<file>images/backgrounds/ground/basic.png</file>
 	<file>images/backgrounds/ground/2.png</file>
 	<file>images/backgrounds/ground/3.png</file>
 	<file>images/backgrounds/ground/5.png</file>
 	<file>images/backgrounds/ground/6.png</file>
+	<file>images/backgrounds/ground/9.png</file>
+	<file>images/backgrounds/ground/10.png</file>
+	<file>images/backgrounds/ground/11.png</file>
 	<file>images/backgrounds/planets/0.png</file>
 	<file>images/backgrounds/planets/1.png</file>
 	<file>images/backgrounds/planets/2.png</file>
@@ -113,6 +122,9 @@
 	<file>images/backgrounds/bg5.png</file>
 	<file>images/backgrounds/bg6.png</file>
 	<file>images/backgrounds/bg8.png</file>
+	<file>images/backgrounds/bg9.png</file>
+	<file>images/backgrounds/bg10.png</file>
+	<file>images/backgrounds/bg11.png</file>
 	<file>images/cloud.png</file>
 	<file>images/stats.png</file>
 	<file>images/player/skins/0.png</file>
@@ -139,6 +151,7 @@
 	<file>images/player/skins/21.png</file>
 	<file>images/player/skins/22.png</file>
 	<file>images/player/skins/23.png</file>
+	<file>images/player/skins/24.png</file>
 	<file>images/player/an1_1.png</file>
 	<file>images/player/an1_2.png</file>
 	<file>images/player/an1_3.png</file>
@@ -167,6 +180,7 @@
 	<file>images/referral.png</file>
 	<file>images/mieserkadser.png</file>
 	<file>images/ad.png</file>
-        <file>sound/pg.mp3</file>
+    <file>sound/pg.mp3</file>
+	<file>sound/flatter.wav</file>
         </qresource>
 </RCC>

@@ -32,14 +32,16 @@ private:
     QPixmap coinPx;
     QPixmap itemBcPx;
     QPixmap cloudPx;
-    int selected;
+    uint selected;
     int page;
+    int skinpage;
+    int bgpage;
     QFont font;
     Translation* transl;
-    void drawSkin(int x, int y, int w, int h, int num, QPainter &painter);
-    void drawBg(int x, int y, int w, int h, int num, QPainter &painter);
-    void drawPipe(int x, int y, int w, int h, int num, QPainter &painter);
-    void drawTail(int x, int y, int w, int h, int num, QPainter &painter);
+    void drawSkin(int x, int y, int w, int h, uint num, QPainter &painter);
+    void drawBg(int x, int y, int w, int h, uint num, QPainter &painter);
+    void drawPipe(int x, int y, int w, int h, uint num, QPainter &painter);
+    void drawTail(int x, int y, int w, int h, uint num, QPainter &painter);
 public:
     explicit Shop(Player *player,QFont font,Translation *transl,QPixmap coinPx, QPixmap cloudPx, QObject *parent = nullptr);
     QPixmap background;
@@ -76,7 +78,8 @@ public:
     void draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QColor textColor);
     void setActive(bool active);
     bool getActive();
-    void mousePress(QPoint pos, bool &cave, bool &space, bool &flip);
+    bool checkDonatorItem(int num, int type);
+    void mousePress(QPoint pos, bool &cave, bool &space, bool &flip, bool &underwater);
     void setSkin(int num);
     QString skinsToString();
     QString bgsToString();

@@ -36,7 +36,8 @@ SOURCES += \
     text.cpp \
     translation.cpp \
     scoreboard.cpp \
-    background.cpp
+    background.cpp \
+    settings.cpp
 
 HEADERS += \
         frmmain.h \
@@ -50,12 +51,13 @@ HEADERS += \
     text.h \
     translation.h \
     scoreboard.h \
-    background.h
+    background.h \
+    settings.h
 
 FORMS += \
         frmmain.ui
 
-CONFIG += mobility c++11
+CONFIG += mobility c++14
 MOBILITY = 
 
 QMAKE_CXXFLAGS += -fexceptions -frtti

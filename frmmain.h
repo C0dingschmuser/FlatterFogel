@@ -9,6 +9,7 @@
 #include <QDateTime>
 #include <QColor>
 #include <QVector>
+#include <QSoundEffect>
 #include <QMessageBox>
 #include <QMediaPlayer>
 #include <QThread>
@@ -41,6 +42,7 @@
 #include "star.h"
 #include "scoreboard.h"
 #include "background.h"
+#include "settings.h"
 
 namespace Ui {
 class FrmMain;
@@ -77,6 +79,9 @@ private slots:
     void on_tRgb();
     void on_mediastateChanged(QMediaPlayer::MediaStatus status);
     void on_appStateChanged(Qt::ApplicationState state);
+    void on_test();
+    void on_settingsBack();
+    void on_settingsPlay();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -86,7 +91,9 @@ private:
     QMediaPlayer *sound;
     QMediaPlaylist *playlist;
     bool soundEnabled;
+    bool soundEffectsEnabled;
     bool suspended;
+    bool unlockedSpeed;
     int mainX;
     int endX;
     bool anDir;
@@ -105,7 +112,7 @@ private:
     bool space;
     bool loading;
     bool lowGraphics;
-    bool donator;
+    int donator;
     int ad;
     bool ad_active;
     QDateTime currentDateTime;
@@ -136,6 +143,7 @@ private:
     QThread *workerThread;
     QThread *blusThread;
     QThread *animationThread;
+    QThread *musicThread;
     std::vector <Obstacle*> obstacles;
     std::vector <Blus*> blusse;
     QVector <Window*> windows;
@@ -144,6 +152,7 @@ private:
     std::vector <QPixmap> pipes;
     std::vector <QPixmap> tails;
     std::vector <QPixmap> planets;
+    std::vector <QSoundEffect*> soundEffects;
     QVector <QPixmap> thumbs;
     QVector <QPixmap> powerupPx;
     std::vector <Background*> backgrounds;
@@ -199,6 +208,7 @@ private:
     bool crate;
     Translation *transl;
     Scoreboard *scoreboard;
+    Settings *settings;
     QString name;
     QColor textColor;
     int enemytype;
@@ -209,6 +219,7 @@ private:
     int highscore_H;
     int highscore_C;
     int highscore_S;
+    int highscore_UM;
     int schmuser;
     int maxX;
     int maxY;
@@ -230,6 +241,8 @@ private:
     int rgb_blue;
     int rgb_green;
     int rgb_mode;
+    int mouseX;
+    int mouseY;
     double planetX;
     double planetY;
     int chosenPlanet;
@@ -238,6 +251,8 @@ private:
     bool outdated;
     bool boostused;
     bool flip;
+    bool eLoad;
+    bool underwater;
     bool vContains(std::vector<int> v, int value);
     double textFade;
     double cloud1X;
@@ -247,18 +262,24 @@ private:
     double g2x;
     double boost;
     int revive;
+    Blus *lastbenpos;
+    double gameSpeed;
     bool flag;
     bool pause;
     bool changelog;
+    bool mousePressed;
     QFile file;
+    QFile fileE;
     void loadData();
     void write();
     void reset(int type=0);
     void moveGround(double speed);
     void createWindows();
     void handleBox();
+    void playFlatter();
     QString genKey();
     QString lucaAlg(QString text);
+    QString lucaAlgR(QString text);
     bool checkKey(QString key);
     bool checkConfirm(QString key);
     bool intersectsWithCircle(QRectF rect, QRectF circle);
@@ -267,10 +288,12 @@ private:
     void error(QString errorString);
     void startStop(bool start);
     void tap(int x, int y);
+    void changeSpeed(bool faster);
     double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e) override;
     void closeEvent(QCloseEvent *event);
 };
