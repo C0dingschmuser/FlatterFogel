@@ -43,6 +43,8 @@
 #include "scoreboard.h"
 #include "background.h"
 #include "settings.h"
+#include "enemy.h"
+#include "projectile.h"
 
 namespace Ui {
 class FrmMain;
@@ -82,6 +84,9 @@ private slots:
     void on_test();
     void on_settingsBack();
     void on_settingsPlay();
+    void on_tbackup();
+    void on_treload();
+    void on_tregen();
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -94,12 +99,20 @@ private:
     bool soundEffectsEnabled;
     bool suspended;
     bool unlockedSpeed;
+    bool schmuserDefend;
+    int schmuserEnemy;
     int mainX;
     int endX;
     bool anDir;
     int newHS;
     int stationaryObstacles;
     int moveAn;
+    double schmuserReload;
+    int schmuserRegen;
+    int schmuserRange;
+    int schmuserCredits;
+    int schmuserDmg;
+    std::vector <int> schmuserCost;
     unsigned long cBox;
     unsigned long cBTouch;
     unsigned long cBPipe;
@@ -133,12 +146,23 @@ private:
     QTimer *t_newHS;
     QTimer *t_tail;
     QTimer *t_rgb;
+    QTimer *t_backup;
+    QTimer *t_reload;
+    QTimer *t_regen;
     QFont font;
     double scaleX;
     double scaleY;
+    QRectF aimingAt;
     Player *player;
     Shop *shop;
     int active;
+    uint schmuserWaveSize;
+    int schmuserWave;
+    int schmuserkills;
+    int schmuserKillsneeded;
+    int schmuserBaseHP;
+    int schmuserBaseMaxHP;
+    int schmuserHP;
     QPoint mousePos;
     QThread *workerThread;
     QThread *blusThread;
@@ -153,6 +177,8 @@ private:
     std::vector <QPixmap> tails;
     std::vector <QPixmap> planets;
     std::vector <QSoundEffect*> soundEffects;
+    std::vector <Enemy*> enemys;
+    std::vector <Projectile*> projectiles;
     QVector <QPixmap> thumbs;
     QVector <QPixmap> powerupPx;
     std::vector <Background*> backgrounds;
@@ -253,6 +279,7 @@ private:
     bool flip;
     bool eLoad;
     bool underwater;
+    bool closing;
     bool vContains(std::vector<int> v, int value);
     double textFade;
     double cloud1X;
@@ -271,18 +298,22 @@ private:
     QFile file;
     QFile fileE;
     void loadData();
-    void write();
+    void write(bool normal=true, int bscore=0);
     void reset(int type=0);
     void moveGround(double speed);
     void createWindows();
     void handleBox();
     void playFlatter();
+    void doSchmuserDefend();
+    void drawSchmuserDefend(QPainter &painter, QFont f);
+    void drawSchmuserDefendEnd(QPainter &painter, QFont f);
     QString genKey();
     QString lucaAlg(QString text);
     QString lucaAlgR(QString text);
     bool checkKey(QString key);
     bool checkConfirm(QString key);
     bool intersectsWithCircle(QRectF rect, QRectF circle);
+    bool intersectsWithCircle2(QRectF rect, int r, QPoint center);
     void checkPost();
     void initSound();
     void error(QString errorString);

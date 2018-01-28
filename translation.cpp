@@ -448,25 +448,14 @@ Text Translation::getText_Changelog()
     switch(locale.language()) {
         case QLocale::German:
             t.text = "Neue Features:\n"
-                     "-> Physik angepasst\n"
-                     "-> Shop-Info verbessert\n"
-                     "-> Geschwindigkeit einstellbar\n"
-                     "(für Spender)\n"
-                     "-> UI-Verbesserungen\n"
-                     "-> Soundeffekte\n"
-                     "-> Einstellungsmenü\n"
-                     "-> Neuer Skin\n"
-                     "-> Neue Hintergründe mit Modi\n"
-                     "-> Neue Säulenskins\n"
-                     "-> Neue Schweife\n"
+                     "-> DLC 1 Flatterfogel: Attack of the Schmuser\n"
                      "-> Bugfixes";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
             t.text = "New Features:\n"
-                     "-> New Skins\n"
-                     "-> Physic improvements\n"
+                     "-> DLC\n"
                      "-> Bugfixes";
             t.pos = QPoint(530,1415);
             t.size = 50;

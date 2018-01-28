@@ -14,8 +14,8 @@ private:
     Translation *transl;
 public:
     explicit Settings(QPixmap *background, QPixmap *btnPx, Translation *transl, QObject *parent = nullptr);
-    void draw(QPainter &painter, QColor textColor);
-    void mousePress(int x, int y, bool &music, bool &soundEffects, bool &lowGraphics);
+    void draw(QPainter &painter, QColor textColor, int &schmuserEnemy);
+    void mousePress(int x, int y, bool &music, bool &soundEffects, bool &lowGraphics, int &schmuserEnemy);
     bool active;
     bool music;
     bool soundEffects;

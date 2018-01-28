@@ -6,16 +6,27 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2334835";
+    lastPost = "2352312";
     loading = true;
     mainX = 0;
     newHS = 0;
     caveSpawnCount = 0;
+    schmuserWaveSize = 5;
+    schmuserWave = 1;
+    schmuserkills = 0;
+    schmuserKillsneeded = 20;
+    schmuserBaseHP = 1000;
+    schmuserBaseMaxHP = 1000;
+    schmuserRange = 600;
+    schmuserDmg = 10;
+    schmuserHP = 100;
     endX = 1080;
     cloud1X = 0;
     cloud2X = 1079;
     event = 0;
     donator = false;
+    schmuserDefend = false;
+    schmuserEnemy = true;
     playTime = 0;
     localPlayTime = 0;
     cBox = 0;
@@ -31,7 +42,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     refActive = false;
     soundEnabled = false;
     soundEffectsEnabled = false;
-    version = "1.3.1.r";
+    version = "1.3.2.r";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -49,6 +60,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_newHS = new QTimer();
     t_tail = new QTimer();
     t_rgb = new QTimer();
+    t_backup = new QTimer();
+    t_reload = new QTimer();
+    t_regen = new QTimer();
     flashOpacity = 0;
     pause = false;
     ad = 0;
@@ -79,6 +93,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     connect(t_newHS,SIGNAL(timeout()),this,SLOT(on_tnewHS()));
     connect(t_tail,SIGNAL(timeout()),this,SLOT(on_tTail()));
     connect(t_rgb,SIGNAL(timeout()),this,SLOT(on_tRgb()));
+    connect(t_backup,SIGNAL(timeout()),this,SLOT(on_tbackup()));
+    connect(t_reload,SIGNAL(timeout()),this,SLOT(on_treload()));
+    connect(t_regen,SIGNAL(timeout()),this,SLOT(on_tregen()));
     connect(qApp,SIGNAL(applicationStateChanged(Qt::ApplicationState)),this,SLOT(on_appStateChanged(Qt::ApplicationState)));
     //this->showMaximized();
     referrals = 3;
@@ -87,6 +104,14 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     space = false;
     flip = false;
     gameSpeed = 1;
+    schmuserKillsneeded = 20;
+    schmuserReload = 100;
+    schmuserRegen = 200;
+    schmuserCredits = 0;
+    schmuserCost.push_back(10);
+    schmuserCost.push_back(5);
+    schmuserCost.push_back(20);
+    schmuserCost.push_back(10);
     lastbenpos = nullptr;
     btnup = QPixmap(":/images/buttons/up.png");
     btndown = QPixmap(":/images/buttons/down.png");
@@ -195,6 +220,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     obsNum = 0;
     boxState = 0;
     resumeTime = 0;
+    closing = false;
     planetX = 1080;
     planetY = 1000;
     chosenPlanet = 0;
@@ -246,9 +272,13 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_flag->start(750);
     t_star->start(125);
     t_an->start(150);
+    t_reload->start(schmuserReload);
+    t_regen->start(schmuserRegen);
+    //t_backup->start(10000);
     t_animation->setTimerType(Qt::PreciseTimer);
     t_animation->start(1);
     t_tchange->setSingleShot(true);
+    t_backup->moveToThread(animationThread);
     t_animation->moveToThread(animationThread); //
     t_rgb->moveToThread(workerThread); //
     t_an->moveToThread(workerThread); //
@@ -263,6 +293,8 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_resume->moveToThread(workerThread);
     t_blus->moveToThread(blusThread); //
     t_tail->moveToThread(blusThread); //
+    t_reload->moveToThread(blusThread);
+    t_regen->moveToThread(blusThread);
     t_newHS->moveToThread(workerThread); //
     for(int i=0;i<10;i++) {
         QSoundEffect *effect = new QSoundEffect();
@@ -607,6 +639,7 @@ void FrmMain::on_appStateChanged(Qt::ApplicationState state)
         QMetaObject::invokeMethod(t_obst,"stop");
         QMetaObject::invokeMethod(t_star,"stop");
         QMetaObject::invokeMethod(t_an,"stop");
+        if(!closing) write(false,score);
         suspended = true;
         if(active==1&&!pause) {
             pause = true;
@@ -639,6 +672,63 @@ void FrmMain::on_settingsPlay()
     }
 }
 
+void FrmMain::on_tbackup()
+{
+    if(suspended||pause||active!=1) return;
+    qDebug()<<"save";
+    write(false,score);
+}
+
+void FrmMain::on_treload()
+{
+    if(!schmuserDefend||active!=1||pause||!enemys.size()) return;
+    double distance = schmuserRange;
+    int minY = schmuserRange;
+    int num = -1;
+    for(uint i=0;i<enemys.size();i++) {
+        if(!enemys[i]->dead&&enemys[i]->prehp>=0) {
+            double tmpDistance = getDistance(player->getRect().center(),enemys[i]->rect.center());
+            int tmpY = enemys[i]->rect.center().y();
+            if(tmpDistance<distance&&tmpY>minY) {
+                minY = tmpY;
+                num = i;
+            }
+        }
+    }
+    if(num<0) return;
+    //if(enemys[num]->prehp>=0) {
+        double speed = 3;
+        double enemyspeed = 1;
+        int dmg = schmuserDmg;
+        enemys[num]->prehp -= dmg;
+        QRect er = enemys[num]->rect;
+        QRectF pr = QRectF(player->getRect().x()+20,player->getRect().y()-25,20,20);
+        double theta = atan2((er.y()+er.height()/2)-(player->getRect().y()-25),(er.x()+er.width()/2)-(player->getRect().x()+20));
+        double angle = qRadiansToDegrees(theta);
+        if(angle<0) angle+=360;
+        double vy = qSin(qDegreesToRadians((double)angle))*2;
+        //winkel zur aktuellen position berechnen
+        double result = std::fabs((double)(er.y()+er.height()/2)-pr.y());
+        result /= std::fabs(vy*speed); //anzahl der schritte von projektil zu ziel
+        er.moveTo(er.x(),er.y()+(enemyspeed*result));
+        aimingAt = er;
+        theta = atan2((er.y()+er.height()/2)-(player->getRect().y()-25),(er.x()+er.width()/2)-(player->getRect().x()+20));
+        angle = qRadiansToDegrees(theta);
+        if(angle<0) angle+=360;
+        //winkel zu zukünftiger position berechnen
+        projectiles.push_back(new Projectile(QRectF(player->getRect().x()+20,player->getRect().y()-25,20,20),angle,speed,dmg));
+    //}
+}
+
+void FrmMain::on_tregen()
+{
+    if(active!=1||!schmuserDefend||pause) return;
+    if(schmuserBaseHP<schmuserBaseMaxHP) {
+        schmuserBaseHP+=schmuserBaseMaxHP*0.001;
+        if(schmuserBaseHP>schmuserBaseMaxHP) schmuserBaseHP = schmuserBaseMaxHP;
+    }
+}
+
 void FrmMain::on_tdraw()
 {
     //qDebug()<<QGuiApplication::applicationState();
@@ -655,6 +745,15 @@ void FrmMain::on_tdraw()
 void FrmMain::on_tblus()
 {
     if(suspended||pause) return;
+    QRectF field(0,0,1080,1920);
+    for(uint i=0;i<projectiles.size();i++) {
+        if(getDistance(player->getRect().center(),projectiles[i]->r.center())<schmuserRange&&!projectiles[i]->del) {
+            projectiles[i]->move();
+        } else {
+            delete projectiles[i];
+            projectiles.erase(projectiles.begin()+i);
+        }
+    }
     for(uint i=0;i<blusse.size();i++) {
         try {
             if(boost) {
@@ -662,7 +761,7 @@ void FrmMain::on_tblus()
             } else {
                 if(!blusse[i]->tail||(blusse[i]->tail&&active==1)) {
                     double s = 0;
-                    if(active==1) s = -gameSpeed;
+                    if(active==1&&!schmuserDefend) s = -gameSpeed;
                     blusse[i]->move(s);
                 }
                 //if(blusse[i]->item) qDebug()<<blusse[i]->getRect();
@@ -746,8 +845,9 @@ void FrmMain::on_tmain()
         QApplication::quit();
     }
     if(active<1) return;
-    if(active==1&&!boxDeath) {
-        localPlayTime+=0.005;
+    if(schmuserDefend) doSchmuserDefend();
+    if(active==1) localPlayTime+=0.005;
+    if(active==1&&!boxDeath&&!schmuserDefend) {
         if(revive==1) {
             reviveTime-=5;
             if(reviveTime<=0) {
@@ -856,7 +956,6 @@ void FrmMain::on_tmain()
                             if((score%200==0&&score!=0)||(score%30==0&&hardcore)) {
                                 on_shopBuy(1,false,true);
                                 player->coins++;
-                                write();
                             } else {
                                 player->setBenis(player->getBenis()+(score*shop->multiplier));
                                 int b = score*shop->multiplier;
@@ -895,7 +994,7 @@ void FrmMain::on_tmain()
         }
     }
     bool dead = false;
-    if(player->getRect().y()<1600&&active>0) {
+    if(player->getRect().y()<1600&&active>0&&!schmuserDefend) {
         double velD = player->getVelD();
         if(!space&&!underwater) {
             if(velD<8) velD += 0.075;
@@ -944,7 +1043,7 @@ void FrmMain::on_tmain()
             }
         }
     }
-    if(player->getRect().y()>=1600||dead) {
+    if((player->getRect().y()>=1600&&!schmuserDefend)||dead) {
         if(!revive) {
             if(active==1) {
                 flashOpacity = 0.5;
@@ -990,43 +1089,44 @@ void FrmMain::on_tmain()
             write();
         }
     }
-    for(uint i=0;i<obstacles.size();i++) {
-        if((obstacles[i]->getTop().x()<-250&&!cave)||(obstacles[i]->getTop().x()<-700&&cave)||obstacles[i]->del) {
-            delete obstacles[i];
-            obstacles.erase(obstacles.begin()+i);
-            //qDebug()<<i;
-            //break;
-        } else if((obstacles[i]->getTop().x()+obstacles[i]->getTop().width()<=player->getRect().x()&&active==1&&!obstacles[i]->approved)&&!cave) {
-            obstacles[i]->approved = true;
-            score++;
-            int ok=-1;
-            if(backgrounds[shop->chosenBackground-1]->windows) {
-                for(int a=0;a<windows.size();a++) {
-                    if(windows[a]->visible) {
-                        ok = a;
-                        break;
+    if(!schmuserDefend) {
+        for(uint i=0;i<obstacles.size();i++) {
+            if((obstacles[i]->getTop().x()<-250&&!cave)||(obstacles[i]->getTop().x()<-700&&cave)||obstacles[i]->del) {
+                delete obstacles[i];
+                obstacles.erase(obstacles.begin()+i);
+                //qDebug()<<i;
+                //break;
+            } else if((obstacles[i]->getTop().x()+obstacles[i]->getTop().width()<=player->getRect().x()&&active==1&&!obstacles[i]->approved)&&!cave) {
+                obstacles[i]->approved = true;
+                score++;
+                int ok=-1;
+                if(backgrounds[shop->chosenBackground-1]->windows) {
+                    for(int a=0;a<windows.size();a++) {
+                        if(windows[a]->visible) {
+                            ok = a;
+                            break;
+                        }
+                    }
+                    if(ok!=-1) {
+                        windows[ok]->visible = false;
                     }
                 }
-                if(ok!=-1) {
-                    windows[ok]->visible = false;
-                }
-            }
-            if(score%200==0||(score%30==0&&hardcore)) {
-                on_shopBuy(1,false,true);
-                player->coins++;
-                write();
-            } else {
-                if(!boost) {
-                    player->setBenis(player->getBenis()+(score*shop->multiplier));
-                    unsigned long b = score*shop->multiplier;
-                    if(hardcore) b*=1.5;
-                    cBPipe += b;
-                    blusse.push_back(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(b)));
-                    if(!lowGraphics) {
-                        QPixmap bpx = blus;
-                        if(shop->chosenSkin==14) bpx = minus;
-                        for(int a=0;a<360;a+=12) {
-                            blusse.push_back(new Blus(a,QRectF(player->getRect().center().x()-20,player->getRect().center().y()-20,40,40),bpx));
+                if(score%200==0||(score%30==0&&hardcore)) {
+                    on_shopBuy(1,false,true);
+                    player->coins++;
+                } else {
+                    if(!boost) {
+                        player->setBenis(player->getBenis()+(score*shop->multiplier));
+                        unsigned long b = score*shop->multiplier;
+                        if(hardcore) b*=1.5;
+                        cBPipe += b;
+                        blusse.push_back(new Blus(90,QRectF(4,180,1,1),"+"+QString::number(b)));
+                        if(!lowGraphics) {
+                            QPixmap bpx = blus;
+                            if(shop->chosenSkin==14) bpx = minus;
+                            for(int a=0;a<360;a+=12) {
+                                blusse.push_back(new Blus(a,QRectF(player->getRect().center().x()-20,player->getRect().center().y()-20,40,40),bpx));
+                            }
                         }
                     }
                 }
@@ -1039,6 +1139,17 @@ void FrmMain::on_tObst()
 {
     if(pause||suspended) return;
     if(QGuiApplication::applicationState()==Qt::ApplicationSuspended) return;
+    if(schmuserDefend&&active==1) {
+        if(enemys.size()<schmuserWaveSize) {
+            do {
+                int x = random(0,980);
+                int y = random(-600,-100);
+                Enemy *e = new Enemy(QRect(x,y,100,100),0,schmuserHP);
+                enemys.push_back(e);
+            } while(enemys.size()<schmuserWaveSize);
+        }
+        return;
+    }
     if(shop->chosenBackground==1&&!cave&&!lowGraphics) { //Schnee
         Blus *b = new Blus(random(55,125),QRectF(random(100,1500),-10,10,10),1,0.15,false);
         b->color = QColor(210,210,210);
@@ -1731,6 +1842,14 @@ void FrmMain::loadData()
                 if(list.size()>10) {
                     boxCount = list.at(10).toInt();
                 }
+                if(list.at(8)=="LordSchaft"&&shop->multiplier<100) {
+                    shop->multiplier = 105;
+                } else if(list.at(8)=="CarlaWiener"&&shop->multiplier<200) {
+                    shop->multiplier = 204;
+                } else if(shop->multiplier==100) {
+                    shop->multiplier = 15;
+                    boxCount += 25;
+                }
                 if(list.size()<11) {
                     changelog = true;
                 } else if(list.at(11).mid(0,6)!=version.mid(0,6)) {
@@ -1841,6 +1960,28 @@ void FrmMain::loadData()
                         unlockedSpeed = true;
                     }
                 }
+                if(list.size()>31) {
+                    if(list.at(30)=="NOTOK") {
+                        moveAn = 3;
+                        score = list.at(31).toInt();
+                    }
+                }
+                if(list.size()>33) {
+                    if(list.at(32).toInt()) {
+                        schmuserEnemy = true;
+                    } else {
+                        schmuserEnemy = false;
+                    }
+                }
+                if(list.at(8)=="RainerHass"&&shop->multiplier<200) {
+                    highscore = 3156;
+                    boxCount = 199;
+                    player->coins = 23;
+                    player->setBenis(74448051);
+                    if(!vContains(shop->ownedbackgrounds,3)) {
+                        shop->ownedbackgrounds.push_back(3);
+                    }
+                }
             }
 
         }
@@ -1859,12 +2000,18 @@ void FrmMain::loadData()
     }
 }
 
-void FrmMain::write()
+void FrmMain::write(bool normal, int bscore)
 {
     file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
     fileE.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
     QTextStream out(&file);
     QTextStream outE(&fileE);
+    QString exit;
+    if(!normal&&!schmuserDefend) {
+        exit.append("NOTOK");
+    } else {
+        exit.append("OK");
+    }
     QString data = QString::number(highscore) + "~" + QString::number(highscore_H) + "~"
         + QString::number(highscore_C) + "~"+ QString::number(highscore_S) + "~" + QString::number(highscore_UM) + "~#"
         + QString::number(player->getBenis()) + "#"
@@ -1880,7 +2027,8 @@ void FrmMain::write()
         + QString::number(shop->chosenPipe) + "#" + lastPost + "#" + QString::number(lowGraphics) + "#"
         + shop->tailsToString() + "#" + QString::number(shop->chosenTail) + "#"
         + QString::number(soundEnabled) + "#" + QString::number(ad) + "#" + QString::number(soundEffectsEnabled) +"#"
-        + QString::number(unlockedSpeed) + "#";
+        + QString::number(unlockedSpeed) + "#" + exit + "#" + QString::number(bscore) + "#" + QString::number(schmuserEnemy) + "#";
+
     if(eLoad) {
         outE << lucaAlg(lucaAlg(data));
         out << "Immer han du die bech :(";
@@ -1918,11 +2066,34 @@ void FrmMain::reset(int type)
     } else {
         go = 2;
     }
+    for(uint i=0;i<enemys.size();i++) {
+        delete enemys[i];
+    }
+    for(uint i=0;i<projectiles.size();i++) {
+        projectiles[i]->del = true;
+    }
+    schmuserCost[0] = 10;
+    schmuserCost[1] = 5;
+    schmuserCost[2] = 20;
+    schmuserCost[3] = 10;
+    enemys.resize(0);
+    schmuserBaseHP = 1000;
+    schmuserBaseMaxHP = 1000;
+    schmuserkills = 0;
+    schmuserWave = 1;
+    schmuserHP = 100;
+    schmuserWaveSize = 5;
+    schmuserKillsneeded = 20;
+    schmuserRange = 600;
+    schmuserCredits = 0;
+    schmuserReload = 100;
+    schmuserDmg = 10;
     player->fin = false;
     QMetaObject::invokeMethod(t_boost,"stop");
     //QMetaObject::invokeMethod(t_an,"stop");
     QMetaObject::invokeMethod(t_tilt,"stop");
     QMetaObject::invokeMethod(t_tail,"stop");
+    QMetaObject::invokeMethod(t_reload,"start",Q_ARG(int,100));
     enemylife = 10;
     caveSpawnCount = 0;
     medal = 0;
@@ -1942,7 +2113,9 @@ void FrmMain::reset(int type)
     boost = 0;
     player->tdir = 0;
     player->tilt = 45;
-    player->setPos(1080/2-250,1920/2-40);
+    if(!schmuserDefend) {
+        player->setPos(1080/2-250,1920/2-40);
+    }
     player->setVelD(0);
     enemyRect.moveTo(-300,100);
 }
@@ -2247,6 +2420,168 @@ void FrmMain::playFlatter()
     }
 }
 
+void FrmMain::doSchmuserDefend()
+{
+    //wavecheck
+    if(schmuserkills>=schmuserKillsneeded) {
+        schmuserkills = 0;
+        if((schmuserWave+1)%10==0) {
+            player->coins++;
+        }
+        schmuserWave++;
+        if(schmuserWaveSize<20) {
+            schmuserWaveSize*=1.25;
+        } else {
+            schmuserHP*=1.5;
+        }
+        schmuserKillsneeded*=1.2;
+    }
+    //del
+    for(uint i=0;i<enemys.size();i++) {
+        bool del=false;
+        if(enemys[i]->showhp) enemys[i]->showhp -= 5;
+        for(uint a=0;a<projectiles.size();a++) {
+            if(!enemys[i]->dead) {
+                if(projectiles[a]->r.intersects(QRectF(enemys[i]->rect))) {
+                    enemys[i]->hp-=projectiles[a]->damage;
+                    projectiles[a]->del = true;
+                    if(enemys[i]->hp<=0) {
+                        enemys[i]->hp = 0;
+                        enemys[i]->dead = true;
+                    } else {
+                        enemys[i]->showhp = 200;
+                    }
+                }
+            }
+        }
+        if(enemys[i]->dead) {
+            if(enemys[i]->opacity>0) {
+                enemys[i]->opacity -= 0.025;
+            } else {
+                del = true;
+            }
+        }
+        if(enemys[i]->rect.y()<1500&&!del) {
+            if(!enemys[i]->dead) {
+                enemys[i]->moveTo(enemys[i]->rect.x(),enemys[i]->rect.y()+1);
+                if(enemys[i]->showhp>5) enemys[i]->showhp-=5;
+            }
+        } else {
+            if(del) {
+                schmuserCredits++;
+                schmuserkills++;
+                //qDebug()<<"WAVE: "<<schmuserWave<<" KILLS: "<<schmuserkills<<" FROM "<<schmuserKillsneeded;
+            } else {
+                schmuserBaseHP -= enemys[i]->hp;
+                if(schmuserBaseHP<=0) {
+                    schmuserBaseHP = 0;
+                    active=2;
+                }
+            }
+            delete enemys[i];
+            enemys.erase(enemys.begin()+i);
+        }
+    }
+}
+
+void FrmMain::drawSchmuserDefend(QPainter &painter, QFont f)
+{
+    QPixmap schmuserPixmap = skins[14];
+    if(!schmuserEnemy) schmuserPixmap = mieserkadserPx;
+    for(uint i=0;i<enemys.size();i++) {
+        QRect er = enemys[i]->rect;
+        if(er.y()>-100) {
+            painter.setOpacity(enemys[i]->opacity);
+            painter.drawPixmap(er,schmuserPixmap);
+        }
+        painter.setOpacity(1);
+    }
+    for(uint i=0;i<enemys.size();i++) {
+        QRect er = enemys[i]->rect;
+        if(enemys[i]->hp<enemys[i]->maxhp) {
+            int health = enemys[i]->hp;
+            int maxHealth = enemys[i]->maxhp;
+            if(health>maxHealth*0.8) {
+                painter.setBrush(QColor(34,177,76));
+            } else if(health>maxHealth*0.6) {
+                painter.setBrush(QColor(181,230,29));
+            } else if(health>maxHealth*0.4) {
+                painter.setBrush(QColor(255,242,0));
+            } else if(health>maxHealth*0.2) {
+                painter.setBrush(QColor(223,89,0));
+            } else if(health>0) {
+                painter.setBrush(QColor(237,28,36));
+            }
+            painter.drawRect(er.x(),er.y()-30,er.width()*((double)enemys[i]->hp/enemys[i]->maxhp),10);
+        }
+    }
+    for(uint i=0;i<projectiles.size();i++) {
+        painter.drawPixmap(projectiles[i]->r,minus,QRectF(0,0,40,40));
+    }
+    /*painter.setBrush(Qt::red);
+    painter.drawRect(aimingAt);*/
+    painter.setBrush(Qt::black);
+    painter.drawRect((mainX+1080)+19,1679,1042,42);
+    int health = schmuserBaseHP;
+    int maxHealth = schmuserBaseMaxHP;
+    if(health>maxHealth*0.8) {
+        painter.setBrush(QColor(34,177,76));
+    } else if(health>maxHealth*0.6) {
+        painter.setBrush(QColor(181,230,29));
+    } else if(health>maxHealth*0.4) {
+        painter.setBrush(QColor(255,242,0));
+    } else if(health>maxHealth*0.2) {
+        painter.setBrush(QColor(223,89,0));
+    } else if(health>0) {
+        painter.setBrush(QColor(237,28,36));
+    }
+    painter.drawRect((mainX+1080)+20,1680,1040*((double)schmuserBaseHP/schmuserBaseMaxHP),40);
+    f.setPixelSize(25);
+    painter.setFont(f);
+    painter.setPen(Qt::white);
+    painter.drawText(QRect((mainX+1080)+19,1679,1042,42),Qt::AlignCenter,QString::number(schmuserBaseHP)+" / "+QString::number(schmuserBaseMaxHP));
+    QPen p;
+    p.setWidth(3);
+    p.setColor(Qt::red);
+    painter.setPen(p);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(player->getRect().center(),schmuserRange,schmuserRange);
+    painter.setPen(Qt::NoPen);
+    painter.drawPixmap((mainX+1080)+10,1730,250,90,btnPx);
+    if(schmuserRange>=1300) painter.setOpacity(0.4);
+    painter.drawPixmap((mainX+1080)+280,1730,250,90,btnPx);
+    painter.setOpacity(1);
+    painter.drawPixmap((mainX+1080)+550,1730,250,90,btnPx);
+    painter.drawPixmap((mainX+1080)+820,1730,250,90,btnPx);
+    painter.setPen(Qt::white);
+    painter.drawText((mainX+1080)+10,1730,250,90,Qt::AlignCenter,"DMG\nCost:"+QString::number(schmuserCost[0]));
+    if(schmuserRange>=1300) painter.setOpacity(0.4);
+    painter.drawText((mainX+1080)+280,1730,250,90,Qt::AlignCenter,"RANGE\nCost:"+QString::number(schmuserCost[1]));
+    painter.setOpacity(1);
+    painter.drawText((mainX+1080)+550,1730,250,90,Qt::AlignCenter,"RELOAD\nCost:"+QString::number(schmuserCost[2]));
+    painter.drawText((mainX+1080)+820,1730,250,90,Qt::AlignCenter,"MAX HP\nCost:"+QString::number(schmuserCost[3]));
+    f.setPixelSize(30);
+    painter.setFont(f);
+    painter.drawText((mainX+1080)+10,1750,1060,250,Qt::AlignCenter,"WAVE "+QString::number(schmuserWave)+" KILLS "+QString::number(schmuserkills)+"/"+QString::number(schmuserKillsneeded));
+}
+
+void FrmMain::drawSchmuserDefendEnd(QPainter &painter, QFont f)
+{
+    painter.drawPixmap(endX+190,1300,300,150,btnPx);
+    painter.drawPixmap(endX+590,1300,300,150,btnPx);
+    painter.setPen(textColor);
+    f.setPixelSize(72);
+    painter.setFont(f);
+    painter.drawText(QRect(0,500,1080,400),Qt::AlignCenter,"Game Over");
+    f.setPixelSize(56);
+    painter.setFont(f);
+    painter.drawText(QRect(0,700,1080,400),Qt::AlignCenter,"Wave "+QString::number(schmuserWave));
+    f.setPixelSize(48);
+    painter.setFont(f);
+    painter.drawText(QRect(endX+190,1300,300,150),Qt::AlignCenter,"Ok");
+    painter.drawText(QRect(endX+590,1300,300,150),Qt::AlignCenter,transl->getBtn_Go().text);
+}
+
 QString FrmMain::genKey()
 {
     bool ok=true;
@@ -2348,6 +2683,21 @@ bool FrmMain::intersectsWithCircle(QRectF rect, QRectF circle)
         double dy=distY-rect.height()/2;
         if(dx*dx+dy*dy<=(radius*radius)) return true;
     }
+    return coll;
+}
+
+bool FrmMain::intersectsWithCircle2(QRectF rect, int radius, QPoint center)
+{
+    bool coll=false;
+    double distX = abs(center.x()-rect.center().x());
+    double distY = abs(center.y()-rect.center().y());
+    if((distX>(rect.width()/2+radius))||
+            (distY>(rect.height()/2+radius))) return false;
+    if((distX<=(rect.width()/2))||
+            (distY<=(rect.height()/2))) return true;
+    double dx=distX-rect.width()/2;
+    double dy=distY-rect.height()/2;
+    if(dx*dx+dy*dy<=(radius*radius)) return true;
     return coll;
 }
 
@@ -2595,7 +2945,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.translate(-1080/2,-1920/2);
     }
     if(active>0||active==-1||moveAn==3||moveAn==1||moveAn==-1) {
-        player->setPos((mainX+1080)+250,player->getRect().y());
+        if(!schmuserDefend) player->setPos((mainX+1080)+250,player->getRect().y());
         painter.save();
         painter.translate(player->getRect().center().x(),player->getRect().center().y());
         painter.rotate(player->tilt-45);
@@ -2697,7 +3047,10 @@ void FrmMain::paintEvent(QPaintEvent *e)
             }
         }
     }
-    if(active==2) {
+    if(schmuserDefend) {
+        drawSchmuserDefend(painter,f);
+    }
+    if(active==2&&!schmuserDefend) {
         //800*480
         painter.setPen(Qt::NoPen);
         painter.drawPixmap(endX+140,480,800,755,end);
@@ -2761,83 +3114,87 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawText(QRect(endX+425,760,475,50),Qt::AlignRight,QString::number(cBox)); //kisten
         painter.drawText(QRect(endX+190,1300,300,150),Qt::AlignCenter,"Ok");
         painter.drawText(QRect(endX+590,1300,300,150),Qt::AlignCenter,transl->getBtn_Go().text);
+    } else if(active==2&&schmuserDefend) {
+        drawSchmuserDefendEnd(painter,f);
     }
-    if(active==1||active==-1||moveAn==3||moveAn==-1) {
-        f.setPixelSize(56);
-        painter.setFont(f);
-        painter.setPen(QColor(255,0,130));
-        if(score<10) {
-            painter.drawText((mainX+1080)+510,750,QString::number(score));
-        } else if(score<100) {
-            painter.drawText((mainX+1080)+490,750,QString::number(score));
-        } else if(score<1000) {
-            painter.drawText((mainX+1080)+470,750,QString::number(score));
-        } else if(score<10000) {
-            painter.drawText((mainX+1080)+450,750,QString::number(score));
-        } else if(score<100000) {
-            painter.drawText((mainX+1080)+430,750,QString::number(score));
-        }
-        if(!shop->item1Count||active==-1||boost) {
-            painter.setOpacity(0.5);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.drawPixmap((mainX+1080)+10,1680,250,90,powerupPx[0]); //item1
-        painter.setOpacity(1);
-        f.setPixelSize(44);
-        painter.setFont(f);
-        painter.setPen(QColor(238,77,46));
-        painter.drawText((mainX+1080)+120,1750,shop->getItemCount(1)+"x");
-        if(!shop->item2Count||active!=-1||(active==-1&&score)||hardcore||cave) {
-            painter.setOpacity(0.5);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.drawPixmap((mainX+1080)+280,1680,250,90,powerupPx[1]); //item2
-        painter.setOpacity(1);
-        painter.setPen(QColor(238,77,46));
-        painter.drawText((mainX+1080)+390,1750,shop->getItemCount(2)+"x");
-        if(!shop->item3Count||active==-1) {
-            painter.setOpacity(0.5);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.drawPixmap((mainX+1080)+550,1680,250,90,powerupPx[2]); //item3
-        painter.setOpacity(1);
-        painter.setPen(QColor(238,77,46));
-        painter.drawText((mainX+1080)+660,1750,shop->getItemCount(3)+"x");
-        if(!shop->item4Count||active!=-1||(active==-1&&score)||hardcore||cave) {
-            painter.setOpacity(0.5);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.drawPixmap((mainX+1080)+820,1680,250,90,powerupPx[3]); //item4
-        painter.setOpacity(1);
-        painter.setPen(QColor(238,77,46));
-        painter.drawText((mainX+1080)+930,1750,shop->getItemCount(4)+"x");
-        painter.setPen(Qt::NoPen);
-        if(space) {
-            painter.drawPixmap((mainX+1080)+10,1790,520,120,btndown);
-            painter.drawPixmap((mainX+1080)+550,1790,520,120,btnup);
-        }
-        if(active==-1||moveAn==3||(active==1&&textFade)) {
-            painter.setOpacity(textFade);
-            if(!space){
-                painter.setPen(Qt::white);
-                f.setPixelSize(48);
-                painter.setFont(f);
-                painter.drawText(QRect((mainX+1080)+0,1000,1080,200),Qt::AlignCenter,transl->getText_Begin().text);
-            } else {
-                painter.setBrush(Qt::white);
-                for(int i=0;i<20;i+=3) {
-                    painter.drawRect((mainX+1080)+25+i*54,player->getRect().center().y()-10,54,20);
-                }
-                painter.setPen(Qt::white);
-                f.setPixelSize(40);
-                painter.setFont(f);
-                painter.drawText(QRect((mainX+1080)+0,player->getRect().center().y()-200,1080,200),Qt::AlignCenter,transl->getText_BeginSpaceTop().text);
-                painter.drawText(QRect((mainX+1080)+0,player->getRect().center().y()+0,1080,200),Qt::AlignCenter,transl->getText_BeginSpaceBottom().text);
-
+    if((active==1||active==-1||moveAn==3||moveAn==-1)) {
+        if(!schmuserDefend) {
+            f.setPixelSize(56);
+            painter.setFont(f);
+            painter.setPen(QColor(255,0,130));
+            if(score<10) {
+                painter.drawText((mainX+1080)+510,750,QString::number(score));
+            } else if(score<100) {
+                painter.drawText((mainX+1080)+490,750,QString::number(score));
+            } else if(score<1000) {
+                painter.drawText((mainX+1080)+470,750,QString::number(score));
+            } else if(score<10000) {
+                painter.drawText((mainX+1080)+450,750,QString::number(score));
+            } else if(score<100000) {
+                painter.drawText((mainX+1080)+430,750,QString::number(score));
             }
-        }
-        if(!shop->item4Count||active==-1) {
-            painter.setOpacity(0.5);
+            if(!shop->item1Count||active==-1||boost) {
+                painter.setOpacity(0.5);
+            }
+            painter.setPen(Qt::NoPen);
+            painter.drawPixmap((mainX+1080)+10,1680,250,90,powerupPx[0]); //item1
+            painter.setOpacity(1);
+            f.setPixelSize(44);
+            painter.setFont(f);
+            painter.setPen(QColor(238,77,46));
+            painter.drawText((mainX+1080)+120,1750,shop->getItemCount(1)+"x");
+            if(!shop->item2Count||active!=-1||(active==-1&&score)||hardcore||cave) {
+                painter.setOpacity(0.5);
+            }
+            painter.setPen(Qt::NoPen);
+            painter.drawPixmap((mainX+1080)+280,1680,250,90,powerupPx[1]); //item2
+            painter.setOpacity(1);
+            painter.setPen(QColor(238,77,46));
+            painter.drawText((mainX+1080)+390,1750,shop->getItemCount(2)+"x");
+            if(!shop->item3Count||active==-1) {
+                painter.setOpacity(0.5);
+            }
+            painter.setPen(Qt::NoPen);
+            painter.drawPixmap((mainX+1080)+550,1680,250,90,powerupPx[2]); //item3
+            painter.setOpacity(1);
+            painter.setPen(QColor(238,77,46));
+            painter.drawText((mainX+1080)+660,1750,shop->getItemCount(3)+"x");
+            if(!shop->item4Count||active!=-1||(active==-1&&score)||hardcore||cave) {
+                painter.setOpacity(0.5);
+            }
+            painter.setPen(Qt::NoPen);
+            painter.drawPixmap((mainX+1080)+820,1680,250,90,powerupPx[3]); //item4
+            painter.setOpacity(1);
+            painter.setPen(QColor(238,77,46));
+            painter.drawText((mainX+1080)+930,1750,shop->getItemCount(4)+"x");
+            painter.setPen(Qt::NoPen);
+            if(space) {
+                painter.drawPixmap((mainX+1080)+10,1790,520,120,btndown);
+                painter.drawPixmap((mainX+1080)+550,1790,520,120,btnup);
+            }
+            if(active==-1||moveAn==3||(active==1&&textFade)) {
+                painter.setOpacity(textFade);
+                if(!space){
+                    painter.setPen(Qt::white);
+                    f.setPixelSize(48);
+                    painter.setFont(f);
+                    painter.drawText(QRect((mainX+1080)+0,1000,1080,200),Qt::AlignCenter,transl->getText_Begin().text);
+                } else {
+                    painter.setBrush(Qt::white);
+                    for(int i=0;i<20;i+=3) {
+                        painter.drawRect((mainX+1080)+25+i*54,player->getRect().center().y()-10,54,20);
+                    }
+                    painter.setPen(Qt::white);
+                    f.setPixelSize(40);
+                    painter.setFont(f);
+                    painter.drawText(QRect((mainX+1080)+0,player->getRect().center().y()-200,1080,200),Qt::AlignCenter,transl->getText_BeginSpaceTop().text);
+                    painter.drawText(QRect((mainX+1080)+0,player->getRect().center().y()+0,1080,200),Qt::AlignCenter,transl->getText_BeginSpaceBottom().text);
+
+                }
+            }
+            if(!shop->item4Count||active==-1) {
+                painter.setOpacity(0.5);
+            }
         }
         painter.setOpacity(1);
         if(pause) {
@@ -2871,6 +3228,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawPixmap(QRect(mainX+390,900,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1100,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+390,1300,300,150),btnPx);
+        painter.drawPixmap(QRect(mainX+390,1500,300,150),btnPx);
         painter.drawPixmap(QRect(mainX+350,1810,360,96),btnPx); //btn einstellungen
         painter.drawPixmap(QRect(mainX+439,1308,200,120),stats);
         painter.drawPixmap(QRect(mainX+10,1810,160,96),flag_de);
@@ -2910,6 +3268,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         f.setPixelSize(shopT.size);
         painter.setFont(f);
         painter.drawText(QPoint(mainX+shopT.pos.x(),shopT.pos.y()),shopT.text);
+        painter.drawText(QRect(390,1500,300,150),Qt::AlignCenter,"AotS");
         if(crate) {
             painter.setBrush(QColor(22,22,24,200));
             painter.setPen(Qt::NoPen);
@@ -3010,12 +3369,16 @@ void FrmMain::paintEvent(QPaintEvent *e)
     } else if((!active&&scoreboard->active)||(moveAn==5||moveAn==6)) {
         scoreboard->draw(painter,highscore,textColor);
     } else if((!active&&settings->active)||(moveAn==7||moveAn==8)) {
-        settings->draw(painter,textColor);
+        settings->draw(painter,textColor,schmuserEnemy);
     }
     f.setPixelSize(48);
     painter.setFont(f);
     painter.setPen(Qt::white);
-    painter.drawText(4,50,"BENIS "+QString::number(player->getBenis()));
+    if(!schmuserDefend||!active) {
+        painter.drawText(4,50,"BENIS "+QString::number(player->getBenis()));
+    } else {
+        painter.drawText(4,50,"CREDITS "+QString::number(schmuserCredits));
+    }
     painter.drawText(90,115,QString::number(player->coins));
     painter.setPen(Qt::NoPen);
     painter.drawPixmap(4,50,75,75,coinPx);
@@ -3070,7 +3433,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
         } else if(scoreboard->active) {
             scoreboard->mpress(QPoint(x,y));
         } else if(settings->active) {
-            settings->mousePress(x,y,soundEnabled,soundEffectsEnabled,lowGraphics);
+            settings->mousePress(x,y,soundEnabled,soundEffectsEnabled,lowGraphics,schmuserEnemy);
         }
         break;
     }
@@ -3144,9 +3507,16 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         write();
                     }
                 }*/
-            } else if(collRect.intersects(QRect(390,900,300,150))) {
+            } else if(collRect.intersects(QRect(390,900,300,150))) { //los
                 radR = 1700;
                 moveAn = 3;
+                schmuserDefend = false;
+                player->setPos(1080/2-250,1920/2-40);
+            } else if(collRect.intersects(QRect(390,1500,300,150))) { //AotS
+                radR = 1700;
+                moveAn = 3;
+                schmuserDefend = true;
+                player->setPos(1080/2-40,1600);
             } else if(collRect.intersects(QRect(390,1100,300,150))) { //shop
                 moveAn = 2;
             } else if(collRect.intersects(QRect(10,1810,160,96))) {
@@ -3241,27 +3611,29 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
         break;
         case -1:
             {
-                QMetaObject::invokeMethod(t_tilt,"start",Q_ARG(int,10));
-                int interval = 0;
-                switch(shop->chosenTail) {
-                case 2:
-                case 3:
-                case 6:
-                    interval = 100;
-                    break;
-                case 4:
-                case 5:
-                case 7:
-                case 8:
-                case 9:
-                case 10:
-                case 11:
-                case 12:
-                    interval = 15;
-                    break;
+                if(!schmuserDefend) {
+                    QMetaObject::invokeMethod(t_tilt,"start",Q_ARG(int,10));
+                    int interval = 0;
+                    switch(shop->chosenTail) {
+                    case 2:
+                    case 3:
+                    case 6:
+                        interval = 100;
+                        break;
+                    case 4:
+                    case 5:
+                    case 7:
+                    case 8:
+                    case 9:
+                    case 10:
+                    case 11:
+                    case 12:
+                        interval = 15;
+                        break;
+                    }
+                    //if(lowGraphics) interval = 0;
+                    if(interval) QMetaObject::invokeMethod(t_tail,"start",Q_ARG(int,interval));
                 }
-                //if(lowGraphics) interval = 0;
-                if(interval) QMetaObject::invokeMethod(t_tail,"start",Q_ARG(int,interval));
                 active = 1;
             }
         case 1:
@@ -3283,7 +3655,39 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     }
                     return;
                 }
-                if(pause) return;
+                if(schmuserDefend) {
+                    /*painter.drawText((mainX+1080)+10,1730,250,90,Qt::AlignCenter,"DMG\nCost:"+QString::number(schmuserCost[0]));
+                    painter.drawText((mainX+1080)+280,1730,250,90,Qt::AlignCenter,"RANGE\nCost:"+QString::number(schmuserCost[1]));
+                    painter.drawText((mainX+1080)+550,1730,250,90,Qt::AlignCenter,"RELOAD\nCost:"+QString::number(schmuserCost[2]));
+                    painter.drawText((mainX+1080)+820,1730,250,90,Qt::AlignCenter,"MAX HP\nCost:"+QString::number(schmuserCost[3]));*/
+                    if(collRect.intersects(QRect(10,1730,250,90))) { //dmg
+                        if(schmuserCredits>=schmuserCost[0]) {
+                            schmuserCredits -= schmuserCost[0];
+                            schmuserCost[0] *= 2;
+                            schmuserDmg *= 1.5;
+                        }
+                    } else if(collRect.intersects(QRect(280,1730,250,90))) { //range
+                        if(schmuserCredits>=schmuserCost[1]&&schmuserRange<1300) {
+                            schmuserCredits -= schmuserCost[1];
+                            schmuserCost[1] *= 2;
+                            schmuserRange *= 1.1;
+                        }
+                    } else if(collRect.intersects(QRect(550,1730,250,90))) { //reload
+                        if(schmuserCredits>=schmuserCost[2]&&schmuserReload>10) {
+                            schmuserCredits -= schmuserCost[2];
+                            schmuserCost[2] *= 2;
+                            schmuserReload *= 0.8;
+                            QMetaObject::invokeMethod(t_reload,"start",Q_ARG(int,schmuserReload));
+                        }
+                    } else if(collRect.intersects(QRect(820,1730,250,90))) { //maxhp
+                        if(schmuserCredits>=schmuserCost[3]) {
+                            schmuserCredits -= schmuserCost[3];
+                            schmuserCost[3] *= 2;
+                            schmuserBaseMaxHP *= 1.5;
+                        }
+                    }
+                }
+                if(pause||schmuserDefend) return;
                 player->tstep = (player->tilt/200)*10;
                 player->tdir = true;
                 QMetaObject::invokeMethod(t_tchange,"stop");
@@ -3372,6 +3776,8 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                        tap(x,y);
                     }
                 }
+            } else if(schmuserDefend) {
+
             }
         break;
         case 2:
@@ -3403,6 +3809,7 @@ void FrmMain::mouseReleaseEvent(QMouseEvent *e)
     mousePressed = false;
     int newX = e->pos().x()/scaleX;
     //int newY = e->pos().y()/scaleY;
+    if(schmuserDefend) return;
     if(abs(mouseX-newX)<300) return;
     if(newX>mouseX) {//links->rechts
         if(active==1) {
@@ -3444,8 +3851,13 @@ void FrmMain::keyPressEvent(QKeyEvent *e)
 
 void FrmMain::closeEvent(QCloseEvent *event)
 {
+    closing = true;
     Q_UNUSED(event)
-    write();
+    if(suspended&&active==1) {
+        write(false,score);
+    } else {
+        write();
+    }
     startStop(false);
     workerThread->quit();
     blusThread->quit();

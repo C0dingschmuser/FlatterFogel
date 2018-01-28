@@ -37,7 +37,9 @@ SOURCES += \
     translation.cpp \
     scoreboard.cpp \
     background.cpp \
-    settings.cpp
+    settings.cpp \
+    enemy.cpp \
+    projectile.cpp
 
 HEADERS += \
         frmmain.h \
@@ -52,7 +54,9 @@ HEADERS += \
     translation.h \
     scoreboard.h \
     background.h \
-    settings.h
+    settings.h \
+    enemy.h \
+    projectile.h
 
 FORMS += \
         frmmain.ui

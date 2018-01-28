@@ -364,7 +364,17 @@ void Shop::draw(QPainter &painter, int rgb_red, int rgb_green, int rgb_blue, QCo
         painter.drawPixmap(shopX+470,790,200,200,item3);
         painter.drawPixmap(shopX+470,1090,200,200,item4);
         painter.setPen(textColor);
+        if(multiplier>99) {
+            f.setPixelSize(58);
+        }
+        painter.setFont(f);
         painter.drawText(shopX+200,640,QString::number(multiplier)+"x");
+        if(tapMultiplier>99) {
+            f.setPixelSize(58);
+        } else {
+            f.setPixelSize(72);
+        }
+        painter.setFont(f);
         painter.drawText(shopX+460,640,QString::number(tapMultiplier)+"x"); //710 3
         f.setPixelSize(22);
         painter.setFont(f);
@@ -723,6 +733,7 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip, bool &und
                     } else {
                         player->setBenis(player->getBenis()-mMax);
                         multiplier+=1;
+                        if(multiplier==100) multiplier=101;
                         mMax = multiplier*500+(((multiplier-10)*2500)*2);
                         emit buy(mMax);
                     }

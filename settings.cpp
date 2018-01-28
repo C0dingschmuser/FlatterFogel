@@ -9,7 +9,7 @@ Settings::Settings(QPixmap *background, QPixmap *btnPx, Translation *transl, QOb
     active = false;
 }
 
-void Settings::draw(QPainter &painter, QColor textColor)
+void Settings::draw(QPainter &painter, QColor textColor, int &schmuserEnemy)
 {
     painter.drawPixmap(settingsX+50,460,980,1200,background);
     painter.drawPixmap(settingsX+58,1520,300,130,btnPx); //back
@@ -26,7 +26,19 @@ void Settings::draw(QPainter &painter, QColor textColor)
     } else {
         painter.setOpacity(1);
     }
-    painter.drawPixmap(QRect(settingsX+66,678,948,100),btnPx); //grafik
+    painter.drawPixmap(QRect(settingsX+66,678,948,100),btnPx); //animationen
+    if(!schmuserEnemy) {
+        painter.setOpacity(0.4);
+    } else {
+        painter.setOpacity(1);
+    }
+    painter.drawPixmap(QRect(settingsX+66,778,474,100),btnPx); //schmuser
+    if(schmuserEnemy) {
+        painter.setOpacity(0.4);
+    } else {
+        painter.setOpacity(1);
+    }
+    painter.drawPixmap(QRect(settingsX+540,778,474,100),btnPx); //mieser
     painter.setOpacity(1);
     Text back = transl->getBtn_Shop_Back();
     QFont f = painter.font();
@@ -48,11 +60,23 @@ void Settings::draw(QPainter &painter, QColor textColor)
         painter.setOpacity(1);
     }
     painter.drawText(QRect(settingsX+66,678,948,100),Qt::AlignCenter,"Animationen");
+    if(!schmuserEnemy) {
+        painter.setOpacity(0.4);
+    } else {
+        painter.setOpacity(1);
+    }
+    painter.drawText(QRect(settingsX+66,778,474,100),Qt::AlignCenter,"Schmuser"); //schmuser
+    if(schmuserEnemy) {
+        painter.setOpacity(0.4);
+    } else {
+        painter.setOpacity(1);
+    }
+    painter.drawText(QRect(settingsX+540,778,474,100),Qt::AlignCenter,"Mieser"); //mieser
     painter.setOpacity(1);
     painter.drawText(QRect(settingsX+58,1520,300,130),Qt::AlignCenter,back.text);
 }
 
-void Settings::mousePress(int x, int y, bool &music, bool &soundEffects, bool &lowGraphics)
+void Settings::mousePress(int x, int y, bool &music, bool &soundEffects, bool &lowGraphics, int &schmuserEnemy)
 {
     QRect pos(x,y,1,1);
     if(pos.intersects(QRect(58,1520,300,130))) { //zurück
@@ -79,5 +103,9 @@ void Settings::mousePress(int x, int y, bool &music, bool &soundEffects, bool &l
             lowGraphics = true;
         }
         this->lowGraphics = lowGraphics;
+    } else if(pos.intersects(QRect(66,778,474,100))) {//schmuser
+        schmuserEnemy = true;
+    } else if(pos.intersects(QRect(540,778,474,100))) {//mieser
+        schmuserEnemy = false;
     }
 }
