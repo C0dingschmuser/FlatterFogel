@@ -56,6 +56,7 @@ public:
     Text getText_Begin();
     Text getText_BeginSpaceTop();
     Text getText_BeginSpaceBottom();
+    Text getText_AOTS();
 };
 
 #endif // LOCALE_H

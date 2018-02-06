@@ -928,3 +928,17 @@ Text Translation::getText_BeginSpaceBottom()
     }
     return t;
 }
+
+Text Translation::getText_AOTS()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe um zu beginnen";
+        break;
+        default:
+            t.text = "Tap to begin";
+        break;
+    }
+    return t;
+}

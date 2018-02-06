@@ -100,6 +100,8 @@ private:
     bool suspended;
     bool unlockedSpeed;
     bool schmuserDefend;
+    bool boostDisabled;
+    bool closeSave;
     int schmuserEnemy;
     int mainX;
     int endX;

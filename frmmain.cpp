@@ -6,7 +6,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2352312";
+    lastPost = "2365110";
     loading = true;
     mainX = 0;
     newHS = 0;
@@ -21,9 +21,11 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     schmuserDmg = 10;
     schmuserHP = 100;
     endX = 1080;
+    closeSave = false;
     cloud1X = 0;
     cloud2X = 1079;
     event = 0;
+    boostDisabled = false;
     donator = false;
     schmuserDefend = false;
     schmuserEnemy = true;
@@ -42,7 +44,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     refActive = false;
     soundEnabled = false;
     soundEffectsEnabled = false;
-    version = "1.3.2.r";
+    version = "1.3.3.r";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -337,7 +339,6 @@ void FrmMain::checkPost()
         try {
             if(split.at(0)!=lastPost) {
                 lastPost = split.at(0);
-                write();
                 newpost = true;
             }
             switch(split.at(1).toInt()) {
@@ -378,7 +379,6 @@ void FrmMain::checkPost()
             }
             if(split.at(3)=="WIN") {
                 boxCount += 25;
-                write();
                 QMessageBox::information(this,"Info","Du hast gewonnen! Viel spaß mit den 25 Geschenken :D");
             }
         } catch(std::exception) {
@@ -1074,19 +1074,14 @@ void FrmMain::on_tmain()
         }
         if(!cave&&!hardcore&&score>highscore&&!space) {
             highscore = score;
-            write();
         } else if(hardcore&&!cave&&score>highscore_H&&!space) {
             highscore_H = score;
-            write();
         } else if(!hardcore&&cave&&score>highscore_C&&!space) {
             highscore_C = score;
-            write();
         } else if(!hardcore&&space&&score>highscore_S) {
             highscore_S = score;
-            write();
         } else if(!hardcore&&underwater&&score>highscore_UM) {
             highscore_UM = score;
-            write();
         }
     }
     if(!schmuserDefend) {
@@ -1365,19 +1360,17 @@ void FrmMain::on_tEvent()
                 if(!vContains(shop->ownedPipes,11)) shop->ownedPipes.push_back(11); //skyline sskin
                 break;
             }
-            write();
             QMessageBox::information(this,"Danke!","Vielen Dank für deine Spende!\nDie exklusiven Inhalte wurden im Shop freigeschaltet!\n\nViel Spaß beim Spielen :D");
         }
         loading = false;
     }
     if(highscore>=10||highscore_H>=5||highscore_C>=10||highscore_S>=7||player->coins) {
-        if((ad!=3&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
+        if((ad!=4&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
             if(!vContains(shop->ownedbackgrounds,4)||!vContains(shop->ownedPipes,8)||
                     !vContains(shop->ownedSkins,23)||!vContains(shop->ownedbackgrounds,7)||
                     !vContains(shop->ownedPipes,11)||ad==-98||!unlockedSpeed) {
-                ad = 3;
+                ad = 4;
                 ad_active = true;
-                write();
             }
         }
     }
@@ -1408,7 +1401,6 @@ void FrmMain::on_shopBuy(int amount, bool buy, bool coin, bool mid)
     if(buy) {
         a = "-";
     }
-    write();
     int x=100,y=115,w=65,h=65,angle=90;
     int x2=4,y2=180;
     if(mid) {
@@ -1546,7 +1538,6 @@ void FrmMain::on_tChange()
 void FrmMain::on_tflag()
 {
     if(changelog&&active!=1) {
-        write();
         changelog = false;
         QMessageBox::information(this,"Changelog v"+version,transl->getText_Changelog().text);
     }
@@ -1649,7 +1640,6 @@ void FrmMain::on_scoreWrite(int type)
     } else if(!type) {
         moveAn = 5;
     }
-    write();
 }
 
 void FrmMain::on_tAnimation()
@@ -1775,6 +1765,8 @@ void FrmMain::loadData()
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QString pathR = path;
     QString pathE = path;
+    QFile restore;
+    restore.setFileName(path+"/restore.dat");
     pathE.append("/settings_e.dat");
     fileE.setFileName(pathE);
     pathR.append("/settings.dat");
@@ -1960,11 +1952,16 @@ void FrmMain::loadData()
                         unlockedSpeed = true;
                     }
                 }
-                if(list.size()>31) {
-                    if(list.at(30)=="NOTOK") {
-                        moveAn = 3;
-                        score = list.at(31).toInt();
-                    }
+                if(restore.exists()) {
+                    QTextStream rin;
+                    restore.open(QIODevice::ReadOnly);
+                    rin.setDevice(&restore);
+                    QString data = rin.readLine();
+                    restore.close();
+                    moveAn = 3;
+                    boostDisabled = true;
+                    score = data.toInt();
+                    restore.remove();
                 }
                 if(list.size()>33) {
                     if(list.at(32).toInt()) {
@@ -1973,7 +1970,9 @@ void FrmMain::loadData()
                         schmuserEnemy = false;
                     }
                 }
-                if(list.at(8)=="RainerHass"&&shop->multiplier<200) {
+                if(list.at(8)=="MrHuso"&&shop->multiplier<200) {
+                    shop->multiplier = 570;
+                    shop->tapMultiplier = 20;
                     highscore = 3156;
                     boxCount = 199;
                     player->coins = 23;
@@ -1981,6 +1980,19 @@ void FrmMain::loadData()
                     if(!vContains(shop->ownedbackgrounds,3)) {
                         shop->ownedbackgrounds.push_back(3);
                     }
+                } else if(list.at(8)=="EVA01_Rene"&&shop->multiplier<100) {
+                    shop->multiplier = 124;
+                    shop->tapMultiplier = 100;
+                    shop->ownedbackgrounds.clear();
+                    for(uint i=1;i<4;i++) {
+                        shop->ownedbackgrounds.push_back(i);
+                    }
+                    shop->ownedbackgrounds.push_back(5);
+                    shop->ownedbackgrounds.push_back(9);
+                    shop->ownedSkins.clear();
+                    shop->ownedSkins.push_back(14);
+                    player->coins = 35;
+                    player->setBenis(75000000);
                 }
             }
 
@@ -2002,42 +2014,50 @@ void FrmMain::loadData()
 
 void FrmMain::write(bool normal, int bscore)
 {
-    file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
-    fileE.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
-    QTextStream out(&file);
-    QTextStream outE(&fileE);
+    qDebug()<<normal;
     QString exit;
-    if(!normal&&!schmuserDefend) {
+    if(!normal&&!schmuserDefend&&active==-1&&active==1) {
         exit.append("NOTOK");
+        QFile restore;
+        QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+        restore.setFileName(path+"/restore.dat");
+        restore.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
+        QTextStream rout(&restore);
+        rout << QString::number(bscore);
+        restore.close();
+        return;
     } else {
         exit.append("OK");
-    }
-    QString data = QString::number(highscore) + "~" + QString::number(highscore_H) + "~"
-        + QString::number(highscore_C) + "~"+ QString::number(highscore_S) + "~" + QString::number(highscore_UM) + "~#"
-        + QString::number(player->getBenis()) + "#"
-        + QString::number(shop->item1Count) + "#" + QString::number(shop->multiplier) + "#"
-        + QString::number(shop->tapMultiplier) + "#" + QString::number(shop->item2Count) + "#"
-        + transl->locale.bcp47Name() + "#" + QString::number(shop->item3Count) + "#"
-        + scoreboard->name + "#" + QString::number(shop->item4Count) + "#"
-        + QString::number(boxCount) + "#" + version + "#" + QString::number(player->coins) + "#"
-        + shop->skinsToString() + "#" + QString::number(event) + "#" + shop->bgsToString() + "#"
-        + QString::number(shop->chosenSkin) + "#" + QString::number(shop->chosenBackground) + "#"
-        + QString::number(referrals) + "~" + QString::number(invited) + "#"
-        + QString::number(playTime,'f',3) + "#" + shop->pipesToString() + "#"
-        + QString::number(shop->chosenPipe) + "#" + lastPost + "#" + QString::number(lowGraphics) + "#"
-        + shop->tailsToString() + "#" + QString::number(shop->chosenTail) + "#"
-        + QString::number(soundEnabled) + "#" + QString::number(ad) + "#" + QString::number(soundEffectsEnabled) +"#"
-        + QString::number(unlockedSpeed) + "#" + exit + "#" + QString::number(bscore) + "#" + QString::number(schmuserEnemy) + "#";
+        file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
+        fileE.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
+        QTextStream out(&file);
+        QTextStream outE(&fileE);
+        QString data = QString::number(highscore) + "~" + QString::number(highscore_H) + "~"
+            + QString::number(highscore_C) + "~"+ QString::number(highscore_S) + "~" + QString::number(highscore_UM) + "~#"
+            + QString::number(player->getBenis()) + "#"
+            + QString::number(shop->item1Count) + "#" + QString::number(shop->multiplier) + "#"
+            + QString::number(shop->tapMultiplier) + "#" + QString::number(shop->item2Count) + "#"
+            + transl->locale.bcp47Name() + "#" + QString::number(shop->item3Count) + "#"
+            + scoreboard->name + "#" + QString::number(shop->item4Count) + "#"
+            + QString::number(boxCount) + "#" + version + "#" + QString::number(player->coins) + "#"
+            + shop->skinsToString() + "#" + QString::number(event) + "#" + shop->bgsToString() + "#"
+            + QString::number(shop->chosenSkin) + "#" + QString::number(shop->chosenBackground) + "#"
+            + QString::number(referrals) + "~" + QString::number(invited) + "#"
+            + QString::number(playTime,'f',3) + "#" + shop->pipesToString() + "#"
+            + QString::number(shop->chosenPipe) + "#" + lastPost + "#" + QString::number(lowGraphics) + "#"
+            + shop->tailsToString() + "#" + QString::number(shop->chosenTail) + "#"
+            + QString::number(soundEnabled) + "#" + QString::number(ad) + "#" + QString::number(soundEffectsEnabled) +"#"
+            + QString::number(unlockedSpeed) + "#" + exit + "#" + QString::number(bscore) + "#" + QString::number(schmuserEnemy) + "#";
 
-    if(eLoad) {
-        outE << lucaAlg(lucaAlg(data));
-        out << "Immer han du die bech :(";
-    } else {
-        out << data;
+        if(eLoad) {
+            outE << lucaAlg(lucaAlg(data));
+            out << "Immer han du die bech :(";
+        } else {
+            out << data;
+        }
+        fileE.close();
+        file.close();
     }
-    fileE.close();
-    file.close();
-
 }
 
 void FrmMain::reset(int type)
@@ -2097,10 +2117,7 @@ void FrmMain::reset(int type)
     enemylife = 10;
     caveSpawnCount = 0;
     medal = 0;
-    if(localPlayTime>playTime) {
-        playTime = localPlayTime;
-        write();
-    }
+    boostDisabled = false;
     localPlayTime = 0;
     boxDeath = 0;
     boxState = 0;
@@ -2400,9 +2417,7 @@ void FrmMain::handleBox()
                 player->coins+=2;
                 on_shopBuy(2,false,true,true);
             }
-            write();
         }
-        write();
     } else {
         boxState++;
     }
@@ -2432,7 +2447,7 @@ void FrmMain::doSchmuserDefend()
         if(schmuserWaveSize<20) {
             schmuserWaveSize*=1.25;
         } else {
-            schmuserHP*=1.5;
+            schmuserHP*=1.25;
         }
         schmuserKillsneeded*=1.2;
     }
@@ -2486,6 +2501,7 @@ void FrmMain::doSchmuserDefend()
 
 void FrmMain::drawSchmuserDefend(QPainter &painter, QFont f)
 {
+    if(!active&&moveAn!=3&&moveAn!=1) return;
     QPixmap schmuserPixmap = skins[14];
     if(!schmuserEnemy) schmuserPixmap = mieserkadserPx;
     for(uint i=0;i<enemys.size();i++) {
@@ -2563,6 +2579,15 @@ void FrmMain::drawSchmuserDefend(QPainter &painter, QFont f)
     f.setPixelSize(30);
     painter.setFont(f);
     painter.drawText((mainX+1080)+10,1750,1060,250,Qt::AlignCenter,"WAVE "+QString::number(schmuserWave)+" KILLS "+QString::number(schmuserkills)+"/"+QString::number(schmuserKillsneeded));
+    if(active==-1||moveAn==3||(active==1&&textFade)) {
+        painter.setOpacity(textFade);
+        painter.setPen(Qt::white);
+        f.setPixelSize(48);
+        painter.setFont(f);
+        Text t = transl->getText_AOTS();
+        painter.drawText(QRect((mainX+1080)+0,1000,1080,200),Qt::AlignCenter,t.text);
+        painter.setOpacity(1);
+    }
 }
 
 void FrmMain::drawSchmuserDefendEnd(QPainter &painter, QFont f)
@@ -3178,7 +3203,8 @@ void FrmMain::paintEvent(QPaintEvent *e)
                     painter.setPen(Qt::white);
                     f.setPixelSize(48);
                     painter.setFont(f);
-                    painter.drawText(QRect((mainX+1080)+0,1000,1080,200),Qt::AlignCenter,transl->getText_Begin().text);
+                    Text t = transl->getText_Begin();
+                    painter.drawText(QRect((mainX+1080)+0,1000,1080,200),Qt::AlignCenter,t.text);
                 } else {
                     painter.setBrush(Qt::white);
                     for(int i=0;i<20;i+=3) {
@@ -3268,7 +3294,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         f.setPixelSize(shopT.size);
         painter.setFont(f);
         painter.drawText(QPoint(mainX+shopT.pos.x(),shopT.pos.y()),shopT.text);
-        painter.drawText(QRect(390,1500,300,150),Qt::AlignCenter,"AotS");
+        painter.drawText(QRect(mainX+390,1500,300,150),Qt::AlignCenter,"AotS");
         if(crate) {
             painter.setBrush(QColor(22,22,24,200));
             painter.setPen(Qt::NoPen);
@@ -3469,7 +3495,6 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                             player->setBenis(player->getBenis()+250000);
                             on_shopBuy(250000,false);
                             referrals--;
-                            write();
                             QMessageBox::information(this,"Info",transl->getText_Referral_Confirmed2().text);
                         } else {
                             QMessageBox::information(this,"Info",transl->getText_Referral_WrongKey().text);
@@ -3485,7 +3510,6 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                             player->setBenis(player->getBenis()+100000);
                             on_shopBuy(100000,false);
                             invited = 1;
-                            write();
                             confirmkey = lucaAlg("d");
                             QMessageBox::information(this,tr("Info"),transl->getText_Referral_Confirmed().text+confirmkey);
                         } else {
@@ -3521,10 +3545,8 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 moveAn = 2;
             } else if(collRect.intersects(QRect(10,1810,160,96))) {
                 transl->locale = QLocale("de");
-                write();
             } else if(collRect.intersects(QRect(175,1810,160,96))) {
                 transl->locale = QLocale("en");
-                write();
             } else if(collRect.intersects(QRect(390,1300,300,150))) { //scoreboard
                 bool ok=true;
                 if(scoreboard->name=="") {
@@ -3592,7 +3614,6 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 if(!settings->active) {
                     moveAn = 7;
                 }
-                write();
             } else if(collRect.intersects(QRect(955,0,125,125))) { //sound
                 if(soundEnabled) {
                     QMetaObject::invokeMethod(sound,"pause");
@@ -3606,7 +3627,6 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 }
                 settings->music = soundEnabled;
                 settings->soundEffects = soundEffectsEnabled;
-                write();
             }
         break;
         case -1:
@@ -3693,7 +3713,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 QMetaObject::invokeMethod(t_tchange,"stop");
                 QMetaObject::invokeMethod(t_tchange,"start",Q_ARG(int,200));
                 if(active==1&&collRectF.intersects(QRectF(10,1680,250,90))) { //item1
-                    if(shop->item1Count&&!revive&&!boost) {
+                    if(shop->item1Count&&!revive&&!boost&&!boostDisabled) {
                         buy = true;
                         shop->item1Count--;
                         revive = 1;
@@ -3709,7 +3729,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         QMetaObject::invokeMethod(t_boost,"start",Q_ARG(int,50));
                     }
                 } else if(active==1&&collRectF.intersects(QRectF(550,1680,250,90))) {  //item3
-                    if(shop->item3Count&&!revive&&!boost) {
+                    if(shop->item3Count&&!revive&&!boost&&!boostDisabled) {
                         shop->item3Count--;
                         revive = 2;
                         buy = true;
@@ -3825,7 +3845,6 @@ void FrmMain::mouseReleaseEvent(QMouseEvent *e)
 void FrmMain::keyPressEvent(QKeyEvent *e)
 {
     if(moveAn) return;
-    write();
     if(e->key()==Qt::Key_Back) {
         if(crate) {
             crate=false;
@@ -3853,7 +3872,7 @@ void FrmMain::closeEvent(QCloseEvent *event)
 {
     closing = true;
     Q_UNUSED(event)
-    if(suspended&&active==1) {
+    if((suspended||pause)&&active==1) {
         write(false,score);
     } else {
         write();
