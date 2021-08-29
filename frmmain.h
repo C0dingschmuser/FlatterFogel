@@ -29,6 +29,21 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QMediaPlaylist>
+#include <QPainterPath>
+#include <QDir>
+#include <QUrlQuery>
+#include <QRandomGenerator>
+#include <QInAppStore>
+#include <QInAppProduct>
+#include <QInAppTransaction>
+
+/*#include "D:/FF_QT515/purchasing/inapp/inappproduct.h"
+#include "D:/FF_QT515/purchasing/inapp/inapppurchasebackend.h"
+#include "D:/FF_QT515/purchasing/inapp/inappstore.h"
+#include "D:/FF_QT515/purchasing/inapp/inapptransaction.h"
+#include "D:/FF_QT515/purchasing/qmltypes/inappproductqmltype.h"
+#include "D:/FF_QT515/purchasing/qmltypes/inappstoreqmltype.h"*/
+
 #ifdef Q_OS_ANDROID
     #include <QtAndroid>
 #endif
@@ -45,6 +60,7 @@
 #include "settings.h"
 #include "enemy.h"
 #include "projectile.h"
+#include "networkmanager.h"
 
 namespace Ui {
 class FrmMain;
@@ -68,7 +84,7 @@ private slots:
     void on_tChange();
     void on_tflag();
     void on_tstar();
-    void on_sbWrongName();
+    void on_sbWrongName(int type);
     void on_sbConnFail();
     void on_write();
     void on_tresume();
@@ -87,6 +103,16 @@ private slots:
     void on_tbackup();
     void on_treload();
     void on_tregen();
+    void handleTransaction(QInAppTransaction *transaction);
+    void productRegistered(QInAppProduct *product);
+    void productUnknown(QInAppProduct::ProductType ptype,QString id);
+    void HandleStatus(QString response);
+    void AuthSave(QString auth);
+    void OpenScoreboard();
+    void UpdateFps(FPSMode newFps);
+    void DSGVOCheck();
+    void DSGVODone(QString response);
+
 public:
     explicit FrmMain(QOpenGLWidget *parent = 0);
     ~FrmMain();
@@ -95,6 +121,11 @@ private:
     Ui::FrmMain *ui;
     QMediaPlayer *sound;
     QMediaPlaylist *playlist;
+
+    QInAppStore *store;
+
+    NetworkManager *networkManager;
+
     bool soundEnabled;
     bool soundEffectsEnabled;
     bool suspended;
@@ -102,6 +133,7 @@ private:
     bool schmuserDefend;
     bool boostDisabled;
     bool closeSave;
+    bool pInit = false;
     int schmuserEnemy;
     int mainX;
     int endX;
@@ -195,6 +227,7 @@ private:
     QPixmap enemyPixmap;
     QPixmap maas;
     QPixmap btnPx;
+    QPixmap settingsBtn;
     QPixmap ground;
     QPixmap bg;
     QPixmap medal_bronze;
@@ -219,8 +252,13 @@ private:
     QPixmap referralPx2;
     QPixmap mieserkadserPx;
     QPixmap ad_px;
+    QPixmap ad_px_eng;
+    QPixmap restorePx;
     QPixmap btnup;
     QPixmap btndown;
+    QPixmap windowPx;
+    QPixmap dsgvoPx_de;
+    QPixmap dsgvoPx_en;
     QVector <QPixmap> boxPxAn;
     QString enemy;
     QString version;
@@ -231,6 +269,8 @@ private:
     QPolygonF polyTop;
     QPolygonF polyBottom;
     QPolygonF polyColl;
+    bool firstlaunch = true;
+    bool dsgvo = false;
     bool fastboost;
     bool newpost;
     bool crate;
@@ -299,6 +339,7 @@ private:
     bool mousePressed;
     QFile file;
     QFile fileE;
+    void setupIAP();
     void loadData();
     void write(bool normal=true, int bscore=0);
     void reset(int type=0);
@@ -322,6 +363,7 @@ private:
     void startStop(bool start);
     void tap(int x, int y);
     void changeSpeed(bool faster);
+    void initPurchase(int packageCode);
     double getDistance(QPointF p1,QPointF p2);
 protected:
     void paintEvent(QPaintEvent *e);

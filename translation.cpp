@@ -321,12 +321,12 @@ Text Translation::gettext_Scoreboard_Falsch()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Nickname darf nicht leer sein, muss kürzer als 13 Zeichen sein und darf folgende Zeichen nicht enthalten: #~äöü";
+            t.text = "Erlaubte Länge: 2-13, Erlaubte Zeichen: 'a-Z A-Z 0-9 .,-_:/?+$%'";
             t.pos = QPoint(180,450);
             t.size = 56;
         break;
         default:
-            t.text = "Nickname cant be empty, has to be shorter than 13 letters and must only contain normal letters and numbers";
+            t.text = "Allowed length: 2-13, Allowed Letters: 'a-Z A-Z 0-9 .,-_:/?+$%'";
             t.pos = QPoint(180,450);
             t.size = 56;
         break;
@@ -411,12 +411,30 @@ Text Translation::getBtn_Scoreboard_Change()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Name zurücksetzen";
+            t.text = "Name ändern";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
-            t.text = "Reset Name";
+            t.text = "Change Name";
+            t.pos = QPoint(530,1415);
+            t.size = 50;
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Scoreboard_NameChanged()
+{
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Name geändert!";
+            t.pos = QPoint(525,1405);
+            t.size = 30;
+        break;
+        default:
+            t.text = "Name changed!";
             t.pos = QPoint(530,1415);
             t.size = 50;
         break;
@@ -874,12 +892,12 @@ Text Translation::getText_CN()
     Text t;
     switch(locale.language()) {
         case QLocale::German:
-            t.text = "Namen zurücksetzen?";
+            t.text = "Namen ändern?";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
         default:
-            t.text = "Reset Name?";
+            t.text = "Change Name?";
             t.pos = QPoint(525,1405);
             t.size = 30;
         break;
@@ -940,5 +958,273 @@ Text Translation::getText_AOTS()
             t.text = "Tap to begin";
         break;
     }
+    return t;
+}
+
+Text Translation::getText_MaybeLater() {
+    Text t;
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Vielleicht später";
+        break;
+        default:
+            t.text = "Maybe later";
+        break;
+    }
+    return t;
+}
+
+Text Translation::getText_Continue()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Weiter";
+        break;
+        default:
+            t.text = "Continue";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_Music()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Musik";
+        break;
+        default:
+            t.text = "Music";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::gettext_Options_Schmuser()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Schmuser";
+        break;
+        default:
+            t.text = "SadCat";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_Mieser()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Mieser";
+        break;
+        default:
+            t.text = "BadCat";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_Animations()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Animationen";
+        break;
+        default:
+            t.text = "Animations";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_SoundEffects()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Toneffekte";
+        break;
+        default:
+            t.text = "Soundeffects";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_FPS()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Bilder pro Sekunde";
+        break;
+        default:
+            t.text = "Frames per Second";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "DSGVO Abfrage";
+        break;
+        default:
+            t.text = "GDPR Request";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_Request()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Daten abfragen";
+        break;
+        default:
+            t.text = "Request Data";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_Info()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Tippe auf OK um deine von uns gespeicherten Daten abzurufen\nDu kannst dies einmal monatlich tun.";
+        break;
+        default:
+            t.text = "Tap on OK to request your personal saved Data by us\nYou can do this once a month.";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_EMail()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Wir brauchen eine E-Mail Adresse zu der wir die Daten senden können.\nDie E-Mail wird nicht gespeichert.";
+        break;
+        default:
+            t.text = "We need an E-Mail Adress to which we can send your Data.\nThe E-Mail will not be saved.";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_None()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Wir haben keine personenbezogenen Daten von dir gespeichert.";
+        break;
+        default:
+            t.text = "We currently have no personal data from you saved.";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_WrongEMail()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Ungültige E-Mail!";
+        break;
+        default:
+            t.text = "Invalid E-Mail!";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_Success()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "E-Mail versendet!\nBitte schaue auch im Spam Ordner nach";
+        break;
+        default:
+            t.text = "E-Mail sent!\nPlease also check your Spam folder";
+        break;
+    }
+
+    return t;
+}
+
+Text Translation::getText_Options_DSGVO_Time()
+{
+    Text t;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t.text = "Du hast deine Daten erst vor weniger als einem Monat angefragt.";
+        break;
+        default:
+            t.text = "Your last GDPR Request was less than a month ago.";
+        break;
+    }
+
+    return t;
+}
+
+int Translation::getLanguageCode() {
+    int t = 0;
+
+    switch(locale.language()) {
+        case QLocale::German:
+            t = 1;
+        break;
+        default:
+            t = 0;
+        break;
+    }
+
     return t;
 }

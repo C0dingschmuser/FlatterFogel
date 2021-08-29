@@ -6,7 +6,20 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
-    lastPost = "2365110";
+
+    networkManager = new NetworkManager();
+
+    connect(networkManager, SIGNAL(StatusDone(QString)), this, SLOT(HandleStatus(QString)));
+    connect(networkManager, SIGNAL(AuthSave(QString)), this, SLOT(AuthSave(QString)));
+    connect(networkManager, SIGNAL(DSGVODone(QString)), this, SLOT(DSGVODone(QString)));
+
+#ifdef Q_OS_ANDROID
+    setupIAP();
+#elif Q_OS_IOS
+    setupIAP()
+#endif
+
+    lastPost = "2561200";
     loading = true;
     mainX = 0;
     newHS = 0;
@@ -44,7 +57,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     refActive = false;
     soundEnabled = false;
     soundEffectsEnabled = false;
-    version = "1.3.3.r";
+    version = "1.3.4.r";
     t_draw = new QTimer();
     t_main = new QTimer();
     t_obst = new QTimer();
@@ -119,6 +132,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     btndown = QPixmap(":/images/buttons/down.png");
     end = QPixmap(":/images/end.png");
     btnPx = QPixmap(":/images/buttons/button.png");
+    settingsBtn = QPixmap(":/images/buttons/buttonSettings.png");
     blus = QPixmap(":/images/blus.png");
     minus = QPixmap(":/images/minus.png");
     ground = QPixmap(":/images/backgrounds/ground/basic.png");
@@ -154,7 +168,13 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     referralPx2 = QPixmap(":/images/referral2.png");
     mieserkadserPx = QPixmap(":/images/mieserkadser.png");
     ad_px = QPixmap(":/images/ad.png");
-    for(int i=0;i<25;i++) {
+    ad_px_eng = QPixmap(":/images/ad_eng.png");
+    restorePx = QPixmap(":/images/buttons/restoreBtn.png");
+    windowPx = QPixmap(":/images/shopM.png");
+    dsgvoPx_de = QPixmap(":/images/dsgvo_de.png");
+    dsgvoPx_en = QPixmap(":/images/dsgvo_en.png");
+
+    for(int i=0;i<26;i++) {
         skins.push_back(QPixmap(":/images/player/skins/"+QString::number(i)+".png"));
     }
     for(int i=0;i<18;i++) {
@@ -197,21 +217,33 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     }
     player = new Player(QRectF(1080/2-250,1920/2-40,80,80));
     shop = new Shop(player,font,transl,coinPx,cloudPx);
-    settings = new Settings(&shop->background,&btnPx,transl);
+
     shop->skins = skins;
     shop->pipes = pipes;
     shop->tails = tails;
     shop->g2 = player->g2;
-    scoreboard = new Scoreboard(shop->background,btnPx,font,transl);
+
+    scoreboard = new Scoreboard(networkManager, shop->background,btnPx,font,transl);
     shop->backgrounds = backgrounds;
     scoreboard->medals = medalsPx;
     connect(scoreboard,SIGNAL(connFail()),this,SLOT(on_sbConnFail()));
-    connect(scoreboard,SIGNAL(wrongName()),this,SLOT(on_sbWrongName()));
+    connect(scoreboard,SIGNAL(wrongName(int)),this,SLOT(on_sbWrongName(int)));
     connect(scoreboard,SIGNAL(write(int)),this,SLOT(on_scoreWrite(int)));
     connect(scoreboard,SIGNAL(back()),this,SLOT(on_scoreBack()));
+    connect(scoreboard, SIGNAL(open()), this, SLOT(OpenScoreboard()));
+
+    connect(networkManager, SIGNAL(GetScoreDone(QString)), scoreboard, SLOT(HandleGetScore(QString)));
+    connect(networkManager, SIGNAL(SetScoreDone(QString)), scoreboard, SLOT(HandleSetScore(QString)));
+    connect(networkManager, SIGNAL(ChangeNameDone(QString)), scoreboard, SLOT(HandleNameChange(QString)));
+
     connect(shop,SIGNAL(back()),this,SLOT(on_shopBack()));
     connect(shop,SIGNAL(msg(QString)),this,SLOT(on_shopMsg(QString)));
     connect(shop,SIGNAL(buy(int,bool,bool,bool)),this,SLOT(on_shopBuy(int,bool,bool,bool)));
+
+    settings = new Settings(&shop->background,&btnPx,transl, scoreboard, networkManager);
+    connect(settings, SIGNAL(updateFPS(FPSMode)), this, SLOT(UpdateFps(FPSMode)));
+    connect(settings, SIGNAL(dsgvoCheck()), this, SLOT(DSGVOCheck()));
+
     connect(settings,SIGNAL(back()),this,SLOT(on_settingsBack()));
     connect(settings,SIGNAL(play()),this,SLOT(on_settingsPlay()));
     enemyRect = QRectF(-300,100,300,200);
@@ -257,16 +289,21 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     unlockedSpeed = false;
     revive = false;
     boostused = false;
-    qsrand(QDateTime::currentDateTime().toTime_t());
+    QRandomGenerator(QDateTime::currentDateTimeUtc().toTime_t());
+    //qsrand(QDateTime::currentDateTime().toTime_t());
     currentDateTime = QDateTime::currentDateTime();
+
+    t_draw->setTimerType(Qt::PreciseTimer);
+    //int aufgerundet für 60fps
+    t_draw->start(17);
+
     loadData();
+
     workerThread = new QThread();
     blusThread = new QThread();
     animationThread = new QThread();
     musicThread = new QThread();
     t_main->start(5);
-    t_draw->setTimerType(Qt::PreciseTimer);
-    t_draw->start(10);
     t_rgb->start(10);
     t_obst->start(50);
     t_blus->start(5);
@@ -297,6 +334,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_tail->moveToThread(blusThread); //
     t_reload->moveToThread(blusThread);
     t_regen->moveToThread(blusThread);
+    sound->moveToThread(blusThread);
     t_newHS->moveToThread(workerThread); //
     for(int i=0;i<10;i++) {
         QSoundEffect *effect = new QSoundEffect();
@@ -320,22 +358,241 @@ FrmMain::~FrmMain()
     delete ui;
 }
 
+
+void FrmMain::setupIAP() {
+    store = new QInAppStore(this);
+
+    connect(store,SIGNAL(transactionReady(QInAppTransaction*)),this,SLOT(handleTransaction(QInAppTransaction*)));
+    connect(store,SIGNAL(productRegistered(QInAppProduct*)),this,SLOT(productRegistered(QInAppProduct*)));
+    connect(store,SIGNAL(productUnknown(QInAppProduct::ProductType,QString)),this,SLOT(productUnknown(QInAppProduct::ProductType,QString)));
+
+    store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_small"));
+    store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_medium"));
+    store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_large"));
+}
+
+void FrmMain::handleTransaction(QInAppTransaction *transaction) {
+    //Transaktion finalisieren
+
+    if(!pInit) return;
+
+    pInit = false;
+
+    if(transaction->status() == QInAppTransaction::PurchaseApproved ||
+            transaction->status() == QInAppTransaction::PurchaseRestored) {
+        //erfolgreich / restored
+
+        QString identifier = transaction->product()->identifier();
+        QString orderID = transaction->orderId();
+
+        //qDebug() << orderID;
+        //qDebug() << identifier;
+
+        int buyCode = -1;
+
+        if(identifier == QStringLiteral("pack_small")) {
+            buyCode = 0;
+        } else if(identifier == QStringLiteral("pack_medium")) {
+            buyCode = 1;
+        } else if(identifier == QStringLiteral("pack_large")) {
+            buyCode = 2;
+        }
+
+        switch(buyCode) {
+        case 2:
+            //packet large
+            unlockedSpeed = true;
+            if(!vContains(shop->ownedbackgrounds, 8))  {
+                shop->ownedbackgrounds.push_back(8); //unterwasser
+                boxCount += 25;
+            }
+        case 1:
+            //packet medium
+            if(!vContains(shop->ownedbackgrounds, 4))  {
+                shop->ownedbackgrounds.push_back(4); //shekel bg
+                if(donator == 1) boxCount += 10;
+            }
+            if(!vContains(shop->ownedPipes,8)) shop->ownedPipes.push_back(8); //shekel sskin
+            if(!vContains(shop->ownedSkins,23)) shop->ownedSkins.push_back(23); //btc skin
+        case 0:
+            //packet small
+            if(!vContains(shop->ownedbackgrounds, 7)) {
+                shop->ownedbackgrounds.push_back(7); //skyline
+                if(donator == 0) boxCount += 5;
+            }
+            if(!vContains(shop->ownedPipes, 11)) shop->ownedPipes.push_back(11); //skyline sskin
+            break;
+        }
+
+        if(buyCode > -1) {
+            //Speichern
+            write();
+            ad_active = false;
+
+            if(transaction->status() == QInAppTransaction::PurchaseApproved) {
+
+                QUrlQuery qry;
+                qry.addQueryItem("code", "3");
+                qry.addQueryItem("name", scoreboard->name);
+                qry.addQueryItem("type", QString::number(buyCode));
+                qry.addQueryItem("id", orderID);
+
+                networkManager->PostData(qry, RequestCodes::Custom);
+
+                if(transl->getLanguageCode() == 1) {
+                    QMessageBox::information(this,"Danke!","Vielen Dank für deinen Kauf!\nDie exklusiven Inhalte wurden im Shop freigeschaltet!\n\nViel Spaß beim Spielen :D");
+                } else {
+                    QMessageBox::information(this,"Thank you!","Thank you for your Purchase!\nThe exclusive content has been unlocked in the shop!\n\nHave fun playing!");
+                }
+            } else {
+                if(transl->getLanguageCode() == 1) {
+                    QMessageBox::information(this,"Info","InGame käufe wiederhergestellt.");
+                } else {
+                    QMessageBox::information(this,"Info","InApp Purchases restored.");
+                }
+            }
+        }
+    }
+}
+
+void FrmMain::productRegistered(QInAppProduct *product)
+{
+    qDebug()<<"OK"<<product->identifier();
+}
+
+void FrmMain::productUnknown(QInAppProduct::ProductType ptype, QString id)
+{
+    Q_UNUSED(ptype)
+    qDebug()<<"UNKNOWN"<<id;
+}
+
+void FrmMain::HandleStatus(QString response)
+{
+    QStringList list = response.split("~");
+
+    if(list.length() <= 1) {
+        //Error handling
+        return;
+    }
+
+    switch(list[0].toInt()) {
+    case 0:
+        if(!vContains(shop->ownedbackgrounds,7)||
+                !vContains(shop->ownedPipes,11)) donator = 1;
+        break;
+    case 1:
+        if(!vContains(shop->ownedSkins,23)||
+                !vContains(shop->ownedbackgrounds,4)||
+                !vContains(shop->ownedPipes,8)||
+                !vContains(shop->ownedbackgrounds,7)||
+                !vContains(shop->ownedPipes,11)) donator = 2;
+        break;
+    case 2:
+        if(!vContains(shop->ownedSkins,23)||
+                !vContains(shop->ownedbackgrounds,4)||
+                !vContains(shop->ownedPipes,8)||
+                !vContains(shop->ownedbackgrounds,7)||
+                !vContains(shop->ownedPipes,11)||
+                !vContains(shop->ownedbackgrounds,8)||
+                !unlockedSpeed) donator = 3;
+        break;
+    }
+
+    if(list[1] != lastPost) {
+        lastPost = list[1];
+        newpost = true;
+    }
+
+    //version check
+}
+
+void FrmMain::AuthSave(QString auth)
+{
+    write();
+}
+
+void FrmMain::OpenScoreboard()
+{
+    moveAn = 5;
+}
+
+void FrmMain::UpdateFps(FPSMode newFps)
+{
+    int num = (int)newFps;
+
+    t_draw->setInterval(1000.0 / num);
+    write();
+}
+
+void FrmMain::DSGVOCheck()
+{
+    QString name = scoreboard->name;
+
+    if(name.length() > 1) {
+
+        QMessageBox::information(this, "Info", transl->getText_Options_DSGVO_EMail().text);
+
+        bool ok = false;
+        QGuiApplication::inputMethod()->show();
+        QString n = QInputDialog::getText(this,tr("EMail"),"EMail: ",QLineEdit::Normal,"",&ok);
+
+        if(ok) {
+            if(n.length() > 4 && n.contains("@") && n.contains(".")) {
+                //EMail "valid"
+
+                QUrlQuery qry;
+                qry.addQueryItem("code", "4");
+                qry.addQueryItem("name", name);
+                qry.addQueryItem("email", n);
+
+                networkManager->PostData(qry, RequestCodes::DSGVO);
+            } else {
+                QMessageBox::critical(this, "Error", transl->getText_Options_WrongEMail().text);
+            }
+        }
+    } else {
+        QMessageBox::information(this, "Info", transl->getText_Options_DSGVO_None().text);
+    }
+}
+
+void FrmMain::DSGVODone(QString response)
+{
+    if(response.contains("1")) {
+        QMessageBox::information(this, "Info", transl->getText_Options_DSGVO_Success().text);
+    } else if(response.contains("2")) {
+        QMessageBox::information(this, "Info", transl->getText_Options_DSGVO_Time().text);
+    }
+}
+
 void FrmMain::checkPost()
 {
-    QTcpSocket *socket = new QTcpSocket();
+    QUrlQuery qry;
+    qry.addQueryItem("code", "-1");
+    qry.addQueryItem("name", scoreboard->name);
+
+    networkManager->PostData(qry, RequestCodes::GetPost);
+
+    return;
+
+    /*QTcpSocket *socket = new QTcpSocket();
     socket->connectToHost("flatterfogel.ddns.net",38900);
     socket->waitForConnected(500);
     if(socket->state()==QTcpSocket::ConnectedState) {
+
         QString data = ".-1#"+lastPost+"#"+scoreboard->name+"#"+version+"#~";
+
         socket->write(data.toUtf8());
         socket->waitForBytesWritten(500);
         socket->waitForReadyRead(1000);
+
         QString input = socket->readAll();
         QStringList list = input.split("#");
         std::vector <QString> split;
+
         for(int i=0;i<list.size();i++) {
             split.push_back(list.at(i));
         }
+
         try {
             if(split.at(0)!=lastPost) {
                 lastPost = split.at(0);
@@ -388,7 +645,7 @@ void FrmMain::checkPost()
         }
     }
     socket->close();
-    delete socket;
+    delete socket;*/
 }
 
 void FrmMain::initSound()
@@ -462,7 +719,7 @@ void FrmMain::tap(int x, int y)
     player->setBenis(player->getBenis()+shop->tapMultiplier);
     if(!lowGraphics) {
         QPixmap bpx = blus;
-        if(shop->chosenSkin!=23&&shop->chosenSkin!=25) {
+        if(shop->chosenSkin!=23&&shop->chosenSkin!=25&&shop->chosenSkin!=26) {
             if(shop->chosenSkin==14) bpx = minus;
             blusse.push_back(new Blus(random(0,360),QRectF(x-20,y-20,40,40),bpx));
         } else {
@@ -521,6 +778,17 @@ void FrmMain::tap(int x, int y)
                     break;
                 }
                 break;
+            case 26:
+                switch(random(0,3)) {
+                case 0:
+                case 1:
+                    text = "quak";
+                    break;
+                case 2:
+                    text = "ban";
+                    break;
+                }
+                break;
             }
             blusse.push_back(new Blus(random(0,360),QRectF(x-20,y-20,40,40),text,random(35,46)));
         }
@@ -545,6 +813,32 @@ void FrmMain::changeSpeed(bool faster)
     } else {
         if(gameSpeed>1) gameSpeed-=0.25;
     }
+}
+
+void FrmMain::initPurchase(int packageCode)
+{
+    //Kauf initialisieren
+
+    QString paket = "pack_small";
+
+    switch(packageCode) {
+    case 1:
+        paket = "pack_medium";
+        break;
+    case 2:
+        paket = "pack_large";
+        break;
+    }
+
+    QInAppProduct *product = store->registeredProduct(paket);
+
+    if(!product) {
+        //Fehlerhaftes Produkt
+        return;
+    }
+
+    pInit = true;
+    product->purchase();
 }
 
 double FrmMain::getDistance(QPointF p1, QPointF p2)
@@ -1337,15 +1631,18 @@ void FrmMain::on_tEvent()
                 QDesktopServices::openUrl(link);
             }
         }
+
         if(donator) {
             switch(donator) {
             case 3:
+                //packet large
                 unlockedSpeed = true;
                 if(!vContains(shop->ownedbackgrounds,8))  {
                     shop->ownedbackgrounds.push_back(8); //unterwasser
                     boxCount += 25;
                 }
             case 2:
+                //packet medium
                 if(!vContains(shop->ownedbackgrounds,4))  {
                     shop->ownedbackgrounds.push_back(4); //shekel bg
                     if(donator==2) boxCount += 10;
@@ -1353,6 +1650,7 @@ void FrmMain::on_tEvent()
                 if(!vContains(shop->ownedPipes,8)) shop->ownedPipes.push_back(8); //shekel sskin
                 if(!vContains(shop->ownedSkins,23)) shop->ownedSkins.push_back(23); //btc skin
             case 1:
+                //packet small
                 if(!vContains(shop->ownedbackgrounds,7)) {
                     shop->ownedbackgrounds.push_back(7); //skyline
                     if(donator==1) boxCount += 5;
@@ -1365,11 +1663,11 @@ void FrmMain::on_tEvent()
         loading = false;
     }
     if(highscore>=10||highscore_H>=5||highscore_C>=10||highscore_S>=7||player->coins) {
-        if((ad!=4&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
+        if((ad!=1&&!donator&&!ad_active&&!shop->getActive()&&active==0&&!scoreboard->active)||ad==-98) {
             if(!vContains(shop->ownedbackgrounds,4)||!vContains(shop->ownedPipes,8)||
                     !vContains(shop->ownedSkins,23)||!vContains(shop->ownedbackgrounds,7)||
                     !vContains(shop->ownedPipes,11)||ad==-98||!unlockedSpeed) {
-                ad = 4;
+                ad = 1;
                 ad_active = true;
             }
         }
@@ -1598,12 +1896,15 @@ void FrmMain::on_tstar()
     }
 }
 
-void FrmMain::on_sbWrongName()
+void FrmMain::on_sbWrongName(int type)
 {
-    scoreboard->active=false;
-    scoreboard->name = "";
-    Text t = transl->getText_Scoreboard_WrongName();
-    QMessageBox::critical(this,"Error",t.text);
+    if(type == -1 || type == 0) {
+        Text t = transl->getText_Scoreboard_WrongName();
+        QMessageBox::critical(this,"Error",t.text);
+    } else if(type == 1) {
+        Text t = transl->getText_Scoreboard_NameChanged();
+        QMessageBox::information(this,"Info",t.text);
+    }
 }
 
 void FrmMain::on_sbConnFail()
@@ -1636,8 +1937,10 @@ void FrmMain::on_scoreBack()
 void FrmMain::on_scoreWrite(int type)
 {
     if(scoreboard->active&&!type) {
+        //zurück
         moveAn = 6;
     } else if(!type) {
+        //scoreboard öffnen
         moveAn = 5;
     }
 }
@@ -1763,8 +2066,24 @@ bool FrmMain::vContains(std::vector<int> v, int value)
 void FrmMain::loadData()
 {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#ifdef Q_OS_WIN
+    if(!QDir(path).exists()) {
+        QDir().mkdir(path);
+    }
+#endif
     QString pathR = path;
     QString pathE = path;
+    QString dsgvoPath = path;
+
+    QFile dsgvoFile;
+    dsgvoFile.setFileName(path + "/dsgvo.dat");
+
+    if(dsgvoFile.exists()) {
+        dsgvo = true;
+    } else {
+        dsgvo = false;
+    }
+
     QFile restore;
     restore.setFileName(path+"/restore.dat");
     pathE.append("/settings_e.dat");
@@ -1772,6 +2091,12 @@ void FrmMain::loadData()
     pathR.append("/settings.dat");
     file.setFileName(pathR);
     if(file.exists()) {
+        firstlaunch = false;
+
+#ifdef QT_DEBUG
+      //firstlaunch = true;
+#endif
+
         QTextStream in;
         QString data;
         if(fileE.exists()) {
@@ -1791,7 +2116,9 @@ void FrmMain::loadData()
         QStringList list = data.split("#");
         QString a=QString::number(list.size())+"///";
         for(int i=0;i<list.size();i++) a.append(list.at(i)+"/");
-        if(version.contains("bs")) {
+
+        //Kp was das macht (lol)
+        /*if(version.contains("bs")) {
             QTcpSocket *dsock = new QTcpSocket();
             dsock->connectToHost("82.165.77.251",38900);
             dsock->waitForConnected(1000);
@@ -1802,7 +2129,7 @@ void FrmMain::loadData()
             }
             dsock->close();
             delete dsock;
-        }
+        }*/
         if(list.size()>1) {
             if(list.at(0).contains("~")) {
                 QStringList scores = QString(list.at(0)).split("~");
@@ -1833,14 +2160,6 @@ void FrmMain::loadData()
                 scoreboard->name = list.at(8);
                 if(list.size()>10) {
                     boxCount = list.at(10).toInt();
-                }
-                if(list.at(8)=="LordSchaft"&&shop->multiplier<100) {
-                    shop->multiplier = 105;
-                } else if(list.at(8)=="CarlaWiener"&&shop->multiplier<200) {
-                    shop->multiplier = 204;
-                } else if(shop->multiplier==100) {
-                    shop->multiplier = 15;
-                    boxCount += 25;
                 }
                 if(list.size()<11) {
                     changelog = true;
@@ -1970,30 +2289,27 @@ void FrmMain::loadData()
                         schmuserEnemy = false;
                     }
                 }
-                if(list.at(8)=="MrHuso"&&shop->multiplier<200) {
-                    shop->multiplier = 570;
-                    shop->tapMultiplier = 20;
-                    highscore = 3156;
-                    boxCount = 199;
-                    player->coins = 23;
-                    player->setBenis(74448051);
-                    if(!vContains(shop->ownedbackgrounds,3)) {
-                        shop->ownedbackgrounds.push_back(3);
-                    }
-                } else if(list.at(8)=="EVA01_Rene"&&shop->multiplier<100) {
-                    shop->multiplier = 124;
-                    shop->tapMultiplier = 100;
-                    shop->ownedbackgrounds.clear();
-                    for(uint i=1;i<4;i++) {
-                        shop->ownedbackgrounds.push_back(i);
-                    }
-                    shop->ownedbackgrounds.push_back(5);
-                    shop->ownedbackgrounds.push_back(9);
-                    shop->ownedSkins.clear();
-                    shop->ownedSkins.push_back(14);
-                    player->coins = 35;
-                    player->setBenis(75000000);
+                if(list.size() > 34) {
+                    //user auth
+                    networkManager->SetAuth(list.at(33), false);
                 }
+                if(list.size() > 35) {
+                    FPSMode newFPS = (FPSMode)list.at(34).toInt();
+                    settings->changeFPS(newFPS);
+                }
+                /*if(list.at(8)=="restore2002"&&shop->multiplier<200) {
+                    scoreboard->name = "Dolllaaar";
+                    shop->multiplier = 1397;
+                    shop->tapMultiplier = 60;
+                    highscore = 3172;
+                    highscore_C = 35;
+                    highscore_H = 141;
+                    highscore_S = 2;
+                    highscore_UM = 3172;
+                    boxCount = 25;
+                    player->coins = 50;
+                    player->setBenis(6999999999);
+                }*/
             }
 
         }
@@ -2016,7 +2332,7 @@ void FrmMain::write(bool normal, int bscore)
 {
     qDebug()<<normal;
     QString exit;
-    if(!normal&&!schmuserDefend&&active==-1&&active==1) {
+    if(!normal && !schmuserDefend && active==-1 && active==1) {
         exit.append("NOTOK");
         QFile restore;
         QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
@@ -2047,7 +2363,8 @@ void FrmMain::write(bool normal, int bscore)
             + QString::number(shop->chosenPipe) + "#" + lastPost + "#" + QString::number(lowGraphics) + "#"
             + shop->tailsToString() + "#" + QString::number(shop->chosenTail) + "#"
             + QString::number(soundEnabled) + "#" + QString::number(ad) + "#" + QString::number(soundEffectsEnabled) +"#"
-            + QString::number(unlockedSpeed) + "#" + exit + "#" + QString::number(bscore) + "#" + QString::number(schmuserEnemy) + "#";
+            + QString::number(unlockedSpeed) + "#" + exit + "#" + QString::number(bscore) + "#" + QString::number(schmuserEnemy) + "#"
+            + networkManager->GetAuth() + "#" + QString::number((int)settings->fps) + "#";
 
         if(eLoad) {
             outE << lucaAlg(lucaAlg(data));
@@ -2750,6 +3067,29 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.drawText(QRect(0,800,1080,300),Qt::AlignCenter,"Lade...");
         return;
     }
+
+    if(!dsgvo) {
+        //DSGVO anzeige
+
+        if(transl->getLanguageCode() == 1) {
+            //Deutsch
+            painter.drawPixmap(115, 750, 850, 850, dsgvoPx_de);
+        } else {
+            painter.drawPixmap(115, 750, 850, 850, dsgvoPx_en);
+        }
+
+        painter.drawPixmap(115,1650,400,150, btnPx); //exit btn
+        painter.drawPixmap(565,1650,400,150, btnPx); //continue btn
+
+        f.setPixelSize(48);
+        painter.setFont(f);
+        painter.setPen(Qt::black);
+        painter.drawText(QRect(115,1650,400,150),Qt::AlignCenter,"Exit");
+        painter.drawText(QRect(565,1650,400,150),Qt::AlignCenter,transl->getText_Continue().text);
+
+        return;
+    }
+
     if(flip) {
         painter.translate(1080/2,1920/2);
         painter.scale(1,-1);
@@ -3251,15 +3591,21 @@ void FrmMain::paintEvent(QPaintEvent *e)
             painter.drawPixmap(mainX+180,1538,150,150,medal_bronze);
         }
         painter.setFont(f);
-        painter.drawPixmap(QRect(mainX+390,900,300,150),btnPx);
-        painter.drawPixmap(QRect(mainX+390,1100,300,150),btnPx);
-        painter.drawPixmap(QRect(mainX+390,1300,300,150),btnPx);
-        painter.drawPixmap(QRect(mainX+390,1500,300,150),btnPx);
-        painter.drawPixmap(QRect(mainX+350,1810,360,96),btnPx); //btn einstellungen
+
+        //Zeichne Buttons
+
+        painter.drawPixmap(QRect(mainX+228,900,300,150),btnPx); //los
+        painter.drawPixmap(QRect(mainX+553,900,300,150),btnPx); //aots
+
+        painter.drawPixmap(QRect(mainX+390,1100,300,150),btnPx); //shop
+        painter.drawPixmap(QRect(mainX+390,1300,300,150),btnPx); //hs
+        painter.drawPixmap(QRect(mainX+390,1500,300,150),settingsBtn); //neue settings
+        //painter.drawPixmap(QRect(mainX+350,1810,360,96),btnPx); //alte settings
         painter.drawPixmap(QRect(mainX+439,1308,200,120),stats);
         painter.drawPixmap(QRect(mainX+10,1810,160,96),flag_de);
         painter.drawPixmap(QRect(mainX+175,1810,160,96),flag_en);
         painter.drawPixmap(QRect(mainX+910,1810,160,96),referralPx1);
+
         painter.setBrush(QColor(238,77,46));
         painter.drawRect(QRect(mainX+725,1810,180,96));
         painter.setBrush(QColor(162,162,162));
@@ -3269,7 +3615,7 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setPen(textColor);
         f.setPixelSize(23);
         painter.setFont(f);
-        painter.drawText(QRect(mainX+350,1810,360,96),Qt::AlignCenter,"Einstellungen");
+        //painter.drawText(QRect(mainX+350,1810,360,96),Qt::AlignCenter,"Einstellungen");
         f.setPixelSize(32);
         painter.setFont(f);
         if(hardcore) {
@@ -3277,9 +3623,11 @@ void FrmMain::paintEvent(QPaintEvent *e)
         } else {
             painter.drawText(QRect(mainX+23,900,75,325),Qt::AlignCenter,"N\nO\nR\nM\nA\nL");
         }
-        f.setPixelSize(25);
+
+        f.setPixelSize(42);
         painter.setFont(f);
-        painter.drawText(QRect(mainX+725,1810,180,96),Qt::AlignCenter,"Spenden");
+        painter.drawText(QRect(mainX+725,1810,180,96),Qt::AlignCenter,"$$$");
+
         painter.setBrush(QColor(22,22,24));
         painter.setOpacity(0.75);
         if(transl->locale.language()==QLocale::German) {
@@ -3290,11 +3638,12 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setOpacity(1);
         f.setPixelSize(go.size);
         painter.setFont(f);
-        painter.drawText(QPoint(mainX+go.pos.x(),go.pos.y()),go.text);
+        //"Los"
+        painter.drawText(QRect(mainX+228,900,300,150), Qt::AlignCenter,go.text);
         f.setPixelSize(shopT.size);
         painter.setFont(f);
         painter.drawText(QPoint(mainX+shopT.pos.x(),shopT.pos.y()),shopT.text);
-        painter.drawText(QRect(mainX+390,1500,300,150),Qt::AlignCenter,"AotS");
+        painter.drawText(QRect(mainX+553,900,300,150),Qt::AlignCenter,"AotS");
         if(crate) {
             painter.setBrush(QColor(22,22,24,200));
             painter.setPen(Qt::NoPen);
@@ -3425,19 +3774,30 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setOpacity(0.7);
         painter.drawRect(0,0,1080,1920);
         painter.setOpacity(1);
-        painter.drawPixmap(65,304,950,1031,ad_px);
-        painter.drawPixmap(165,1345,750,150,btnPx); //jetzt spenden
-        painter.drawPixmap(165,1505,750,150,btnPx);
-        f.setPixelSize(48);
-        painter.setFont(f);
+
+        if(transl->getLanguageCode() == 1) {
+            //Deutsch
+            painter.drawPixmap(65,150,950,1413,ad_px); //ad image
+        } else {
+            //Englisch
+            painter.drawPixmap(65,150,950,1413,ad_px_eng); //ad image eng
+        }
+
+        //painter.drawPixmap(165,1345,750,150,btnPx); //jetzt spenden
+
+        painter.drawPixmap(65, 1650, 150, 150, restorePx); //restore btn
+        painter.drawPixmap(265,1650,750,150, btnPx); //vllt später btn
+
+        //f.setPixelSize(48);
+        //painter.setFont(f);
         painter.setPen(textColor);
-        painter.drawText(QRect(165,1345,750,150),Qt::AlignCenter,"Jetzt Spenden");
-        f.setPixelSize(20);
-        painter.setFont(f);
-        painter.drawText(QPoint(205,1475),"(Ab 1.5€. Weiterleitung zu Paypal)");
+        //painter.drawText(QRect(165,1345,750,150),Qt::AlignCenter,"Jetzt Spenden");
+        //f.setPixelSize(20);
+        //painter.setFont(f);
+        //painter.drawText(QPoint(205,1475),"(Ab 1.5€. Weiterleitung zu Paypal)");
         f.setPixelSize(40);
         painter.setFont(f);
-        painter.drawText(QRect(165,1505,750,150),Qt::AlignCenter,"Vielleicht später");
+        painter.drawText(QRect(265,1650,750,150),Qt::AlignCenter,transl->getText_MaybeLater().text);
     }
 }
 
@@ -3452,12 +3812,15 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     QRectF collRectF = QRectF(collRect);
     //delete e;
     mousePos = QPoint(x,y);
+
+    //qDebug() << mousePos;
+
     switch(active) {
     case 0:
         if(shop->getActive()) {
             shop->mousePress(QPoint(x,y),cave,space,flip,underwater);
         } else if(scoreboard->active) {
-            scoreboard->mpress(QPoint(x,y));
+            scoreboard->mpress(QPoint(x,y), this);
         } else if(settings->active) {
             settings->mousePress(x,y,soundEnabled,soundEffectsEnabled,lowGraphics,schmuserEnemy);
         }
@@ -3466,15 +3829,69 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
     if(moveAn||shop->getActive()||scoreboard->active||settings->active||loading) return;
     switch(active) {
         case 0:
+
+            if(!dsgvo) {
+                //DSGVO check
+
+                if(collRect.intersects(QRect(115,1650,400,150))) {
+                    //Exit App
+                    QApplication::quit();
+                } else if(collRect.intersects(QRect(565,1650,400,150))) {
+                    //Continue
+                    firstlaunch = false;
+                    dsgvo = true;
+
+                    //Speichern
+                    QFile dsgvoFile;
+                    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+                    dsgvoFile.setFileName(path+"/dsgvo.dat");
+                    dsgvoFile.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
+                    QTextStream dout(&dsgvoFile);
+                    dout << QString::number(1);
+                    dsgvoFile.close();
+
+                } else if(collRect.intersects(QRect(115, 750, 850, 850))) {
+                    //Datenschutzerklärung öffnen
+                    QUrl link("https://pastebin.com/kiHSKVV2");
+                    QDesktopServices::openUrl(link);
+                }
+
+                return;
+            }
+
             if(ad_active) {
-                if(collRect.intersects(QRect(165,1345,750,150))) { //jetzt spenden
+                //Ad Aktiv -> Prüfen ob auf Paket getippt
+
+                int packageCode = -1;
+
+                if(collRect.intersects(QRect(100, 264, 900, 350))) {
+                    //Kleines Paket
+                    packageCode = 0;
+                } else if(collRect.intersects(QRect(100, 622, 900, 350))) {
+                    //Mittleres Paket
+                    packageCode = 1;
+                } else if(collRect.intersects(QRect(100, 999, 900, 350))) {
+                    //Großes Paket
+                    packageCode = 2;
+                }
+
+                if(packageCode > -1) {
+                    //Kauf initialisieren
+                    initPurchase(packageCode);
+                } else if(collRect.intersects(QRect(265,1650,750,150))) {
+                    //Auf "Vielleicht später" getippt -> exit ad
+                    ad_active = 0;
+                } else if(collRect.intersects(QRect(65, 1650, 150, 150))) {
+                    //Auf Restore getippt
+                    store->restorePurchases();
+                }
+
+                /*if(collRect.intersects(QRect(165,1345,750,150))) { //jetzt spenden
                     QUrl link("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LNQX9P7KSG6NY");
                     QMessageBox::information(this,"Info","Vergiss nicht deinen Namen anzugeben!");
                     QDesktopServices::openUrl(link);
                     ad_active = 0;
-                } else if(collRect.intersects(QRect(165,1505,750,150))) {
-                    ad_active = 0;
-                }
+                }*/
                 return;
             }
             if(crate) {
@@ -3531,16 +3948,15 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         write();
                     }
                 }*/
-            } else if(collRect.intersects(QRect(390,900,300,150))) { //los
+            } else if(collRect.intersects(QRect(228,900,300,150))) { //los
                 radR = 1700;
                 moveAn = 3;
                 schmuserDefend = false;
                 player->setPos(1080/2-250,1920/2-40);
-            } else if(collRect.intersects(QRect(390,1500,300,150))) { //AotS
-                radR = 1700;
-                moveAn = 3;
-                schmuserDefend = true;
-                player->setPos(1080/2-40,1600);
+            } else if(collRect.intersects(QRect(390,1500,300,150))) { //öffne settings
+                if(!settings->active) {
+                    moveAn = 7;
+                }
             } else if(collRect.intersects(QRect(390,1100,300,150))) { //shop
                 moveAn = 2;
             } else if(collRect.intersects(QRect(10,1810,160,96))) {
@@ -3548,32 +3964,49 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
             } else if(collRect.intersects(QRect(175,1810,160,96))) {
                 transl->locale = QLocale("en");
             } else if(collRect.intersects(QRect(390,1300,300,150))) { //scoreboard
-                bool ok=true;
-                if(scoreboard->name=="") {
+
+                //qDebug() << "hit1";
+
+                bool ok = true;
+                if(scoreboard->name == "") {
+                    //Wenn Name noch nicht gesetzt
+
+                    //qDebug() << "hit2";
+
                     QGuiApplication::inputMethod()->show();
-                    QString n = QInputDialog::getText(this,tr("Nickname"),transl->getText_Scoreboard_SetName().text,QLineEdit::Normal,"",&ok);
-                    if(n.isEmpty()||n.contains("äüö#~ÄÖÜ")||n.size()>12||n.contains(" ")) {
-                        if(ok) {
-                            ok = false;
+                    QString n = QInputDialog::getText(this,tr("Nickname"),transl->getText_Scoreboard_SetName().text, QLineEdit::Normal, "", &ok);
+
+                    if(ok) {
+                        //In Dialogbox auf ok geklickt
+
+                        ok = scoreboard->checkName(n);
+
+                        if(!ok) {
+                            //Name falsch
+
                             Text t = transl->gettext_Scoreboard_Falsch();
                             QMessageBox::critical(this,"Error",t.text);
+                        } else {
+                            scoreboard->name = n;
+                            scoreboard->first = "1";
                         }
-                    } else {
-                        scoreboard->name = n;
-                        scoreboard->first="1";
                     }
                 } else {
-                    scoreboard->first="0";
+                    //qDebug() << "hit3";
+                    scoreboard->first = "0";
                 }
-                if(highscore&&ok) {
+
+                if(ok) {
+                    //qDebug() << "hit4";
                     //if(highscore*3>playTime) num = -1;
                     scoreboard->setScore(highscore,highscore_H,highscore_C,highscore_S,highscore_UM);
-                    if(scoreboard->wasConnected==1) {
-                        if(scoreboard->first=="1") scoreboard->first=="0";
+
+                    /*if(scoreboard->wasConnected==1) {
+                        if(scoreboard->first=="1") scoreboard->first="0";
                         scoreboard->getScores();
-                    }
+                    }*/
                 }
-                if(ok&&scoreboard->wasConnected==1) scoreboard->active = true;
+                //if(ok && scoreboard->wasConnected==1) scoreboard->active = true;
             } else if(collRect.intersects(QRect(775,1550,150,135))&&!crate) { //kiste
                 if(boxCount) {
                     if(!crate) {
@@ -3610,10 +4043,11 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                         hardcore = true;
                     }
                 }
-            } else if(collRect.intersects(QRect(350,1810,360,96))) {//animation
-                if(!settings->active) {
-                    moveAn = 7;
-                }
+            } else if(collRect.intersects(QRect(553,900,300,150))) {//öffne aots
+                radR = 1700;
+                moveAn = 3;
+                schmuserDefend = true;
+                player->setPos(1080/2-40,1600);
             } else if(collRect.intersects(QRect(955,0,125,125))) { //sound
                 if(soundEnabled) {
                     QMetaObject::invokeMethod(sound,"pause");

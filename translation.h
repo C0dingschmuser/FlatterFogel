@@ -33,6 +33,7 @@ public:
     Text getBtn_Scoreboard_Back();
     Text getText_Scoreboard_SetName();
     Text getBtn_Scoreboard_Change();
+    Text getText_Scoreboard_NameChanged();
     Text getText_PauseError();
     Text getText_Changelog();
     Text getText_Shop_NoSell();
@@ -57,6 +58,23 @@ public:
     Text getText_BeginSpaceTop();
     Text getText_BeginSpaceBottom();
     Text getText_AOTS();
+    Text getText_MaybeLater();
+    Text getText_Continue();
+    Text getText_Options_Music();
+    Text gettext_Options_Schmuser();
+    Text getText_Options_Mieser();
+    Text getText_Options_Animations();
+    Text getText_Options_SoundEffects();
+    Text getText_Options_FPS();
+    Text getText_Options_DSGVO();
+    Text getText_Options_DSGVO_Request();
+    Text getText_Options_DSGVO_Info();
+    Text getText_Options_DSGVO_EMail();
+    Text getText_Options_DSGVO_None();
+    Text getText_Options_WrongEMail();
+    Text getText_Options_DSGVO_Success();
+    Text getText_Options_DSGVO_Time();
+    int getLanguageCode();
 };
 
 #endif // LOCALE_H

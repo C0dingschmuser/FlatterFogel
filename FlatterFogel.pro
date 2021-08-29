@@ -4,8 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network multimedia
+QT       += core gui network multimedia purchasing
 android: QT += androidextras
+android: include(D:/FF_QT515/android_openssl-master/openssl.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,9 +27,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         frmmain.cpp \
+    networkmanager.cpp \
     player.cpp \
     obstacle.cpp \
     blus.cpp \
+    scoreboardplayer.cpp \
     shop.cpp \
     pxan.cpp \
     window.cpp \
@@ -43,9 +46,11 @@ SOURCES += \
 
 HEADERS += \
         frmmain.h \
+    networkmanager.h \
     player.h \
     obstacle.h \
     blus.h \
+    scoreboardplayer.h \
     shop.h \
     pxan.h \
     window.h \
@@ -66,40 +71,24 @@ MOBILITY =
 
 QMAKE_CXXFLAGS += -fexceptions -frtti
 
-DISTFILES += \
-    android/AndroidManifest.xml \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat \
-    android/AndroidManifest.xml \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat \
-    android/google-services.json \
-    android/AndroidManifest.xml \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat \
-    android/AndroidManifest.xml \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat
-
-ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
-
 RESOURCES += \
     resources.qrc
+
+DISTFILES += \
+    android/AndroidManifest.xml \
+    android/AndroidManifest.xml \
+    android/build.gradle \
+    android/gradle.properties \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew \
+    android/gradlew.bat \
+    android/res/values/libs.xml \
+    images/buttons/buttonSettings.png
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+ANDROID_ABIS += arm64-v8a armeabi-v7a
+
+#include(D:/FF_QT515/purchasing/purchasing.pri);
 
 

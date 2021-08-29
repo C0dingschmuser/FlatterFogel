@@ -1,41 +1,23 @@
 buildscript {
     repositories {
-        jcenter()
         google()
-        maven {
-            url 'https://maven.fabric.io/public'
-        }
+        jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
-        classpath 'com.google.gms:google-services:3.1.2'
-        classpath 'com.google.firebase:firebase-plugins:1.1.3'
-        classpath 'io.fabric.tools:gradle:1.24.4'
+        classpath 'com.android.tools.build:gradle:3.6.0'
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
-        maven {
-            url "https://maven.google.com" // Google's Maven repository
-        }
-    }
+repositories {
+    google()
+    jcenter()
 }
 
 apply plugin: 'com.android.application'
-apply plugin: 'com.google.firebase.firebase-perf'
-apply plugin: 'io.fabric'
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.google.firebase:firebase-core:11.8.0'
-    compile 'com.google.firebase:firebase-perf:11.8.0'
-    compile 'com.google.firebase:firebase-messaging:11.8.0'
-    compile('com.crashlytics.sdk.android:crashlytics:2.7.1@aar') {
-       transitive = true
-    }
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
 
 android {
@@ -54,26 +36,42 @@ android {
 
     compileSdkVersion androidCompileSdkVersion.toInteger()
 
-    //buildToolsVersion androidBuildToolsVersion
-    defaultConfig {
-        applicationId "com.bruhgames.Flatterfogel"
-    }
+    buildToolsVersion '28.0.3'
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = [qt5AndroidDir + '/src', 'src', 'java']
             aidl.srcDirs = [qt5AndroidDir + '/src', 'src', 'aidl']
             res.srcDirs = [qt5AndroidDir + '/res', 'res']
-            resources.srcDirs = ['src']
+            resources.srcDirs = ['resources']
             renderscript.srcDirs = ['src']
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
        }
     }
 
+    tasks.withType(JavaCompile) {
+        options.incremental = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     lintOptions {
         abortOnError false
     }
-}
 
-apply plugin: 'com.google.gms.google-services'
+    // Do not compress Qt binary resources file
+    aaptOptions {
+        noCompress 'rcc'
+    }
+
+    defaultConfig {
+        resConfig "en"
+        minSdkVersion = 21
+        targetSdkVersion = 30
+    }
+}

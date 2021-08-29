@@ -64,6 +64,7 @@ Shop::Shop(Player *player, QFont font, Translation *transl, QPixmap coinPx, QPix
     skinPrice.append(4);
     skinPrice.append(99);
     skinPrice.append(2);
+    skinPrice.append(5);
     bgPrice.append(0);
     bgPrice.append(1);
     bgPrice.append(1);
@@ -791,7 +792,7 @@ void Shop::mousePress(QPoint pos, bool &cave, bool &space, bool &flip, bool &und
             switch(page) {
             case -1:
                 {
-                    int b = player->getBenis();
+                    unsigned long long b = player->getBenis();
                     if(b<100000) {
                         emit msg(transl->getText_Shop_NotEnough().text);
                     } else {
