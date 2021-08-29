@@ -15,8 +15,10 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
 
 #ifdef Q_OS_ANDROID
     setupIAP();
-#elif Q_OS_IOS
-    setupIAP()
+#endif
+
+#ifdef Q_OS_IOS
+    setupIAP();
 #endif
 
     lastPost = "2561200";

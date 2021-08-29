@@ -8,6 +8,10 @@ QT       += core gui network multimedia purchasing
 android: QT += androidextras
 android: include(D:/FF_QT515/android_openssl-master/openssl.pri)
 
+ios {
+    QMAKE_INFO_PLIST = ios/Info.plist
+}
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = FlatterFogel
