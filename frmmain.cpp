@@ -88,7 +88,13 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     QString fam = QFontDatabase::applicationFontFamilies(id).at(0);
     font = QFont(fam);
 
+#ifdef Q_OS_WIN
     SetupSound();
+#endif
+
+#ifdef Q_OS_ANDROID
+    SetupSound();
+#endif
 
     connect(t_event,SIGNAL(timeout()),this,SLOT(on_tEvent()));
     connect(t_main,SIGNAL(timeout()),this,SLOT(on_tmain()));
@@ -1039,12 +1045,22 @@ void FrmMain::on_settingsBack()
 
 void FrmMain::on_settingsPlay()
 {
+#ifdef Q_OS_WIN
     if(soundEnabled) {
         sound->setVolume(25);
         QMetaObject::invokeMethod(sound,"play");
     } else {
         QMetaObject::invokeMethod(sound,"pause");
     }
+#endif
+#ifdef Q_OS_ANDROID
+    if(soundEnabled) {
+        sound->setVolume(25);
+        QMetaObject::invokeMethod(sound,"play");
+    } else {
+        QMetaObject::invokeMethod(sound,"pause");
+    }
+#endif
 }
 
 void FrmMain::on_tbackup()
@@ -4176,6 +4192,7 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                 schmuserDefend = true;
                 player->setPos(1080/2-40,1600);
             } else if(collRect.intersects(QRect(955,0,125,125))) { //sound
+#ifdef Q_OS_WIN
                 if(soundEnabled) {
                     QMetaObject::invokeMethod(sound,"pause");
                     soundEnabled = false;
@@ -4186,6 +4203,19 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     soundEnabled = true;
                     soundEffectsEnabled = true;
                 }
+#endif
+#ifdef Q_OS_ANDROID
+                if(soundEnabled) {
+                    QMetaObject::invokeMethod(sound,"pause");
+                    soundEnabled = false;
+                    soundEffectsEnabled = false;
+                } else {
+                    sound->setVolume(25);
+                    QMetaObject::invokeMethod(sound,"play");
+                    soundEnabled = true;
+                    soundEffectsEnabled = true;
+                }
+#endif
                 settings->music = soundEnabled;
                 settings->soundEffects = soundEffectsEnabled;
             }

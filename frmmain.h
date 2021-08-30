@@ -13,10 +13,12 @@
 #ifdef Q_OS_WIN
 #include <QSoundEffect>
 #include <QMediaPlayer>
+#include <QMediaPlaylist>
 #endif
 #ifdef Q_OS_ANDROID
 #include <QSoundEffect>
 #include <QMediaPlayer>
+#include <QMediaPlaylist>
 #endif
 
 #include <QMessageBox>
@@ -36,7 +38,6 @@
 #include <bitset>
 #include <QPushButton>
 #include <QMessageBox>
-#include <QMediaPlaylist>
 #include <QPainterPath>
 #include <QDir>
 #include <QUrlQuery>
