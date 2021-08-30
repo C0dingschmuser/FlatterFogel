@@ -305,10 +305,19 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     blusThread = new QThread();
     animationThread = new QThread();
     musicThread = new QThread();
+#ifdef QT_NO_DEBUG
     t_main->start(5);
-    t_rgb->start(10);
-    t_obst->start(50);
     t_blus->start(5);
+    t_obst->start(50);
+#endif
+
+#ifdef QT_DEBUG
+    t_main->start(0);
+    t_blus->start(0);
+    t_obst->start(10);
+#endif
+
+    t_rgb->start(10);
     t_event->start(500);
     t_flag->start(750);
     t_star->start(125);
@@ -319,7 +328,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_animation->setTimerType(Qt::PreciseTimer);
     t_animation->start(1);
     t_tchange->setSingleShot(true);
-    t_backup->moveToThread(animationThread);
+    /*t_backup->moveToThread(animationThread);
     t_animation->moveToThread(animationThread); //
     t_rgb->moveToThread(workerThread); //
     t_an->moveToThread(workerThread); //
@@ -337,19 +346,19 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_reload->moveToThread(blusThread);
     t_regen->moveToThread(blusThread);
     sound->moveToThread(blusThread);
-    t_newHS->moveToThread(workerThread); //
+    t_newHS->moveToThread(workerThread); //*/
     for(int i=0;i<10;i++) {
         QSoundEffect *effect = new QSoundEffect();
         effect->setSource(QUrl::fromLocalFile(":/sound/flatter.wav"));
         effect->setVolume(0.4);
         effect->moveToThread(musicThread);
-        soundEffects.push_back(effect);
+        //soundEffects.push_back(effect);
     }
-    sound->moveToThread(musicThread);
-    workerThread->start();
-    blusThread->start();
-    musicThread->start();
-    animationThread->start();
+    //sound->moveToThread(musicThread);
+    //workerThread->start();
+    //blusThread->start();
+    //musicThread->start();
+    //animationThread->start();
     //startStop(true);
     qApp->setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }");
 }
@@ -696,6 +705,10 @@ void FrmMain::error(QString errorString)
 
 void FrmMain::startStop(bool start)
 {
+#ifdef QT_DEBUG
+    return;
+#endif
+
     if(start) {
         QMetaObject::invokeMethod(t_draw,"start",Q_ARG(int,10));
         QMetaObject::invokeMethod(t_main,"start",Q_ARG(int,5));
@@ -913,7 +926,11 @@ void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
 
 void FrmMain::on_appStateChanged(Qt::ApplicationState state)
 {
-    if(state==Qt::ApplicationActive) {
+#ifdef QT_DEBUG
+    return;
+#endif
+
+    if(state == Qt::ApplicationActive) {
         if(soundEnabled) {
             if(sound->state()==QMediaPlayer::PausedState) {
                 QMetaObject::invokeMethod(sound,"play");
@@ -1187,10 +1204,12 @@ void FrmMain::on_tmain()
                             intersectsWithCircle(obstacles[i]->getTop(),player->getCollRect())) co = true;
                 }
             }
+#ifdef QT_NO_DEBUG
             if(co) {
                 active = 3;
                 flashOpacity = 0.5;
             }
+#endif
         }
         if(((score>highscore&&!cave&&!hardcore&&!space&&!underwater)||
                 (score>highscore_H&&!cave&&hardcore)||
@@ -1289,8 +1308,9 @@ void FrmMain::on_tmain()
             }
         }
     }
+
     bool dead = false;
-    if(player->getRect().y()<1600&&active>0&&!schmuserDefend) {
+    if(player->getRect().y()<1600 && active > 0 && !schmuserDefend) {
         double velD = player->getVelD();
         if(!space&&!underwater) {
             if(velD<8) velD += 0.075;
@@ -1299,6 +1319,7 @@ void FrmMain::on_tmain()
             if(velD<8) velD += 0.035;
             player->setVelD(velD);
         }
+
         QRectF r = player->getCollRect();
         if(!cave) {
             if(r.y()+velD>1600) {
@@ -1308,6 +1329,8 @@ void FrmMain::on_tmain()
             if(!boost) {
                 QRectF newr = player->getCollRect();
                 newr.moveTo(newr.x(),newr.y()+velD);
+
+#ifdef QT_NO_DEBUG
                 for(uint i=0;i<obstacles.size();i++) {
                     if(newr.intersects(obstacles[i]->getBottom())||
                             newr.intersects(obstacles[i]->getTop())) {
@@ -1316,7 +1339,12 @@ void FrmMain::on_tmain()
                         break;
                     }
                 }
+#endif
+
             }
+
+#ifdef QT_NO_DEBUG
+
             if(ok) {
                 if(player->getRect().y()>0||velD>0) {
                     player->setPos(r.x(),r.y()+velD);
@@ -1324,7 +1352,12 @@ void FrmMain::on_tmain()
                     player->setVelD(velD*-1);
                 }
             }
+#endif
+
         } else {
+
+#ifdef QT_NO_DEBUG
+
             QRectF r2 = QRectF(r.x(),r.y()+velD,r.width(),r.height());
             QPolygonF inters = QPolygonF(r2).intersected(polyBottom);
             //QPolygonF intersT = QPolygonF(r2).intersected(polyTop);
@@ -1337,9 +1370,16 @@ void FrmMain::on_tmain()
                     player->setPos(r2.x(),r2.y());
                 }
             }
+#endif
+
         }
     }
-    if((player->getRect().y()>=1600&&!schmuserDefend)||dead) {
+
+#ifdef QT_DEBUG
+    dead = false;
+#endif
+
+    if((player->getRect().y() >= 1600 && !schmuserDefend) || dead) {
         if(!revive) {
             if(active==1) {
                 flashOpacity = 0.5;
@@ -1380,6 +1420,7 @@ void FrmMain::on_tmain()
             highscore_UM = score;
         }
     }
+
     if(!schmuserDefend) {
         for(uint i=0;i<obstacles.size();i++) {
             if((obstacles[i]->getTop().x()<-250&&!cave)||(obstacles[i]->getTop().x()<-700&&cave)||obstacles[i]->del) {
@@ -2147,7 +2188,12 @@ void FrmMain::loadData()
             } else {
                 highscore = list.at(0).toInt();
             }
+#ifdef QT_NO_DEBUG
             player->setBenis(list.at(1).toULongLong());
+#endif
+#ifdef QT_DEBUG
+            player->setBenis(1000000);
+#endif
             shop->multiplier = list.at(3).toInt();
             shop->tapMultiplier = list.at(4).toInt();
             if(!shop->multiplier||!shop->tapMultiplier) {
@@ -4308,7 +4354,7 @@ void FrmMain::closeEvent(QCloseEvent *event)
 {
     closing = true;
     Q_UNUSED(event)
-    if((suspended||pause)&&active==1) {
+    if((suspended||pause) && active==1) {
         write(false,score);
     } else {
         write();
