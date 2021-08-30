@@ -12,8 +12,8 @@ android: include(D:/FF_QT515/android_openssl-master/openssl.pri)
 
 ios {
     QMAKE_INFO_PLIST = ios/Info.plist
-    ios_icon.files = $$files($$PWD/ios/AppIcon*.png)
-    QMAKE_BUNDLE_DATA += ios_icon
+    QMAKE_ASSET_CATALOGS = $$PWD/ios/Images.xcassets
+    QMAKE_ASSET_CATALOGS_APP_ICON = "AppIcon"
 }
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
