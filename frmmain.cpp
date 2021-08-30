@@ -3097,12 +3097,14 @@ void FrmMain::paintEvent(QPaintEvent *e)
     scaleX = double(this->geometry().width()/double(1080));
     scaleY = double(this->geometry().height()/double(1920));
 
-    QImage drawImage(this->geometry().width(), this->geometry().height(), QImage::Format_ARGB32);
-    QPainter painter(&drawImage);
+    QPainter painter(this);
 
     QPen pen(QColor(28,185,146));
     QFont f = font;
+
     //f.setBold(true);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, false);
     //painter.setRenderHint(QPainter::SmoothPixmapTransform);
     //painter.setRenderHint(QPainter::Antialiasing);
 
@@ -3851,9 +3853,6 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setFont(f);
         painter.drawText(QRect(265,1650,750,150),Qt::AlignCenter,transl->getText_MaybeLater().text);
     }
-
-    QPainter painter2(this);
-    painter2.drawImage(QRectF(0, 0, this->geometry().width(), this->geometry().height()), drawImage);
 }
 
 void FrmMain::mousePressEvent(QMouseEvent *e)
