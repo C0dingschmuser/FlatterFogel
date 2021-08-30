@@ -9,9 +9,17 @@
 #include <QDateTime>
 #include <QColor>
 #include <QVector>
+
+#ifdef Q_OS_WIN
 #include <QSoundEffect>
-#include <QMessageBox>
 #include <QMediaPlayer>
+#endif
+#ifdef Q_OS_ANDROID
+#include <QSoundEffect>
+#include <QMediaPlayer>
+#endif
+
+#include <QMessageBox>
 #include <QThread>
 #include <QMouseEvent>
 #include <QPixmap>
@@ -96,7 +104,14 @@ private slots:
     void on_tnewHS();
     void on_tTail();
     void on_tRgb();
+
+#ifdef Q_OS_WIN
     void on_mediastateChanged(QMediaPlayer::MediaStatus status);
+#endif
+#ifdef Q_OS_ANDROID
+    void on_mediastateChanged(QMediaPlayer::MediaStatus status);
+#endif
+
     void on_appStateChanged(Qt::ApplicationState state);
     void on_test();
     void on_settingsBack();
@@ -120,8 +135,19 @@ public:
 
 private:
     Ui::FrmMain *ui;
+
+#ifdef Q_OS_WIN
     QMediaPlayer *sound;
     QMediaPlaylist *playlist;
+    std::vector <QSoundEffect*> soundEffects;
+    void SetupSound();
+#endif
+#ifdef Q_OS_ANDROID
+    QMediaPlayer *sound;
+    QMediaPlaylist *playlist;
+    std::vector <QSoundEffect*> soundEffects;
+    void SetupSound();
+#endif
 
     QInAppStore *store;
 
@@ -211,7 +237,6 @@ private:
     std::vector <QPixmap> pipes;
     std::vector <QPixmap> tails;
     std::vector <QPixmap> planets;
-    std::vector <QSoundEffect*> soundEffects;
     std::vector <Enemy*> enemys;
     std::vector <Projectile*> projectiles;
     QVector <QPixmap> thumbs;

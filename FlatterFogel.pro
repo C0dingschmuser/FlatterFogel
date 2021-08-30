@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network multimedia purchasing
+QT       += core gui network purchasing
+windows: QT += multimedia
+android: QT += multimedia
 android: QT += androidextras
 android: include(D:/FF_QT515/android_openssl-master/openssl.pri)
 

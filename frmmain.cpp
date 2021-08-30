@@ -87,12 +87,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     int id = QFontDatabase::addApplicationFont(":/font/PressStart2P.ttf");
     QString fam = QFontDatabase::applicationFontFamilies(id).at(0);
     font = QFont(fam);
-    playlist = new QMediaPlaylist();
-    playlist->addMedia(QUrl("qrc:/sound/pg.mp3"));
-    playlist->setPlaybackMode(QMediaPlaylist::Loop);
-    sound = new QMediaPlayer();
-    connect(sound,SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),this,SLOT(on_mediastateChanged(QMediaPlayer::MediaStatus)));
-    sound->setPlaylist(playlist);
+
+    SetupSound();
+
     connect(t_event,SIGNAL(timeout()),this,SLOT(on_tEvent()));
     connect(t_main,SIGNAL(timeout()),this,SLOT(on_tmain()));
     connect(t_draw,SIGNAL(timeout()),this,SLOT(on_tdraw()));
@@ -345,8 +342,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_tail->moveToThread(blusThread); //
     t_reload->moveToThread(blusThread);
     t_regen->moveToThread(blusThread);
-    sound->moveToThread(blusThread);
     t_newHS->moveToThread(workerThread); //
+
+#ifdef Q_OS_WIN
     for(int i=0;i<10;i++) {
         QSoundEffect *effect = new QSoundEffect();
         effect->setSource(QUrl::fromLocalFile(":/sound/flatter.wav"));
@@ -355,6 +353,19 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
         soundEffects.push_back(effect);
     }
     sound->moveToThread(musicThread);
+#endif
+
+#ifdef Q_OS_ANDROID
+    for(int i=0;i<10;i++) {
+        QSoundEffect *effect = new QSoundEffect();
+        effect->setSource(QUrl::fromLocalFile(":/sound/flatter.wav"));
+        effect->setVolume(0.4);
+        effect->moveToThread(musicThread);
+        soundEffects.push_back(effect);
+    }
+    sound->moveToThread(musicThread);
+#endif
+
     workerThread->start();
     blusThread->start();
     musicThread->start();
@@ -369,6 +380,29 @@ FrmMain::~FrmMain()
     delete ui;
 }
 
+#ifdef Q_OS_WIN
+void FrmMain::SetupSound()
+{
+    playlist = new QMediaPlaylist();
+    playlist->addMedia(QUrl("qrc:/sound/pg.mp3"));
+    playlist->setPlaybackMode(QMediaPlaylist::Loop);
+    sound = new QMediaPlayer();
+    connect(sound,SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),this,SLOT(on_mediastateChanged(QMediaPlayer::MediaStatus)));
+    sound->setPlaylist(playlist);
+}
+#endif
+
+#ifdef Q_OS_ANDROID
+void FrmMain::SetupSound()
+{
+    playlist = new QMediaPlaylist();
+    playlist->addMedia(QUrl("qrc:/sound/pg.mp3"));
+    playlist->setPlaybackMode(QMediaPlaylist::Loop);
+    sound = new QMediaPlayer();
+    connect(sound,SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),this,SLOT(on_mediastateChanged(QMediaPlayer::MediaStatus)));
+    sound->setPlaylist(playlist);
+}
+#endif
 
 void FrmMain::setupIAP() {
     store = new QInAppStore(this);
@@ -916,6 +950,7 @@ void FrmMain::on_tRgb()
     }
 }
 
+#ifdef Q_OS_WIN
 void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
 {
     if(status == QMediaPlayer::MediaStatus::LoadedMedia&&soundEnabled) {
@@ -923,6 +958,17 @@ void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
         QMetaObject::invokeMethod(sound,"play");
     }
 }
+#endif
+
+#ifdef Q_OS_ANDROID
+void FrmMain::on_mediastateChanged(QMediaPlayer::MediaStatus status)
+{
+    if(status == QMediaPlayer::MediaStatus::LoadedMedia&&soundEnabled) {
+        sound->setVolume(25);
+        QMetaObject::invokeMethod(sound,"play");
+    }
+}
+#endif
 
 void FrmMain::on_appStateChanged(Qt::ApplicationState state)
 {
@@ -931,11 +977,20 @@ void FrmMain::on_appStateChanged(Qt::ApplicationState state)
 #endif
 
     if(state == Qt::ApplicationActive) {
+#ifdef Q_OS_WIN
         if(soundEnabled) {
-            if(sound->state()==QMediaPlayer::PausedState) {
+            if(sound->state() == QMediaPlayer::PausedState) {
                 QMetaObject::invokeMethod(sound,"play");
             }
         }
+#endif
+#ifdef Q_OS_ANDROID
+        if(soundEnabled) {
+            if(sound->state() == QMediaPlayer::PausedState) {
+                QMetaObject::invokeMethod(sound,"play");
+            }
+        }
+#endif
         if(!suspended) return;
         QMetaObject::invokeMethod(t_draw,"start",Q_ARG(int,10));
         QMetaObject::invokeMethod(t_main,"start",Q_ARG(int,5));
@@ -957,9 +1012,16 @@ void FrmMain::on_appStateChanged(Qt::ApplicationState state)
         if(active==1&&!pause) {
             pause = true;
         }
+#ifdef Q_OS_WIN
         if(soundEnabled) {
-            if(sound->state()==QMediaPlayer::PlayingState) sound->pause();
+            if(sound->state() == QMediaPlayer::PlayingState) sound->pause();
         }
+#endif
+#ifdef Q_OS_ANDROID
+        if(soundEnabled) {
+            if(sound->state() == QMediaPlayer::PlayingState) sound->pause();
+        }
+#endif
     }
 //active
     //inactive
@@ -2791,6 +2853,7 @@ void FrmMain::handleBox()
 void FrmMain::playFlatter()
 {
     if(!soundEffectsEnabled) return;
+#ifdef Q_OS_WIN
     for(int i=0;i<10;i++) {
         if(!soundEffects[i]->isPlaying()&&soundEffects[i]->status()==QSoundEffect::Ready) {
             QMetaObject::invokeMethod(soundEffects[i],"play");
@@ -2798,6 +2861,16 @@ void FrmMain::playFlatter()
             break;
         }
     }
+#endif
+#ifdef Q_OS_ANDROID
+    for(int i=0;i<10;i++) {
+        if(!soundEffects[i]->isPlaying()&&soundEffects[i]->status()==QSoundEffect::Ready) {
+            QMetaObject::invokeMethod(soundEffects[i],"play");
+            //soundEffects[i]->play();
+            break;
+        }
+    }
+#endif
 }
 
 void FrmMain::doSchmuserDefend()
