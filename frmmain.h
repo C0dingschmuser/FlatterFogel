@@ -36,6 +36,7 @@
 #include <QInAppStore>
 #include <QInAppProduct>
 #include <QInAppTransaction>
+#include <QOpenGLPaintDevice>
 
 /*#include "D:/FF_QT515/purchasing/inapp/inappproduct.h"
 #include "D:/FF_QT515/purchasing/inapp/inapppurchasebackend.h"
@@ -366,7 +367,7 @@ private:
     void initPurchase(int packageCode);
     double getDistance(QPointF p1,QPointF p2);
 protected:
-    void paintEvent(QPaintEvent *e);
+    void paintEvent(QPaintEvent *e) override;
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e) override;

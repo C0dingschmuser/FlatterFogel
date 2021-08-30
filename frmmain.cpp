@@ -328,7 +328,7 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_animation->setTimerType(Qt::PreciseTimer);
     t_animation->start(1);
     t_tchange->setSingleShot(true);
-    /*t_backup->moveToThread(animationThread);
+    t_backup->moveToThread(animationThread);
     t_animation->moveToThread(animationThread); //
     t_rgb->moveToThread(workerThread); //
     t_an->moveToThread(workerThread); //
@@ -346,19 +346,19 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     t_reload->moveToThread(blusThread);
     t_regen->moveToThread(blusThread);
     sound->moveToThread(blusThread);
-    t_newHS->moveToThread(workerThread); //*/
+    t_newHS->moveToThread(workerThread); //
     for(int i=0;i<10;i++) {
         QSoundEffect *effect = new QSoundEffect();
         effect->setSource(QUrl::fromLocalFile(":/sound/flatter.wav"));
         effect->setVolume(0.4);
         effect->moveToThread(musicThread);
-        //soundEffects.push_back(effect);
+        soundEffects.push_back(effect);
     }
-    //sound->moveToThread(musicThread);
-    //workerThread->start();
-    //blusThread->start();
-    //musicThread->start();
-    //animationThread->start();
+    sound->moveToThread(musicThread);
+    workerThread->start();
+    blusThread->start();
+    musicThread->start();
+    animationThread->start();
     //startStop(true);
     qApp->setStyleSheet("QMessageBox { messagebox-text-interaction-flags: 5; }");
 }
@@ -3093,15 +3093,19 @@ bool FrmMain::intersectsWithCircle2(QRectF rect, int radius, QPoint center)
 
 void FrmMain::paintEvent(QPaintEvent *e)
 {
-    Q_UNUSED(e)
+    //Q_UNUSED(e)
     scaleX = double(this->geometry().width()/double(1080));
     scaleY = double(this->geometry().height()/double(1920));
-    QPainter painter(this);
+
+    QImage drawImage(this->geometry().width(), this->geometry().height(), QImage::Format_ARGB32);
+    QPainter painter(&drawImage);
+
     QPen pen(QColor(28,185,146));
     QFont f = font;
     //f.setBold(true);
     //painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.setRenderHint(QPainter::Antialiasing);
+    //painter.setRenderHint(QPainter::Antialiasing);
+
     painter.scale(scaleX,scaleY);
     if(loading) {
         painter.setBrush(QColor(22,22,24));
@@ -3847,6 +3851,9 @@ void FrmMain::paintEvent(QPaintEvent *e)
         painter.setFont(f);
         painter.drawText(QRect(265,1650,750,150),Qt::AlignCenter,transl->getText_MaybeLater().text);
     }
+
+    QPainter painter2(this);
+    painter2.drawImage(QRectF(0, 0, this->geometry().width(), this->geometry().height()), drawImage);
 }
 
 void FrmMain::mousePressEvent(QMouseEvent *e)

@@ -8,6 +8,8 @@ QT       += core gui network multimedia purchasing
 android: QT += androidextras
 android: include(D:/FF_QT515/android_openssl-master/openssl.pri)
 
+#include(D:/FF/qnanopainter/libqnanopainter/include.pri)
+
 ios {
     QMAKE_INFO_PLIST = ios/Info.plist
     ios_icon.files = $$files($$PWD/ios/AppIcon*.png)
