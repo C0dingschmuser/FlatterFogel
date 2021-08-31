@@ -16,6 +16,14 @@ ios {
     QMAKE_INFO_PLIST = ios/Info.plist
     QMAKE_ASSET_CATALOGS = $$PWD/ios/Images.xcassets
     QMAKE_ASSET_CATALOGS_APP_ICON = "AppIcon"
+
+    ios_artwork.files = $$files($$PWD/ios/BGDef.png)
+    QMAKE_BUNDLE_DATA += ios_artwork
+
+    app_launch_screen.files = $$files($$PWD/ios/MyLaunchScreen.storyboard)
+    QMAKE_BUNDLE_DATA += app_launch_screen
+
+    OTHER_FILES += ios/*.storyboard
 }
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
