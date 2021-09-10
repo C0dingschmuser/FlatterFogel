@@ -6,6 +6,9 @@ FrmMain::FrmMain(QOpenGLWidget *parent) :
     ui(new Ui::FrmMain)
 {
     ui->setupUi(this);
+    this->setStyleSheet("background-color: black;");
+
+    setupDirs();
 
     networkManager = new NetworkManager();
 
@@ -420,6 +423,20 @@ void FrmMain::setupIAP() {
     store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_small"));
     store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_medium"));
     store->registerProduct(QInAppProduct::Unlockable, QStringLiteral("pack_large"));
+}
+
+void FrmMain::setupDirs()
+{
+    QString mDataPath = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).value(0);
+    qDebug() << "Data Path: " << mDataPath;
+    QDir myDir(mDataPath);
+    if (!myDir.exists()) {
+        bool ok = myDir.mkpath(mDataPath);
+        if(!ok) {
+            qWarning() << "Couldn't create dir. " << mDataPath;
+        }
+        qDebug() << "created directory path" << mDataPath;
+    }
 }
 
 void FrmMain::handleTransaction(QInAppTransaction *transaction) {
@@ -2187,6 +2204,11 @@ bool FrmMain::vContains(std::vector<int> v, int value)
 void FrmMain::loadData()
 {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+
+#ifdef Q_OS_IOS
+    path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).value(0);
+#endif
+
 #ifdef Q_OS_WIN
     if(!QDir(path).exists()) {
         QDir().mkdir(path);
@@ -2462,6 +2484,11 @@ void FrmMain::write(bool normal, int bscore)
         exit.append("NOTOK");
         QFile restore;
         QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+
+#ifdef Q_OS_IOS
+        path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).value(0);
+#endif
+
         restore.setFileName(path+"/restore.dat");
         restore.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
         QTextStream rout(&restore);
@@ -3987,6 +4014,11 @@ void FrmMain::mousePressEvent(QMouseEvent *e)
                     //Speichern
                     QFile dsgvoFile;
                     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+
+#ifdef Q_OS_IOS
+                    path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).value(0);
+#endif
+
                     dsgvoFile.setFileName(path+"/dsgvo.dat");
                     dsgvoFile.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
                     QTextStream dout(&dsgvoFile);

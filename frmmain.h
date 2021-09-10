@@ -367,6 +367,7 @@ private:
     QFile file;
     QFile fileE;
     void setupIAP();
+    void setupDirs();
     void loadData();
     void write(bool normal=true, int bscore=0);
     void reset(int type=0);
